@@ -25,7 +25,7 @@ export function fuzzyScore(query: string, target: string): number | null {
     let found = false;
     while (ti < t.length) {
       if (t[ti] === ch) {
-        const wordStart = ti === 0 || /[\s\-_:./\]/.test(t[ti - 1]);
+        const wordStart = ti === 0 || /[\s\-_:./\\]/.test(t[ti - 1]);
         streak += 1;
         score += 1 + streak * 2 + (wordStart ? 8 : 0);
         ti++;

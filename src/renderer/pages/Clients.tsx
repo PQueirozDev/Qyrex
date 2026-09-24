@@ -1,202 +1,533 @@
-import { useEffect, useState } from "react";
-import { Plus, Search, Trash2, Phone, Instagram, Mail, MessageCircle } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/Card";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  AtSign,
+  CheckSquare,
+  Code2,
+  FolderOpen,
+  FolderSearch,
+  Instagram,
+  Mail,
+  Megaphone,
+  MessageCircle,
+  Phone,
+  Plus,
+  Search,
+  Trash2,
+  Users,
+  Wallet,
+  X,
+} from "lucide-react";
+import type { Client, ClientStatus } from "@shared/types";
 import { Button } from "@/components/ui/Button";
-import { Dialog } from "@/components/ui/Dialog";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { Card } from "@/components/ui/Card";
+import { Badge, Drawer, EmptyState, ErrorState, Field, LoadingRows, PageHeader, Segmented } from "@/components/ui/primitives";
+import { TaskFormDialog } from "@/components/TaskFormDialog";
+import { attempt } from "@/lib/api";
 import { cn } from "@/lib/cn";
+import { formatCurrency, formatDate, relativeDay, todayISO } from "@/lib/format";
+import { fuzzyFilter } from "@/lib/fuzzy";
 import { useClientsStore } from "@/stores/useClientsStore";
-import type { Client } from "@shared/types";
+import { useProjectsStore } from "@/stores/useProjectsStore";
+import { useTasksStore } from "@/stores/useTasksStore";
+import { useMarketingStore } from "@/stores/useMarketingStore";
+import { confirmAction, toast, useUIStore } from "@/stores/useUIStore";
 
-const STATUS_LABEL: Record<Client["status"], string> = {
-  ativo: "🟢 Ativo",
-  inativo: "⚪ Inativo",
-  prospecto: "🔵 Prospecto",
+export const CLIENT_STATUS_LABEL: Record<ClientStatus, string> = { ativo: "Ativo", inativo: "Inativo", prospecto: "Prospecto" };
+const STATUS_TONE = { ativo: "success", inativo: "neutral", prospecto: "accent" } as const;
+
+// --- Atalhos de contato ---------------------------------------------------------------
+
+let whatsappDesktop: boolean | null = null;
+async function preferDesktop(): Promise<boolean> {
+  if (whatsappDesktop === null) {
+    const status = await attempt(window.workspace.system.whatsappStatus());
+    whatsappDesktop = status?.desktopInstalled ?? false;
+  }
+  return whatsappDesktop;
+}
+
+export async function openClientWhatsApp(phone: string, message?: string) {
+  await attempt(window.workspace.system.openWhatsAppChat({ phone, message: message || undefined }, await preferDesktop()));
+}
+
+function instagramUrl(handle: string): string {
+  if (/^https?:\/\//i.test(handle)) return handle;
+  return `https://instagram.com/${handle.replace(/^@/, "")}`;
+}
+
+function ContactButtons({ client, size = "xs" }: { client: Client; size?: "xs" | "sm" }) {
+  const open = (url: string) => void attempt(window.workspace.system.openExternalUrl(url));
+  const whatsapp = client.whatsapp || client.phone;
+  return (
+    <div className="flex flex-wrap gap-1" onClick={(e) => e.stopPropagation()}>
+      {whatsapp && (
+        <Button size={size} variant="secondary" onClick={() => void openClientWhatsApp(whatsapp)} title="WhatsApp">
+          <MessageCircle size={12} className="text-success" /> {size === "sm" && "WhatsApp"}
+        </Button>
+      )}
+      {client.instagram && (
+        <Button size={size} variant="secondary" onClick={() => open(instagramUrl(client.instagram!))} title="Instagram">
+          <Instagram size={12} /> {size === "sm" && "Instagram"}
+        </Button>
+      )}
+      {client.email && (
+        <Button size={size} variant="secondary" onClick={() => open(`mailto:${client.email}`)} title="Email">
+          <Mail size={12} /> {size === "sm" && "Email"}
+        </Button>
+      )}
+      {client.phone && (
+        <Button size={size} variant="secondary" onClick={() => open(`tel:${client.phone!.replace(/[^\d+]/g, "")}`)} title="Ligar">
+          <Phone size={12} /> {size === "sm" && "Ligar"}
+        </Button>
+      )}
+    </div>
+  );
+}
+
+// --- Formulário -------------------------------------------------------------------------
+
+type FormState = {
+  name: string;
+  company: string;
+  status: ClientStatus;
+  phone: string;
+  whatsapp: string;
+  instagram: string;
+  email: string;
+  monthlyValue: string;
+  nextBillingDate: string;
+  filesPath: string;
+  notes: string;
 };
 
-export function Clients() {
-  const { clients, load, createClient, updateClient, removeClient, error } = useClientsStore();
-  const [search, setSearch] = useState("");
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [toDelete, setToDelete] = useState<Client | null>(null);
+function toForm(c: Client | null): FormState {
+  return {
+    name: c?.name ?? "",
+    company: c?.company ?? "",
+    status: c?.status ?? "ativo",
+    phone: c?.phone ?? "",
+    whatsapp: c?.whatsapp ?? "",
+    instagram: c?.instagram ?? "",
+    email: c?.email ?? "",
+    monthlyValue: c?.monthlyValue != null ? String(c.monthlyValue).replace(".", ",") : "",
+    nextBillingDate: c?.nextBillingDate ?? "",
+    filesPath: c?.filesPath ?? "",
+    notes: c?.notes ?? "",
+  };
+}
 
-  const [name, setName] = useState("");
-  const [company, setCompany] = useState("");
-  const [phone, setPhone] = useState("");
-  const [whatsapp, setWhatsapp] = useState("");
-  const [instagram, setInstagram] = useState("");
-  const [email, setEmail] = useState("");
-  const [monthlyValue, setMonthlyValue] = useState("");
+function parseMoney(v: string): number | null | "invalid" {
+  const clean = v.trim().replace(/[R$\s]/g, "");
+  if (!clean) return null;
+  // Aceita "1.500,50", "1500,50" e "1500.50".
+  const normalized = clean.includes(",") ? clean.replace(/\./g, "").replace(",", ".") : clean;
+  const n = Number(normalized);
+  return Number.isFinite(n) && n >= 0 ? n : "invalid";
+}
+
+function ClientDrawer({ client, onClose }: { client: Client | null; onClose: () => void }) {
+  const { create, update, remove } = useClientsStore();
+  const projects = useProjectsStore((s) => s.projects);
+  const { tasks, toggleDone } = useTasksStore();
+  const marketing = useMarketingStore((s) => s.items);
+  const navigate = useUIStore((s) => s.navigate);
+
+  const [form, setForm] = useState<FormState>(() => toForm(client));
+  const [saving, setSaving] = useState(false);
+  const [taskOpen, setTaskOpen] = useState(false);
+
+  useEffect(() => setForm(toForm(client)), [client]);
+
+  const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((f) => ({ ...f, [key]: value }));
+  const dirty = JSON.stringify(form) !== JSON.stringify(toForm(client));
+  const money = parseMoney(form.monthlyValue);
+
+  async function save() {
+    if (!form.name.trim() || money === "invalid") return;
+    setSaving(true);
+    const payload = {
+      name: form.name.trim(),
+      company: form.company.trim() || null,
+      status: form.status,
+      phone: form.phone.trim() || null,
+      whatsapp: form.whatsapp.trim() || null,
+      instagram: form.instagram.trim() || null,
+      email: form.email.trim() || null,
+      monthlyValue: money,
+      nextBillingDate: form.nextBillingDate || null,
+      filesPath: form.filesPath || null,
+      notes: form.notes.trim() || null,
+    };
+    if (client) {
+      if (await update(client.id, payload)) toast.success("Cliente salvo");
+    } else {
+      const created = await create(payload);
+      if (created) navigate("clientes", created.id);
+    }
+    setSaving(false);
+  }
+
+  async function pickFolder() {
+    const dir = await attempt(window.workspace.system.pickDirectory("Pasta de arquivos do cliente"));
+    if (!dir) return;
+    const allowed = await attempt(window.workspace.files.isAllowed(dir));
+    if (!allowed) {
+      toast.error("Essa pasta não está dentro de um diretório autorizado (Configurações → Diretórios autorizados).");
+      return;
+    }
+    set("filesPath", dir);
+  }
+
+  async function handleDelete() {
+    if (!client) return;
+    const ok = await confirmAction({
+      title: `Excluir o cliente "${client.name}"?`,
+      description: "Projetos, tarefas e conteúdos vinculados continuam existindo, só perdem o vínculo.",
+      danger: true,
+      confirmLabel: "Excluir",
+    });
+    if (!ok) return;
+    await remove(client.id);
+    onClose();
+  }
+
+  const clientProjects = client ? projects.filter((p) => p.clientId === client.id) : [];
+  const clientTasks = client ? tasks.filter((t) => t.clientId === client.id && t.status !== "concluido") : [];
+  const clientContent = client ? marketing.filter((m) => m.clientId === client.id && m.status !== "publicado") : [];
+
+  return (
+    <Drawer
+      open
+      onClose={onClose}
+      width={580}
+      title={client ? client.name : "Novo cliente"}
+      actions={
+        client && (
+          <Button size="icon-sm" variant="ghost" onClick={() => void handleDelete()} title="Excluir cliente">
+            <Trash2 size={13} className="text-danger" />
+          </Button>
+        )
+      }
+    >
+      <div className="space-y-5">
+        {client && <ContactButtons client={client} size="sm" />}
+
+        <section className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Nome">
+              <input className="input" value={form.name} onChange={(e) => set("name", e.target.value)} />
+            </Field>
+            <Field label="Empresa">
+              <input className="input" value={form.company} onChange={(e) => set("company", e.target.value)} />
+            </Field>
+          </div>
+          <div>
+            <span className="label">Status</span>
+            <Segmented
+              value={form.status}
+              onChange={(v) => set("status", v)}
+              options={(Object.keys(CLIENT_STATUS_LABEL) as ClientStatus[]).map((s) => ({ value: s, label: CLIENT_STATUS_LABEL[s] }))}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="WhatsApp" hint="Com DDD. Ex.: 11 99999-0000">
+              <input className="input" value={form.whatsapp} onChange={(e) => set("whatsapp", e.target.value)} />
+            </Field>
+            <Field label="Telefone">
+              <input className="input" value={form.phone} onChange={(e) => set("phone", e.target.value)} />
+            </Field>
+            <Field label="Instagram">
+              <input className="input" value={form.instagram} onChange={(e) => set("instagram", e.target.value)} placeholder="@perfil" />
+            </Field>
+            <Field label="Email">
+              <input type="email" className="input" value={form.email} onChange={(e) => set("email", e.target.value)} />
+            </Field>
+          </div>
+        </section>
+
+        <section>
+          <p className="section-title mb-2 flex items-center gap-1.5">
+            <Wallet size={12} /> Financeiro
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Manutenção mensal (R$)">
+              <input
+                className={cn("input", money === "invalid" && "border-danger")}
+                value={form.monthlyValue}
+                onChange={(e) => set("monthlyValue", e.target.value)}
+                placeholder="0,00"
+                inputMode="decimal"
+              />
+            </Field>
+            <Field
+              label="Próxima cobrança"
+              hint={form.nextBillingDate && form.nextBillingDate < todayISO() ? <span className="text-danger">Cobrança atrasada</span> : undefined}
+            >
+              <input type="date" className="input" value={form.nextBillingDate} onChange={(e) => set("nextBillingDate", e.target.value)} />
+            </Field>
+          </div>
+        </section>
+
+        <section>
+          <p className="section-title mb-2">Pasta de arquivos</p>
+          <div className="flex gap-2">
+            <input className="input font-mono text-xs" value={form.filesPath} readOnly placeholder="Nenhuma pasta vinculada" />
+            <Button variant="secondary" onClick={() => void pickFolder()}>
+              <FolderSearch size={14} /> Escolher
+            </Button>
+            {form.filesPath && (
+              <>
+                <Button variant="ghost" size="icon" onClick={() => navigate("arquivos", form.filesPath)} title="Abrir em Arquivos">
+                  <FolderOpen size={14} />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => set("filesPath", "")} title="Desvincular pasta">
+                  <X size={14} />
+                </Button>
+              </>
+            )}
+          </div>
+        </section>
+
+        <Field label="Observações">
+          <textarea className="input min-h-[80px] resize-y" value={form.notes} onChange={(e) => set("notes", e.target.value)} />
+        </Field>
+
+        <div className="flex justify-end gap-2">
+          {client && dirty && (
+            <Button size="sm" variant="ghost" onClick={() => setForm(toForm(client))}>
+              Descartar
+            </Button>
+          )}
+          <Button size="sm" onClick={() => void save()} loading={saving} disabled={!form.name.trim() || money === "invalid" || (client !== null && !dirty)}>
+            {client ? "Salvar alterações" : "Criar cliente"}
+          </Button>
+        </div>
+
+        {client && (
+          <>
+            <section>
+              <p className="section-title mb-2 flex items-center gap-1.5">
+                <Code2 size={12} /> Projetos
+              </p>
+              {clientProjects.length === 0 ? (
+                <p className="text-xs text-text-faint">Nenhum projeto vinculado. Vincule pelo formulário do projeto.</p>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {clientProjects.map((p) => (
+                    <Button key={p.id} size="xs" variant="secondary" onClick={() => navigate("projetos", p.id)}>
+                      {p.name}
+                    </Button>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section>
+              <div className="mb-2 flex items-center justify-between">
+                <p className="section-title flex items-center gap-1.5">
+                  <CheckSquare size={12} /> Tarefas abertas
+                </p>
+                <Button size="xs" variant="ghost" onClick={() => setTaskOpen(true)}>
+                  <Plus size={12} /> Nova
+                </Button>
+              </div>
+              {clientTasks.length === 0 ? (
+                <p className="text-xs text-text-faint">Nenhuma tarefa aberta.</p>
+              ) : (
+                <div className="space-y-1">
+                  {clientTasks.map((t) => (
+                    <div key={t.id} className="flex items-center gap-2 text-sm">
+                      <input type="checkbox" className="accent-accent" checked={false} onChange={() => void toggleDone(t)} aria-label="Concluir" />
+                      <button className="min-w-0 flex-1 truncate text-left text-text" onClick={() => navigate("tarefas", t.id)}>
+                        {t.title}
+                      </button>
+                      {t.dueDate && <span className="text-[11px] capitalize text-text-faint">{relativeDay(t.dueDate)}</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section>
+              <div className="mb-2 flex items-center justify-between">
+                <p className="section-title flex items-center gap-1.5">
+                  <Megaphone size={12} /> Marketing em andamento
+                </p>
+                <Button size="xs" variant="ghost" onClick={() => navigate("marketing")}>
+                  Ver quadro
+                </Button>
+              </div>
+              {clientContent.length === 0 ? (
+                <p className="text-xs text-text-faint">Nenhum conteúdo em andamento.</p>
+              ) : (
+                <div className="space-y-1">
+                  {clientContent.map((m) => (
+                    <button key={m.id} onClick={() => navigate("marketing", m.id)} className="flex w-full items-center gap-2 rounded-md px-1 py-1 text-left text-sm hover:bg-bg-hover">
+                      <Badge>{m.type}</Badge>
+                      <span className="min-w-0 flex-1 truncate text-text">{m.title}</span>
+                      {m.scheduledDate && <span className="text-[11px] text-text-faint">{formatDate(m.scheduledDate)}</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </section>
+          </>
+        )}
+      </div>
+      {client && <TaskFormDialog open={taskOpen} onClose={() => setTaskOpen(false)} defaults={{ clientId: client.id }} />}
+    </Drawer>
+  );
+}
+
+// --- Página ----------------------------------------------------------------------------
+
+export function Clients() {
+  const { clients, loaded, loading, error, load } = useClientsStore();
+  const { loaded: projectsLoaded, load: loadProjects } = useProjectsStore();
+  const { loaded: tasksLoaded, load: loadTasks } = useTasksStore();
+  const { loaded: marketingLoaded, load: loadMarketing } = useMarketingStore();
+  const pageParam = useUIStore((s) => s.pageParam);
+  const navigate = useUIStore((s) => s.navigate);
+
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<ClientStatus | "todos">("todos");
+  const [openId, setOpenId] = useState<string | "new" | null>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     void load();
-  }, [load]);
+    if (!projectsLoaded) void loadProjects();
+    if (!tasksLoaded) void loadTasks();
+    if (!marketingLoaded) void loadMarketing();
+  }, [load, projectsLoaded, loadProjects, tasksLoaded, loadTasks, marketingLoaded, loadMarketing]);
+
+  // pageParam: "new" abre o cadastro, "search" foca a busca, um id abre o cliente.
+  useEffect(() => {
+    if (!pageParam) return;
+    if (pageParam === "search") setTimeout(() => searchRef.current?.focus(), 30);
+    else setOpenId(pageParam);
+  }, [pageParam]);
+
+  const filtered = useMemo(() => {
+    const list = statusFilter === "todos" ? clients : clients.filter((c) => c.status === statusFilter);
+    return fuzzyFilter(list, search, (c) => `${c.name} ${c.company ?? ""} ${c.email ?? ""} ${c.instagram ?? ""} ${c.whatsapp ?? ""}`);
+  }, [clients, search, statusFilter]);
+
+  const counts = useMemo(
+    () => ({
+      ativo: clients.filter((c) => c.status === "ativo").length,
+      prospecto: clients.filter((c) => c.status === "prospecto").length,
+      inativo: clients.filter((c) => c.status === "inativo").length,
+    }),
+    [clients]
+  );
+  const monthly = clients.filter((c) => c.status === "ativo").reduce((sum, c) => sum + (c.monthlyValue ?? 0), 0);
+  const today = todayISO();
+  const current = openId && openId !== "new" ? clients.find((c) => c.id === openId) ?? null : null;
 
   useEffect(() => {
-    const t = setTimeout(() => void load(search || undefined), 250);
-    return () => clearTimeout(t);
-  }, [search, load]);
-
-  async function handleCreate() {
-    const ok = await createClient({
-      name,
-      company: company || undefined,
-      phone: phone || undefined,
-      whatsapp: whatsapp || undefined,
-      instagram: instagram || undefined,
-      email: email || undefined,
-      monthlyValue: monthlyValue ? Number(monthlyValue) : undefined,
-    });
-    if (ok) {
-      setDialogOpen(false);
-      setName("");
-      setCompany("");
-      setPhone("");
-      setWhatsapp("");
-      setInstagram("");
-      setEmail("");
-      setMonthlyValue("");
+    if (openId && openId !== "new" && loaded && !clients.some((c) => c.id === openId)) {
+      toast.error("Cliente não encontrado.");
+      setOpenId(null);
     }
-  }
+  }, [openId, loaded, clients]);
+
+  const close = () => {
+    setOpenId(null);
+    if (pageParam) navigate("clientes");
+  };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-text">Clientes</h1>
-        <Button size="sm" onClick={() => setDialogOpen(true)}>
-          <Plus size={14} /> Novo cliente
-        </Button>
-      </div>
-
-      <div className="flex items-center gap-2 rounded-lg border border-border bg-bg-card px-3 py-1.5">
-        <Search size={14} className="text-text-faint" />
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar cliente..."
-          className="w-full bg-transparent text-sm text-text placeholder:text-text-faint focus:outline-none"
-        />
-      </div>
-
-      {error && <p className="text-sm text-danger">{error}</p>}
-
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {clients.map((client) => (
-          <Card key={client.id}>
-            <CardContent className="pt-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="text-sm font-semibold text-text">{client.name}</h3>
-                  {client.company && <p className="text-xs text-text-faint">{client.company}</p>}
-                </div>
-                <button onClick={() => setToDelete(client)} aria-label="Excluir cliente">
-                  <Trash2 size={14} className="text-text-faint hover:text-danger" />
-                </button>
-              </div>
-
-              <select
-                value={client.status}
-                onChange={(e) => updateClient(client.id, { status: e.target.value as Client["status"] })}
-                className={cn(
-                  "mt-2 rounded-md border border-border-subtle bg-bg px-1.5 py-0.5 text-xs",
-                  client.status === "ativo" && "text-success",
-                  client.status === "inativo" && "text-text-faint",
-                  client.status === "prospecto" && "text-accent"
-                )}
-              >
-                {(Object.keys(STATUS_LABEL) as Client["status"][]).map((s) => (
-                  <option key={s} value={s}>
-                    {STATUS_LABEL[s]}
-                  </option>
-                ))}
-              </select>
-
-              {client.monthlyValue != null && (
-                <p className="mt-2 text-xs text-text-muted">
-                  Manutenção: R$ {client.monthlyValue.toFixed(2)}
-                  {client.nextBillingDate && <> • Próx.: {client.nextBillingDate}</>}
-                </p>
-              )}
-
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {client.whatsapp && (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() =>
-                      window.workspace.system.openExternalUrl(
-                        `https://wa.me/${client.whatsapp!.replace(/\D/g, "")}`
-                      )
-                    }
-                  >
-                    <MessageCircle size={12} /> WhatsApp
-                  </Button>
-                )}
-                {client.phone && (
-                  <Button size="sm" variant="secondary" onClick={() => window.workspace.system.openExternalUrl(`tel:${client.phone}`)}>
-                    <Phone size={12} />
-                  </Button>
-                )}
-                {client.instagram && (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() =>
-                      window.workspace.system.openExternalUrl(
-                        `https://instagram.com/${client.instagram!.replace("@", "")}`
-                      )
-                    }
-                  >
-                    <Instagram size={12} />
-                  </Button>
-                )}
-                {client.email && (
-                  <Button size="sm" variant="secondary" onClick={() => window.workspace.system.openExternalUrl(`mailto:${client.email}`)}>
-                    <Mail size={12} />
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-
-        {clients.length === 0 && (
-          <p className="text-sm text-text-faint">Nenhum cliente encontrado.</p>
-        )}
-      </div>
-
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} title="Novo cliente">
-        <div className="grid max-h-[60vh] grid-cols-2 gap-2 overflow-y-auto">
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome *" className="col-span-2 rounded-md border border-border bg-bg px-2.5 py-1.5 text-sm text-text placeholder:text-text-faint focus:outline-none focus:ring-1 focus:ring-accent" />
-          <input value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Empresa" className="col-span-2 rounded-md border border-border bg-bg px-2.5 py-1.5 text-sm text-text placeholder:text-text-faint focus:outline-none focus:ring-1 focus:ring-accent" />
-          <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Telefone" className="rounded-md border border-border bg-bg px-2.5 py-1.5 text-sm text-text placeholder:text-text-faint focus:outline-none focus:ring-1 focus:ring-accent" />
-          <input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="WhatsApp" className="rounded-md border border-border bg-bg px-2.5 py-1.5 text-sm text-text placeholder:text-text-faint focus:outline-none focus:ring-1 focus:ring-accent" />
-          <input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="Instagram" className="rounded-md border border-border bg-bg px-2.5 py-1.5 text-sm text-text placeholder:text-text-faint focus:outline-none focus:ring-1 focus:ring-accent" />
-          <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="rounded-md border border-border bg-bg px-2.5 py-1.5 text-sm text-text placeholder:text-text-faint focus:outline-none focus:ring-1 focus:ring-accent" />
-          <input value={monthlyValue} onChange={(e) => setMonthlyValue(e.target.value)} placeholder="Manutenção mensal (R$)" type="number" className="col-span-2 rounded-md border border-border bg-bg px-2.5 py-1.5 text-sm text-text placeholder:text-text-faint focus:outline-none focus:ring-1 focus:ring-accent" />
-        </div>
-        <div className="mt-3 flex justify-end gap-2">
-          <Button variant="ghost" size="sm" onClick={() => setDialogOpen(false)}>
-            Cancelar
+    <div>
+      <PageHeader
+        title="Clientes"
+        description={`${counts.ativo} ativo(s) · ${formatCurrency(monthly)}/mês em manutenção`}
+        actions={
+          <Button size="sm" onClick={() => setOpenId("new")}>
+            <Plus size={14} /> Novo cliente
           </Button>
-          <Button size="sm" onClick={handleCreate} disabled={!name.trim()}>
-            Criar
-          </Button>
-        </div>
-      </Dialog>
-
-      <ConfirmDialog
-        open={!!toDelete}
-        danger
-        title={`Excluir "${toDelete?.name}"?`}
-        description="Essa ação não pode ser desfeita."
-        confirmLabel="Excluir"
-        onCancel={() => setToDelete(null)}
-        onConfirm={async () => {
-          if (toDelete) await removeClient(toDelete.id);
-          setToDelete(null);
-        }}
+        }
       />
+
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <Segmented
+          value={statusFilter}
+          onChange={setStatusFilter}
+          options={[
+            { value: "todos", label: "Todos" },
+            { value: "ativo", label: "Ativos", count: counts.ativo },
+            { value: "prospecto", label: "Prospectos", count: counts.prospecto },
+            { value: "inativo", label: "Inativos", count: counts.inativo },
+          ]}
+        />
+        <div className="relative ml-auto">
+          <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-faint" />
+          <input ref={searchRef} className="input w-64 py-1 pl-7 text-xs" placeholder="Buscar cliente..." value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+      </div>
+
+      {error && <ErrorState message={error} onRetry={() => void load()} />}
+
+      <Card className="overflow-hidden">
+        {!loaded && loading ? (
+          <div className="p-4">
+            <LoadingRows />
+          </div>
+        ) : clients.length === 0 ? (
+          <EmptyState
+            icon={Users}
+            title="Nenhum cliente ainda"
+            description="Cadastre clientes para acompanhar manutenção mensal, cobranças, projetos e conteúdo."
+            action={
+              <Button size="sm" onClick={() => setOpenId("new")}>
+                <Plus size={14} /> Novo cliente
+              </Button>
+            }
+          />
+        ) : filtered.length === 0 ? (
+          <EmptyState icon={Search} title="Nenhum cliente encontrado" />
+        ) : (
+          <div className="divide-y divide-border-subtle">
+            {filtered.map((c) => (
+              <div
+                key={c.id}
+                onClick={() => setOpenId(c.id)}
+                className="group flex cursor-pointer items-center gap-3 px-4 py-2.5 transition-colors hover:bg-bg-hover/50"
+              >
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-muted text-xs font-semibold text-accent">
+                  {c.name.slice(0, 2).toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate text-sm font-medium text-text">{c.name}</span>
+                    <Badge tone={STATUS_TONE[c.status]}>{CLIENT_STATUS_LABEL[c.status]}</Badge>
+                  </div>
+                  <div className="flex items-center gap-2 text-[11px] text-text-faint">
+                    {c.company && <span>{c.company}</span>}
+                    {c.instagram && (
+                      <span className="flex items-center gap-0.5">
+                        <AtSign size={10} />
+                        {c.instagram.replace(/^@/, "")}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {c.monthlyValue != null && <span className="text-xs text-text-muted">{formatCurrency(c.monthlyValue)}/mês</span>}
+                {c.nextBillingDate && (
+                  <span className={cn("w-24 text-right text-[11px] capitalize", c.nextBillingDate < today ? "text-danger" : "text-text-faint")}>
+                    {relativeDay(c.nextBillingDate)}
+                  </span>
+                )}
+                <div className="opacity-0 transition-opacity group-hover:opacity-100">
+                  <ContactButtons client={c} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      {(openId === "new" || current) && <ClientDrawer key={openId} client={current} onClose={close} />}
     </div>
   );
 }

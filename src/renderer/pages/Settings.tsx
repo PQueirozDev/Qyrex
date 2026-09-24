@@ -1,122 +1,264 @@
-import { useEffect, useState } from "react";
-import { Trash2 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
+import { useEffect, useState, type ReactNode } from "react";
+import { Code2, FileText, FolderPlus, Info, Monitor, Moon, Sun, Trash2, X } from "lucide-react";
+import type { AIProviderId, NotificationPrefs } from "@shared/types";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { EmptyState, PageHeader, Segmented, Spinner, Switch } from "@/components/ui/primitives";
+import { attempt } from "@/lib/api";
 import { useSettingsStore } from "@/stores/useSettingsStore";
+import { useAIStore } from "@/stores/useAIStore";
+import { confirmAction } from "@/stores/useUIStore";
+
+function Section({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
+  return (
+    <Card className="p-5">
+      <div className="mb-4">
+        <h2 className="text-sm font-semibold text-text">{title}</h2>
+        {description && <p className="mt-0.5 text-xs text-text-muted">{description}</p>}
+      </div>
+      <div className="space-y-3">{children}</div>
+    </Card>
+  );
+}
+
+function Row({ label, hint, children }: { label: string; hint?: ReactNode; children: ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div className="min-w-0">
+        <p className="text-sm text-text">{label}</p>
+        {hint && <p className="text-[11px] text-text-faint">{hint}</p>}
+      </div>
+      <div className="shrink-0">{children}</div>
+    </div>
+  );
+}
+
+const NOTIFICATION_LABELS: Record<keyof NotificationPrefs, { label: string; hint: string }> = {
+  tasks: { label: "Tarefas", hint: "Prazos de hoje e tarefas atrasadas" },
+  events: { label: "Agenda", hint: "Lembrete antes dos compromissos" },
+  billing: { label: "Cobranças", hint: "Clientes com cobrança próxima ou atrasada" },
+  marketing: { label: "Marketing", hint: "Conteúdos agendados para hoje" },
+};
 
 export function Settings() {
-  const { settings, load, update, addAllowedDir, removeAllowedDir } = useSettingsStore();
-  const [newDir, setNewDir] = useState("");
+  const { settings, system, update, addAllowedDir, removeAllowedDir, loadSystem } = useSettingsStore();
+  const { providers, loadProviders } = useAIStore();
+  const [name, setName] = useState(settings?.userName ?? "");
+  const [allowedCommands, setAllowedCommands] = useState<string[] | null>(null);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    void loadProviders();
+    void loadSystem();
+    void attempt(window.workspace.commands.listAllowed()).then((list) => setAllowedCommands(list ?? []));
+  }, [loadProviders, loadSystem]);
 
-  if (!settings) return null;
+  useEffect(() => setName(settings?.userName ?? ""), [settings?.userName]);
+
+  if (!settings) {
+    return (
+      <div className="flex h-40 items-center justify-center">
+        <Spinner />
+      </div>
+    );
+  }
+
+  const connectedProviders = providers.filter((p) => p.connected);
+  const defaultProvider = providers.find((p) => p.id === settings.aiDefaultProvider);
+
+  async function removeDir(dir: string) {
+    const ok = await confirmAction({
+      title: "Remover autorização desta pasta?",
+      description: "O Workspace deixa de acessar arquivos dela. Nada é apagado do disco.",
+      detail: dir,
+      confirmLabel: "Remover",
+    });
+    if (ok) await removeAllowedDir(dir);
+  }
+
+  async function revoke(command: string) {
+    await attempt(window.workspace.commands.revoke(command), "Autorização revogada");
+    setAllowedCommands((list) => list?.filter((c) => c !== command) ?? null);
+  }
 
   return (
-    <div className="max-w-2xl space-y-4">
-      <h1 className="text-lg font-semibold text-text">Configurações</h1>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Geral</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <label className="block text-sm text-text-muted">
-            Nome
-            <input
-              value={settings.userName}
-              onChange={(e) => update({ userName: e.target.value })}
-              className="mt-1 w-full rounded-md border border-border bg-bg px-2.5 py-1.5 text-sm text-text focus:outline-none focus:ring-1 focus:ring-accent"
+    <div className="mx-auto max-w-3xl">
+      <PageHeader title="Configurações" />
+      <div className="space-y-4">
+        <Section title="Aparência">
+          <Row label="Tema">
+            <Segmented
+              value={settings.theme}
+              onChange={(theme) => void update({ theme })}
+              options={[
+                { value: "dark", label: <><Moon size={12} /> Escuro</> },
+                { value: "light", label: <><Sun size={12} /> Claro</> },
+                { value: "system", label: <><Monitor size={12} /> Sistema</> },
+              ]}
             />
-          </label>
+          </Row>
+        </Section>
 
-          <label className="flex items-center gap-2 text-sm text-text">
+        <Section title="Inicialização">
+          <Row label="Iniciar com o Windows" hint="Abre o Workspace ao entrar no sistema.">
+            <Switch checked={settings.startWithSystem} onChange={(v) => void update({ startWithSystem: v })} />
+          </Row>
+          <Row label="Minimizar para a bandeja" hint="Fechar a janela mantém o app rodando na bandeja do sistema.">
+            <Switch checked={settings.minimizeToTray} onChange={(v) => void update({ minimizeToTray: v })} />
+          </Row>
+        </Section>
+
+        <Section title="Perfil">
+          <Row label="Seu nome" hint="Usado na saudação do Início.">
             <input
-              type="checkbox"
-              checked={settings.minimizeToTray}
-              onChange={(e) => update({ minimizeToTray: e.target.checked })}
-              className="accent-accent"
+              className="input w-56"
+              value={name}
+              maxLength={60}
+              onChange={(e) => setName(e.target.value)}
+              onBlur={() => name.trim() !== settings.userName && void update({ userName: name.trim() })}
+              onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
             />
-            Minimizar para a bandeja do sistema ao fechar
-          </label>
+          </Row>
+        </Section>
 
-          <label className="flex items-center gap-2 text-sm text-text">
-            <input
-              type="checkbox"
-              checked={settings.startWithSystem}
-              onChange={(e) => update({ startWithSystem: e.target.checked })}
-              className="accent-accent"
-            />
-            Iniciar com o Windows
-          </label>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Terminal</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-2">
-            {(["powershell", "cmd"] as const).map((t) => (
-              <button
-                key={t}
-                onClick={() => update({ defaultTerminal: t })}
-                className={`rounded-md border px-3 py-1.5 text-sm ${
-                  settings.defaultTerminal === t
-                    ? "border-accent bg-accent-muted text-text"
-                    : "border-border text-text-muted"
-                }`}
-              >
-                {t === "powershell" ? "PowerShell" : "CMD"}
-              </button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Diretórios autorizados</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <p className="text-xs text-text-faint">
-            O Workspace só pode abrir, listar ou modificar arquivos dentro destas pastas.
-          </p>
-          {settings.allowedProjectDirs.length === 0 && (
-            <p className="text-sm text-text-faint">Nenhum diretório autorizado ainda.</p>
-          )}
-          {settings.allowedProjectDirs.map((dir) => (
-            <div key={dir} className="flex items-center justify-between rounded-md border border-border-subtle px-2.5 py-1.5">
-              <span className="truncate text-sm text-text-muted">{dir}</span>
-              <button onClick={() => removeAllowedDir(dir)} aria-label="Remover">
-                <Trash2 size={14} className="text-text-faint hover:text-danger" />
-              </button>
+        <Section title="Diretórios autorizados" description="O Workspace só lê, lista ou altera arquivos dentro destas pastas. Raízes de disco, pastas do sistema e a pasta do usuário inteira não são aceitas.">
+          {settings.allowedProjectDirs.length === 0 ? (
+            <EmptyState className="py-4" icon={FolderPlus} title="Nenhuma pasta autorizada" />
+          ) : (
+            <div className="divide-y divide-border-subtle rounded-lg border border-border-subtle">
+              {settings.allowedProjectDirs.map((dir) => (
+                <div key={dir} className="flex items-center gap-2 px-3 py-2">
+                  <span className="min-w-0 flex-1 truncate font-mono text-xs text-text">{dir}</span>
+                  <Button size="icon-sm" variant="ghost" onClick={() => void removeDir(dir)} aria-label={`Remover ${dir}`}>
+                    <X size={13} />
+                  </Button>
+                </div>
+              ))}
             </div>
-          ))}
-          <div className="flex gap-2 pt-1">
-            <input
-              value={newDir}
-              onChange={(e) => setNewDir(e.target.value)}
-              placeholder="C:\Projetos"
-              className="flex-1 rounded-md border border-border bg-bg px-2.5 py-1.5 text-sm text-text placeholder:text-text-faint focus:outline-none focus:ring-1 focus:ring-accent"
-            />
+          )}
+          <Button size="sm" variant="secondary" onClick={() => void addAllowedDir()}>
+            <FolderPlus size={13} /> Autorizar pasta...
+          </Button>
+        </Section>
+
+        <Section title="VS Code">
+          <Row label="Executável" hint={system?.vscodePath ?? "Não encontrado automaticamente."}>
             <Button
               size="sm"
-              onClick={() => {
-                if (newDir.trim()) {
-                  void addAllowedDir(newDir.trim());
-                  setNewDir("");
-                }
+              variant="secondary"
+              onClick={async () => {
+                const picked = await attempt(window.workspace.system.pickVSCode());
+                if (picked) void loadSystem();
               }}
             >
-              Adicionar
+              <Code2 size={13} /> Escolher Code.exe
             </Button>
+          </Row>
+        </Section>
+
+        <Section title="Terminal">
+          <Row label="Shell padrão" hint="Usado no terminal integrado e ao abrir terminais externos.">
+            <Segmented
+              value={settings.defaultTerminal}
+              onChange={(defaultTerminal) => void update({ defaultTerminal })}
+              options={[
+                { value: "powershell", label: "PowerShell" },
+                { value: "cmd", label: "CMD" },
+              ]}
+            />
+          </Row>
+          {system && !system.terminalAvailable && (
+            <p className="flex items-center gap-1.5 text-[11px] text-text-faint">
+              <Info size={11} /> Terminal integrado indisponível neste sistema: os terminais abrem numa janela externa.
+            </p>
+          )}
+        </Section>
+
+        <Section title="IA" description="Usados ao criar uma nova conversa.">
+          <Row label="Provider padrão">
+            <select
+              className="input w-48"
+              value={settings.aiDefaultProvider ?? ""}
+              onChange={(e) => {
+                const id = (e.target.value || null) as AIProviderId | null;
+                void update({ aiDefaultProvider: id, aiDefaultModel: providers.find((p) => p.id === id)?.defaultModel ?? null });
+              }}
+            >
+              <option value="">Automático</option>
+              {providers.map((p) => (
+                <option key={p.id} value={p.id} disabled={!p.connected}>
+                  {p.label}
+                  {!p.connected ? " (desconectado)" : ""}
+                </option>
+              ))}
+            </select>
+          </Row>
+          <Row label="Modelo padrão">
+            <select
+              className="input w-48"
+              value={settings.aiDefaultModel ?? ""}
+              disabled={!defaultProvider}
+              onChange={(e) => void update({ aiDefaultModel: e.target.value || null })}
+            >
+              {settings.aiDefaultModel && !defaultProvider?.models.some((m) => m.id === settings.aiDefaultModel) && (
+                <option value={settings.aiDefaultModel}>{settings.aiDefaultModel}</option>
+              )}
+              {defaultProvider?.models.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+          </Row>
+          {connectedProviders.length === 0 && <p className="text-[11px] text-text-faint">Nenhuma IA conectada ainda — conecte em Integrações.</p>}
+        </Section>
+
+        <Section title="Notificações" description="Notificações da área de trabalho.">
+          {(Object.keys(NOTIFICATION_LABELS) as (keyof NotificationPrefs)[]).map((key) => (
+            <Row key={key} label={NOTIFICATION_LABELS[key].label} hint={NOTIFICATION_LABELS[key].hint}>
+              <Switch
+                checked={settings.notifications[key]}
+                onChange={(v) => void update({ notifications: { ...settings.notifications, [key]: v } })}
+              />
+            </Row>
+          ))}
+        </Section>
+
+        <Section title="Privacidade e segurança">
+          <div>
+            <p className="text-sm text-text">Comandos sempre permitidos</p>
+            <p className="mb-2 text-[11px] text-text-faint">Comandos sugeridos pela IA que você marcou como “Permitir sempre”. Comandos perigosos nunca entram aqui.</p>
+            {allowedCommands === null ? (
+              <Spinner />
+            ) : allowedCommands.length === 0 ? (
+              <p className="text-xs text-text-faint">Nenhum comando pré-autorizado.</p>
+            ) : (
+              <div className="divide-y divide-border-subtle rounded-lg border border-border-subtle">
+                {allowedCommands.map((cmd) => (
+                  <div key={cmd} className="flex items-center gap-2 px-3 py-1.5">
+                    <code className="min-w-0 flex-1 truncate font-mono text-xs text-text">{cmd}</code>
+                    <Button size="xs" variant="ghost" onClick={() => void revoke(cmd)}>
+                      <Trash2 size={11} /> Revogar
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        </CardContent>
-      </Card>
+          <Row label="Logs do aplicativo" hint="Registros locais, com chaves e tokens removidos.">
+            <Button size="sm" variant="secondary" onClick={() => void attempt(window.workspace.system.openLogs())}>
+              <FileText size={13} /> Abrir pasta de logs
+            </Button>
+          </Row>
+        </Section>
+
+        <Section title="Sobre">
+          <p className="text-sm text-text">PQueiroz Workspace {system ? `v${system.appVersion}` : ""}</p>
+          <p className="text-xs text-text-muted">
+            Central de trabalho: projetos, tarefas, arquivos, IA, clientes, marketing e integrações. Tudo local, no SQLite desta máquina.
+          </p>
+          {system && <p className="text-[11px] text-text-faint">Plataforma: {system.platform}</p>}
+        </Section>
+      </div>
     </div>
   );
 }

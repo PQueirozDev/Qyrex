@@ -1,19 +1,204 @@
-import { useEffect, useMemo, useState } from "react";
-import { Plus, Send, Square, RotateCcw, Paperclip, Trash2, Bot } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Bot,
+  Code2,
+  MessageSquare,
+  MoreHorizontal,
+  Paperclip,
+  Pencil,
+  Plug,
+  Plus,
+  RefreshCw,
+  RotateCcw,
+  Send,
+  Sparkles,
+  Square,
+  Trash2,
+  Users,
+  X,
+} from "lucide-react";
+import type { AIProviderId, AIProviderStatus, AttachedFileRef } from "@shared/types";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Dialog } from "@/components/ui/Dialog";
+import { Badge, EmptyState, ErrorState, Field, Menu, Segmented, Spinner } from "@/components/ui/primitives";
 import { MessageBubble } from "@/components/MessageBubble";
 import { AttachFilesDialog } from "@/components/AttachFilesDialog";
 import { cn } from "@/lib/cn";
-import { useAIStore } from "@/stores/useAIStore";
+import { timeAgo } from "@/lib/format";
+import { errorMessage, unwrap } from "@/lib/api";
+import { onStreamRequest, useAIStore } from "@/stores/useAIStore";
 import { useProjectsStore } from "@/stores/useProjectsStore";
-import type { AIProviderId, AttachedFileRef } from "@shared/types";
-import type { Page } from "@/App";
+import { useSettingsStore } from "@/stores/useSettingsStore";
+import { confirmAction, promptText, useUIStore } from "@/stores/useUIStore";
 
-interface AICenterProps {
-  onNavigate: (page: Page) => void;
+const PROVIDER_IDS: AIProviderId[] = ["anthropic", "openai", "google"];
+
+function ModelSelect({
+  provider,
+  value,
+  onChange,
+  className,
+}: {
+  provider: AIProviderStatus | undefined;
+  value: string;
+  onChange: (model: string) => void;
+  className?: string;
+}) {
+  const refreshModels = useAIStore((s) => s.refreshModels);
+  const [refreshing, setRefreshing] = useState(false);
+  const models = provider?.models ?? [];
+  const hasValue = models.some((m) => m.id === value);
+
+  return (
+    <div className={cn("flex gap-1.5", className)}>
+      <select className="input" value={value} onChange={(e) => onChange(e.target.value)} disabled={!provider}>
+        {!hasValue && value && <option value={value}>{value}</option>}
+        {models.map((m) => (
+          <option key={m.id} value={m.id}>
+            {m.label}
+          </option>
+        ))}
+      </select>
+      <Button
+        variant="secondary"
+        size="icon"
+        className="h-[34px] w-[34px]"
+        disabled={!provider?.connected || refreshing}
+        title="Atualizar lista de modelos"
+        onClick={async () => {
+          if (!provider) return;
+          setRefreshing(true);
+          await refreshModels(provider.id);
+          setRefreshing(false);
+        }}
+      >
+        <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
+      </Button>
+    </div>
+  );
 }
 
-export function AICenter({ onNavigate }: AICenterProps) {
+// --- Nova conversa -----------------------------------------------------------------------
+
+function NewConversationDialog({ open, initialProvider, onClose }: { open: boolean; initialProvider: AIProviderId | null; onClose: () => void }) {
+  const { providers, createConversation } = useAIStore();
+  const projects = useProjectsStore((s) => s.projects);
+  const settings = useSettingsStore((s) => s.settings);
+  const connected = providers.filter((p) => p.connected);
+
+  const [provider, setProvider] = useState<AIProviderId | "">("");
+  const [model, setModel] = useState("");
+  const [projectId, setProjectId] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const preferred = [initialProvider, settings?.aiDefaultProvider].find((p) => p && connected.some((c) => c.id === p)) ?? connected[0]?.id ?? "";
+    setProvider(preferred);
+    const status = providers.find((p) => p.id === preferred);
+    setModel(preferred && preferred === settings?.aiDefaultProvider && settings.aiDefaultModel ? settings.aiDefaultModel : status?.defaultModel ?? "");
+    setProjectId("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialProvider]);
+
+  const status = providers.find((p) => p.id === provider);
+
+  async function create() {
+    if (!provider || !model) return;
+    setCreating(true);
+    const id = await createConversation({ provider, model, projectId: projectId || undefined });
+    setCreating(false);
+    if (id) onClose();
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title="Nova conversa"
+      footer={
+        connected.length > 0 && (
+          <>
+            <Button size="sm" variant="ghost" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button size="sm" onClick={() => void create()} loading={creating} disabled={!provider || !model}>
+              Começar
+            </Button>
+          </>
+        )
+      }
+    >
+      {connected.length === 0 ? (
+        <EmptyState
+          icon={Plug}
+          title="Nenhuma IA conectada"
+          description="Conecte Claude, OpenAI ou Gemini com a sua API key em Integrações."
+          action={
+            <Button
+              size="sm"
+              onClick={() => {
+                onClose();
+                useUIStore.getState().navigate("integracoes");
+              }}
+            >
+              Abrir Integrações
+            </Button>
+          }
+        />
+      ) : (
+        <div className="space-y-3">
+          <div>
+            <span className="label">Provider</span>
+            <Segmented
+              value={provider || connected[0].id}
+              onChange={(p) => {
+                setProvider(p);
+                setModel(providers.find((x) => x.id === p)?.defaultModel ?? "");
+              }}
+              options={connected.map((p) => ({ value: p.id, label: p.label }))}
+            />
+          </div>
+          <Field label="Modelo">
+            <ModelSelect provider={status} value={model} onChange={setModel} />
+          </Field>
+          <Field label="Projeto (opcional)" hint="Com um projeto você pode anexar arquivos dele e executar comandos sugeridos na pasta dele.">
+            <select className="input" value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+              <option value="">Nenhum</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+      )}
+    </Dialog>
+  );
+}
+
+// --- Chat -------------------------------------------------------------------------------------
+
+function AttachedChips({ files, onRemove }: { files: AttachedFileRef[]; onRemove: (path: string) => void }) {
+  if (files.length === 0) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 px-3 pt-2">
+      <span className="text-[11px] text-text-faint">Serão enviados:</span>
+      {files.map((f) => (
+        <span key={f.path} title={f.path} className="inline-flex items-center gap-1 rounded-md border border-accent/25 bg-accent/5 px-1.5 py-0.5 text-[11px] text-text">
+          <Paperclip size={10} className="text-accent" /> {f.name}
+          <button onClick={() => onRemove(f.path)} className="text-text-faint hover:text-danger" aria-label={`Remover ${f.name}`}>
+            <X size={10} />
+          </button>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function ChatView({ onNew }: { onNew: () => void }) {
   const {
     providers,
     conversations,
@@ -22,246 +207,611 @@ export function AICenter({ onNavigate }: AICenterProps) {
     streamingText,
     isStreaming,
     error,
-    loadProviders,
-    loadConversations,
-    createConversation,
+    updateConversation,
     deleteConversation,
-    selectConversation,
     sendMessage,
+    regenerate,
     interrupt,
-    regenerateLast,
   } = useAIStore();
-  const { projects, load: loadProjects } = useProjectsStore();
-
-  const [composing, setComposing] = useState(false);
-  const [newProvider, setNewProvider] = useState<AIProviderId | null>(null);
-  const [newModel, setNewModel] = useState("");
-  const [newProjectId, setNewProjectId] = useState<string>("");
+  const projects = useProjectsStore((s) => s.projects);
 
   const [draft, setDraft] = useState("");
   const [attached, setAttached] = useState<AttachedFileRef[]>([]);
-  const [attachDialogOpen, setAttachDialogOpen] = useState(false);
+  const [attachOpen, setAttachOpen] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const conversation = conversations.find((c) => c.id === activeConversationId);
+  const project = projects.find((p) => p.id === conversation?.projectId);
+  const provider = providers.find((p) => p.id === conversation?.provider);
 
   useEffect(() => {
-    void loadProviders();
-    void loadConversations();
-    void loadProjects();
-  }, [loadProviders, loadConversations, loadProjects]);
+    setDraft("");
+    setAttached([]);
+  }, [activeConversationId]);
 
-  const connectedProviders = providers.filter((p) => p.connected);
-  const activeConversation = conversations.find((c) => c.id === activeConversationId);
-  const activeProject = projects.find((p) => p.id === activeConversation?.projectId);
+  // Acompanha o fim da conversa enquanto a resposta chega.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [messages.length, streamingText, activeConversationId]);
 
-  const modelsForNewProvider = useMemo(
-    () => providers.find((p) => p.id === newProvider)?.models ?? [],
-    [providers, newProvider]
-  );
+  const run = useMemo(() => ({ cwd: project?.localPath ?? null, assistantLabel: provider?.label ?? "A IA" }), [project?.localPath, provider?.label]);
 
-  async function handleCreateConversation() {
-    if (!newProvider || !newModel) return;
-    const title = `Conversa ${new Date().toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}`;
-    await createConversation({
-      title,
-      provider: newProvider,
-      model: newModel,
-      projectId: newProjectId || undefined,
-    });
-    setComposing(false);
-    setNewProvider(null);
-    setNewModel("");
-    setNewProjectId("");
+  if (!conversation) {
+    return (
+      <EmptyState
+        className="h-full"
+        icon={MessageSquare}
+        title="Nenhuma conversa selecionada"
+        description="Escolha uma conversa ao lado ou comece uma nova."
+        action={
+          <Button size="sm" onClick={onNew}>
+            <Plus size={14} /> Nova conversa
+          </Button>
+        }
+      />
+    );
   }
 
-  async function handleSend() {
-    if (!draft.trim() || isStreaming) return;
-    const content = draft;
+  async function send() {
+    const content = draft.trim();
+    if (!content || isStreaming) return;
     const files = attached;
     setDraft("");
     setAttached([]);
     await sendMessage(content, files);
   }
 
-  if (connectedProviders.length === 0) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-        <Bot size={28} className="text-text-faint" />
-        <h2 className="text-lg font-semibold text-text">Nenhum provider de IA conectado</h2>
-        <p className="max-w-sm text-sm text-text-muted">
-          Conecte o Claude, OpenAI ou Gemini em Integrações para começar a conversar.
-        </p>
-        <Button size="sm" onClick={() => onNavigate("integracoes")}>
-          Ir para Integrações
-        </Button>
+  const lastIsAssistant = messages.length > 0 && messages[messages.length - 1].role === "assistant";
+
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center gap-2 border-b border-border-subtle px-5 py-2.5">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-text">{conversation.title}</p>
+          <div className="flex items-center gap-1.5 text-[11px] text-text-faint">
+            <span>{provider?.label ?? conversation.provider}</span>
+            {project && (
+              <>
+                <span>·</span>
+                <Code2 size={10} /> {project.name}
+              </>
+            )}
+          </div>
+        </div>
+        <ModelSelect
+          className="w-64 [&_select]:py-1 [&_select]:text-xs"
+          provider={provider}
+          value={conversation.model}
+          onChange={(model) => void updateConversation(conversation.id, { model })}
+        />
+        <Menu
+          trigger={<MoreHorizontal size={15} />}
+          items={[
+            {
+              label: "Renomear",
+              icon: Pencil,
+              onSelect: async () => {
+                const title = await promptText({ title: "Renomear conversa", initialValue: conversation.title, confirmLabel: "Salvar" });
+                if (title) void updateConversation(conversation.id, { title });
+              },
+            },
+            "separator",
+            {
+              label: "Excluir conversa",
+              icon: Trash2,
+              danger: true,
+              onSelect: async () => {
+                if (await confirmAction({ title: "Excluir esta conversa?", description: "Todo o histórico dela será apagado.", danger: true, confirmLabel: "Excluir" }))
+                  void deleteConversation(conversation.id);
+              },
+            },
+          ]}
+        />
       </div>
+
+      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-3xl space-y-4 px-5 py-5">
+          {messages.length === 0 && !isStreaming && (
+            <EmptyState icon={Bot} title={`Converse com ${provider?.label ?? "a IA"}`} description={project ? `Contexto: projeto ${project.name}. Anexe arquivos para a IA ler.` : undefined} />
+          )}
+          {messages.map((m, i) => (
+            <MessageBubble
+              key={m.id}
+              role={m.role}
+              content={m.content}
+              attachedFiles={m.attachedFiles}
+              run={m.role === "assistant" ? run : null}
+              footer={
+                i === messages.length - 1 && lastIsAssistant && !isStreaming ? (
+                  <Button size="xs" variant="ghost" onClick={() => void regenerate()}>
+                    <RotateCcw size={11} /> Regenerar resposta
+                  </Button>
+                ) : undefined
+              }
+            />
+          ))}
+          {isStreaming && (
+            <MessageBubble role="assistant" content={streamingText || "…"} footer={<Spinner className="h-3 w-3" />} />
+          )}
+          {error && <ErrorState message={error} onRetry={messages.some((m) => m.role === "user") ? () => void regenerate() : undefined} />}
+        </div>
+      </div>
+
+      <div className="border-t border-border-subtle px-5 py-3">
+        <div className="mx-auto max-w-3xl rounded-card border border-border bg-bg-elevated focus-within:border-accent/50">
+          <AttachedChips files={attached} onRemove={(p) => setAttached(attached.filter((f) => f.path !== p))} />
+          <textarea
+            className="max-h-48 min-h-[56px] w-full resize-none bg-transparent px-3 py-2.5 text-sm text-text placeholder:text-text-faint focus:outline-none"
+            placeholder={`Mensagem para ${provider?.label ?? "a IA"}... (Enter envia, Shift+Enter quebra linha)`}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                void send();
+              }
+            }}
+          />
+          <div className="flex items-center gap-2 px-2 pb-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setAttachOpen(true)}
+              disabled={!project}
+              title={project ? "Anexar arquivos do projeto" : "Vincule um projeto à conversa para anexar arquivos"}
+            >
+              <Paperclip size={13} /> Anexar
+            </Button>
+            <span className="ml-auto text-[11px] text-text-faint">{provider?.connected === false && "Provider desconectado"}</span>
+            {isStreaming ? (
+              <Button size="sm" variant="secondary" onClick={() => void interrupt()}>
+                <Square size={12} /> Interromper
+              </Button>
+            ) : (
+              <Button size="sm" onClick={() => void send()} disabled={!draft.trim() || provider?.connected === false}>
+                <Send size={13} /> Enviar
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {project && (
+        <AttachFilesDialog
+          open={attachOpen}
+          rootPath={project.localPath}
+          initiallySelected={attached}
+          onClose={() => setAttachOpen(false)}
+          onConfirm={(files) => {
+            setAttached(files);
+            setAttachOpen(false);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// --- AI Council -------------------------------------------------------------------------------
+
+interface CouncilAnswer {
+  provider: AIProviderId;
+  model: string;
+  requestId: string;
+  text: string;
+  status: "streaming" | "done" | "error";
+  error?: string;
+}
+
+function CouncilView() {
+  const providers = useAIStore((s) => s.providers);
+  const projects = useProjectsStore((s) => s.projects);
+  const navigate = useUIStore((s) => s.navigate);
+  const connected = providers.filter((p) => p.connected);
+
+  const [enabled, setEnabled] = useState<Record<string, boolean>>({});
+  const [models, setModels] = useState<Record<string, string>>({});
+  const [prompt, setPrompt] = useState("");
+  const [projectId, setProjectId] = useState("");
+  const [attached, setAttached] = useState<AttachedFileRef[]>([]);
+  const [attachOpen, setAttachOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [answers, setAnswers] = useState<CouncilAnswer[]>([]);
+  const [askedPrompt, setAskedPrompt] = useState("");
+  const [runError, setRunError] = useState<string | null>(null);
+  const [synth, setSynth] = useState<{ requestId: string; text: string; status: CouncilAnswer["status"]; error?: string } | null>(null);
+  const [synthProvider, setSynthProvider] = useState<AIProviderId | "">("");
+  const unsubs = useRef<(() => void)[]>([]);
+
+  useEffect(() => {
+    setEnabled((prev) => {
+      const next = { ...prev };
+      for (const p of connected) if (next[p.id] === undefined) next[p.id] = true;
+      return next;
+    });
+    setModels((prev) => {
+      const next = { ...prev };
+      for (const p of connected) if (!next[p.id]) next[p.id] = p.defaultModel;
+      return next;
+    });
+    if (!synthProvider && connected[0]) setSynthProvider(connected[0].id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [providers]);
+
+  useEffect(() => () => unsubs.current.forEach((u) => u()), []);
+
+  const project = projects.find((p) => p.id === projectId);
+  const targets = connected.filter((p) => enabled[p.id]).map((p) => ({ provider: p.id, model: models[p.id] || p.defaultModel }));
+  const running = answers.some((a) => a.status === "streaming");
+  const allDone = answers.length > 0 && !running;
+  const labelOf = (id: AIProviderId) => providers.find((p) => p.id === id)?.label ?? id;
+
+  function listen(requestId: string, onChunk: (update: (prev: CouncilAnswer) => CouncilAnswer) => void) {
+    const off = onStreamRequest(requestId, (chunk) => {
+      if (chunk.type === "delta") onChunk((a) => ({ ...a, text: a.text + (chunk.text ?? "") }));
+      else {
+        onChunk((a) => ({ ...a, status: chunk.type === "error" ? "error" : "done", error: chunk.error }));
+        off();
+      }
+    });
+    unsubs.current.push(off);
+    return off;
+  }
+
+  async function run() {
+    setConfirmOpen(false);
+    const text = prompt.trim();
+    if (!text || targets.length === 0) return;
+    unsubs.current.forEach((u) => u());
+    unsubs.current = [];
+    setRunError(null);
+    setSynth(null);
+    setAskedPrompt(text);
+
+    const withIds = targets.map((t) => ({ ...t, requestId: crypto.randomUUID() }));
+    setAnswers(withIds.map((t) => ({ ...t, text: "", status: "streaming" })));
+    // Os listeners precisam existir antes do disparo: o streaming começa imediatamente.
+    const offs = withIds.map((t) =>
+      listen(t.requestId, (update) => setAnswers((list) => list.map((a) => (a.requestId === t.requestId ? update(a) : a))))
+    );
+    try {
+      await unwrap(
+        window.workspace.ai.council.run({ prompt: text, targets: withIds, attachedFiles: attached, confirmedCount: withIds.length })
+      );
+    } catch (err) {
+      offs.forEach((o) => o());
+      setAnswers([]);
+      setRunError(errorMessage(err));
+    }
+  }
+
+  async function synthesize() {
+    const provider = connected.find((p) => p.id === synthProvider);
+    const usable = answers.filter((a) => a.status === "done" && a.text.trim());
+    if (!provider || usable.length === 0) return;
+    const requestId = crypto.randomUUID();
+    setSynth({ requestId, text: "", status: "streaming" });
+    const off = onStreamRequest(requestId, (chunk) => {
+      if (chunk.type === "delta") setSynth((s) => (s && s.requestId === requestId ? { ...s, text: s.text + (chunk.text ?? "") } : s));
+      else {
+        setSynth((s) => (s && s.requestId === requestId ? { ...s, status: chunk.type === "error" ? "error" : "done", error: chunk.error } : s));
+        off();
+      }
+    });
+    unsubs.current.push(off);
+    try {
+      await unwrap(
+        window.workspace.ai.council.synthesize({
+          requestId,
+          provider: provider.id,
+          model: models[provider.id] || provider.defaultModel,
+          prompt: askedPrompt,
+          answers: usable.map((a) => ({ label: `${labelOf(a.provider)} (${a.model})`, content: a.text })),
+        })
+      );
+    } catch (err) {
+      off();
+      setSynth({ requestId, text: "", status: "error", error: errorMessage(err) });
+    }
+  }
+
+  function interruptAll() {
+    for (const a of answers) if (a.status === "streaming") void window.workspace.ai.interrupt(a.requestId);
+    if (synth?.status === "streaming") void window.workspace.ai.interrupt(synth.requestId);
+  }
+
+  if (connected.length === 0) {
+    return (
+      <EmptyState
+        className="h-full"
+        icon={Users}
+        title="O AI Council precisa de pelo menos uma IA conectada"
+        description="Conecte Claude, OpenAI e/ou Gemini para comparar respostas lado a lado."
+        action={
+          <Button size="sm" onClick={() => navigate("integracoes")}>
+            Abrir Integrações
+          </Button>
+        }
+      />
     );
   }
 
   return (
-    <div className="flex h-full gap-4">
-      {/* Lista de conversas */}
-      <div className="w-56 shrink-0 space-y-2 overflow-y-auto border-r border-border-subtle pr-3">
-        <Button size="sm" className="w-full" onClick={() => setComposing(true)}>
-          <Plus size={14} /> Nova conversa
-        </Button>
+    <div className="h-full overflow-y-auto">
+      <div className="mx-auto max-w-6xl space-y-4 px-6 py-5">
+        <div>
+          <h2 className="text-base font-semibold text-text">AI Council</h2>
+          <p className="text-sm text-text-muted">A mesma pergunta para vários modelos, respostas lado a lado e uma síntese final.</p>
+        </div>
 
-        {composing && (
-          <div className="space-y-1.5 rounded-lg border border-border-subtle p-2">
+        <Card className="space-y-3 p-4">
+          <div className="grid gap-2 md:grid-cols-3">
+            {PROVIDER_IDS.map((id) => {
+              const p = providers.find((x) => x.id === id);
+              if (!p) return null;
+              return (
+                <div key={id} className={cn("rounded-lg border p-2.5", p.connected && enabled[id] ? "border-accent/40 bg-accent/5" : "border-border-subtle")}>
+                  <label className="mb-2 flex items-center gap-2 text-sm text-text">
+                    <input
+                      type="checkbox"
+                      className="accent-accent"
+                      disabled={!p.connected || running}
+                      checked={p.connected && Boolean(enabled[id])}
+                      onChange={(e) => setEnabled({ ...enabled, [id]: e.target.checked })}
+                    />
+                    {p.label}
+                    {!p.connected && <Badge>desconectado</Badge>}
+                  </label>
+                  {p.connected && (
+                    <ModelSelect
+                      className="[&_select]:py-1 [&_select]:text-xs"
+                      provider={p}
+                      value={models[id] ?? p.defaultModel}
+                      onChange={(m) => setModels({ ...models, [id]: m })}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <textarea
+            className="input min-h-[90px] resize-y"
+            placeholder="Pergunta para o conselho..."
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && prompt.trim() && targets.length > 0) setConfirmOpen(true);
+            }}
+          />
+          <div className="flex flex-wrap items-center gap-2">
             <select
-              value={newProvider ?? ""}
+              className="input w-52 py-1 text-xs"
+              value={projectId}
               onChange={(e) => {
-                setNewProvider(e.target.value as AIProviderId);
-                setNewModel("");
+                setProjectId(e.target.value);
+                setAttached([]);
               }}
-              className="w-full rounded-md border border-border bg-bg px-2 py-1 text-xs text-text"
             >
-              <option value="">Provider...</option>
-              {connectedProviders.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
-            {newProvider && (
-              <select
-                value={newModel}
-                onChange={(e) => setNewModel(e.target.value)}
-                className="w-full rounded-md border border-border bg-bg px-2 py-1 text-xs text-text"
-              >
-                <option value="">Modelo...</option>
-                {modelsForNewProvider.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
-            )}
-            <select
-              value={newProjectId}
-              onChange={(e) => setNewProjectId(e.target.value)}
-              className="w-full rounded-md border border-border bg-bg px-2 py-1 text-xs text-text"
-            >
-              <option value="">Sem projeto vinculado</option>
+              <option value="">Sem projeto (sem anexos)</option>
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
                 </option>
               ))}
             </select>
-            <Button size="sm" className="w-full" disabled={!newProvider || !newModel} onClick={handleCreateConversation}>
-              Criar
+            <Button size="sm" variant="ghost" disabled={!project} onClick={() => setAttachOpen(true)}>
+              <Paperclip size={13} /> Anexar{attached.length > 0 && ` (${attached.length})`}
             </Button>
+            <div className="ml-auto flex gap-2">
+              {running && (
+                <Button size="sm" variant="secondary" onClick={interruptAll}>
+                  <Square size={12} /> Interromper
+                </Button>
+              )}
+              <Button size="sm" onClick={() => setConfirmOpen(true)} disabled={!prompt.trim() || targets.length === 0 || running}>
+                <Users size={13} /> Perguntar ao conselho
+              </Button>
+            </div>
+          </div>
+          <AttachedChips files={attached} onRemove={(p) => setAttached(attached.filter((f) => f.path !== p))} />
+        </Card>
+
+        {runError && <ErrorState message={runError} />}
+
+        {answers.length > 0 && (
+          <div className={cn("grid gap-3", answers.length === 2 && "md:grid-cols-2", answers.length >= 3 && "lg:grid-cols-3")}>
+            {answers.map((a) => (
+              <Card key={a.requestId} className="flex min-w-0 flex-col">
+                <div className="flex items-center gap-2 border-b border-border-subtle px-3 py-2">
+                  <Bot size={13} className="text-text-faint" />
+                  <span className="text-sm font-medium text-text">{labelOf(a.provider)}</span>
+                  <span className="truncate text-[11px] text-text-faint">{a.model}</span>
+                  <span className="ml-auto">
+                    {a.status === "streaming" ? <Spinner className="h-3 w-3" /> : a.status === "error" ? <Badge tone="danger">Erro</Badge> : <Badge tone="success">Pronto</Badge>}
+                  </span>
+                </div>
+                <div className="min-w-0 p-3">
+                  {a.status === "error" ? (
+                    <ErrorState message={a.error ?? "Erro na IA."} />
+                  ) : (
+                    <MessageBubble role="assistant" content={a.text || "…"} />
+                  )}
+                </div>
+              </Card>
+            ))}
           </div>
         )}
 
-        {conversations.map((c) => (
-          <div
-            key={c.id}
-            className={cn(
-              "group flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs",
-              c.id === activeConversationId ? "bg-accent-muted text-text" : "text-text-muted hover:bg-bg-elevated"
+        {allDone && (
+          <Card className="p-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <Sparkles size={14} className="text-accent" />
+              <span className="text-sm font-medium text-text">Síntese</span>
+              <select className="input ml-auto w-44 py-1 text-xs" value={synthProvider} onChange={(e) => setSynthProvider(e.target.value as AIProviderId)}>
+                {connected.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    Sintetizar com {p.label}
+                  </option>
+                ))}
+              </select>
+              <Button
+                size="sm"
+                onClick={() => void synthesize()}
+                disabled={synth?.status === "streaming" || !answers.some((a) => a.status === "done" && a.text.trim())}
+                loading={synth?.status === "streaming"}
+              >
+                Sintetizar respostas
+              </Button>
+            </div>
+            {synth && (
+              <div className="mt-3">
+                {synth.status === "error" ? <ErrorState message={synth.error ?? "Erro na síntese."} /> : <MessageBubble role="assistant" content={synth.text || "…"} />}
+              </div>
             )}
-          >
-            <button className="flex-1 truncate text-left" onClick={() => selectConversation(c.id)}>
-              {c.title}
-            </button>
-            <button
-              className="opacity-0 group-hover:opacity-100"
-              onClick={() => deleteConversation(c.id)}
-              aria-label="Excluir conversa"
-            >
-              <Trash2 size={12} className="text-text-faint hover:text-danger" />
-            </button>
-          </div>
-        ))}
+          </Card>
+        )}
       </div>
 
-      {/* Chat */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {!activeConversation ? (
-          <div className="flex flex-1 items-center justify-center text-sm text-text-faint">
-            Selecione ou crie uma conversa para começar.
+      <Dialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        size="sm"
+        title={`Enviar para ${targets.length} provider(s)?`}
+        description="Cada provider cobra pela própria resposta na sua API key."
+        footer={
+          <>
+            <Button size="sm" variant="ghost" onClick={() => setConfirmOpen(false)}>
+              Cancelar
+            </Button>
+            <Button size="sm" onClick={() => void run()} data-autofocus>
+              Enviar para {targets.length}
+            </Button>
+          </>
+        }
+      >
+        <ul className="space-y-1 text-sm">
+          {targets.map((t) => (
+            <li key={t.provider} className="flex items-center gap-2">
+              <Bot size={13} className="text-text-faint" />
+              <span className="text-text">{labelOf(t.provider)}</span>
+              <span className="text-xs text-text-faint">{t.model}</span>
+            </li>
+          ))}
+        </ul>
+        {attached.length > 0 && <p className="mt-2 text-xs text-text-muted">{attached.length} arquivo(s) anexado(s) vão junto para todos.</p>}
+      </Dialog>
+
+      {project && (
+        <AttachFilesDialog
+          open={attachOpen}
+          rootPath={project.localPath}
+          initiallySelected={attached}
+          onClose={() => setAttachOpen(false)}
+          onConfirm={(files) => {
+            setAttached(files);
+            setAttachOpen(false);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// --- Página --------------------------------------------------------------------------------------
+
+export function AICenter() {
+  const { providers, conversations, activeConversationId, loadProviders, loadConversations, selectConversation } = useAIStore();
+  const { loaded: projectsLoaded, load: loadProjects } = useProjectsStore();
+  const pageParam = useUIStore((s) => s.pageParam);
+  const navigate = useUIStore((s) => s.navigate);
+
+  const [tab, setTab] = useState<"chat" | "council">("chat");
+  const [newOpen, setNewOpen] = useState(false);
+  const [newProvider, setNewProvider] = useState<AIProviderId | null>(null);
+  const [filter, setFilter] = useState("");
+
+  useEffect(() => {
+    void loadProviders();
+    void loadConversations();
+    if (!projectsLoaded) void loadProjects();
+  }, [loadProviders, loadConversations, projectsLoaded, loadProjects]);
+
+  // pageParam: "anthropic" | "openai" | "google" abre uma conversa nova com ele; "council" abre o Council.
+  useEffect(() => {
+    if (!pageParam) return;
+    if (pageParam === "council") setTab("council");
+    else if ((PROVIDER_IDS as string[]).includes(pageParam)) {
+      setTab("chat");
+      setNewProvider(pageParam as AIProviderId);
+      setNewOpen(true);
+    }
+    navigate("ia");
+  }, [pageParam, navigate]);
+
+  const visible = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    return q ? conversations.filter((c) => c.title.toLowerCase().includes(q)) : conversations;
+  }, [conversations, filter]);
+
+  const labelOf = (id: AIProviderId) => providers.find((p) => p.id === id)?.label ?? id;
+  const openNew = () => {
+    setNewProvider(null);
+    setNewOpen(true);
+  };
+
+  return (
+    <div className="flex h-full">
+      <aside className="flex w-64 shrink-0 flex-col border-r border-border-subtle bg-bg-elevated/40">
+        <div className="space-y-2 p-3">
+          <Segmented
+            className="flex w-full [&>button]:flex-1 [&>button]:justify-center"
+            value={tab}
+            onChange={setTab}
+            options={[
+              { value: "chat", label: "Chat" },
+              { value: "council", label: "AI Council" },
+            ]}
+          />
+          {tab === "chat" && (
+            <>
+              <Button size="sm" className="w-full" onClick={openNew}>
+                <Plus size={14} /> Nova conversa
+              </Button>
+              <input className="input py-1 text-xs" placeholder="Filtrar conversas..." value={filter} onChange={(e) => setFilter(e.target.value)} />
+            </>
+          )}
+        </div>
+        {tab === "chat" ? (
+          <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto px-2 pb-3">
+            {visible.length === 0 && <p className="px-2 py-4 text-center text-xs text-text-faint">Nenhuma conversa.</p>}
+            {visible.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => void selectConversation(c.id)}
+                className={cn(
+                  "block w-full rounded-lg px-2.5 py-1.5 text-left transition-colors",
+                  c.id === activeConversationId ? "bg-bg-hover" : "hover:bg-bg-hover/60"
+                )}
+              >
+                <p className="truncate text-[13px] text-text">{c.title}</p>
+                <p className="truncate text-[11px] text-text-faint">
+                  {labelOf(c.provider)} · {timeAgo(c.createdAt)}
+                </p>
+              </button>
+            ))}
           </div>
         ) : (
-          <>
-            <div className="flex items-center justify-between border-b border-border-subtle pb-2">
-              <div className="text-xs text-text-faint">
-                {providers.find((p) => p.id === activeConversation.provider)?.label} · {activeConversation.model}
-                {activeProject && <> · Contexto: {activeProject.name}</>}
-              </div>
-            </div>
-
-            <div className="flex-1 space-y-4 overflow-y-auto py-4">
-              {messages.map((m) => (
-                <MessageBubble key={m.id} role={m.role} content={m.content} attachedFiles={m.attachedFiles} />
-              ))}
-              {isStreaming && streamingText && <MessageBubble role="assistant" content={streamingText} />}
-              {error && <p className="text-sm text-danger">{error}</p>}
-            </div>
-
-            {attached.length > 0 && (
-              <div className="mb-1.5 flex flex-wrap gap-1.5">
-                {attached.map((f) => (
-                  <span
-                    key={f.path}
-                    className="inline-flex items-center gap-1 rounded-md border border-accent/30 bg-accent-muted px-1.5 py-0.5 text-[11px] text-text"
-                  >
-                    <Paperclip size={10} /> {f.name}
-                    <button onClick={() => setAttached((prev) => prev.filter((x) => x.path !== f.path))}>×</button>
-                  </span>
-                ))}
-              </div>
-            )}
-
-            <div className="flex items-end gap-2 border-t border-border-subtle pt-3">
-              {activeProject && (
-                <Button variant="secondary" size="icon" onClick={() => setAttachDialogOpen(true)} aria-label="Anexar arquivo">
-                  <Paperclip size={15} />
-                </Button>
-              )}
-              <textarea
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    void handleSend();
-                  }
-                }}
-                placeholder="Pergunte alguma coisa..."
-                rows={2}
-                className="flex-1 resize-none rounded-lg border border-border bg-bg-card px-3 py-2 text-sm text-text placeholder:text-text-faint focus:outline-none focus:ring-1 focus:ring-accent"
-              />
-              {isStreaming ? (
-                <Button variant="danger" size="icon" onClick={() => void interrupt()} aria-label="Interromper">
-                  <Square size={14} />
-                </Button>
-              ) : (
-                <>
-                  <Button variant="secondary" size="icon" onClick={() => void regenerateLast()} aria-label="Regenerar">
-                    <RotateCcw size={14} />
-                  </Button>
-                  <Button size="icon" onClick={() => void handleSend()} disabled={!draft.trim()} aria-label="Enviar">
-                    <Send size={14} />
-                  </Button>
-                </>
-              )}
-            </div>
-
-            {activeProject && (
-              <AttachFilesDialog
-                open={attachDialogOpen}
-                rootPath={activeProject.localPath}
-                initiallySelected={attached}
-                onClose={() => setAttachDialogOpen(false)}
-                onConfirm={(files) => {
-                  setAttached(files);
-                  setAttachDialogOpen(false);
-                }}
-              />
-            )}
-          </>
+          <div className="px-4 text-xs leading-relaxed text-text-muted">
+            O Council só dispara para os providers marcados, e você confirma a quantidade antes de enviar.
+          </div>
         )}
-      </div>
+      </aside>
+
+      <section className="min-w-0 flex-1">{tab === "chat" ? <ChatView onNew={openNew} /> : <CouncilView />}</section>
+
+      <NewConversationDialog open={newOpen} initialProvider={newProvider} onClose={() => setNewOpen(false)} />
     </div>
   );
 }

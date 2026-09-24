@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
-import { Folder, File, ChevronRight, ArrowLeft } from "lucide-react";
+import { ArrowLeft, ChevronRight, File, Folder, X } from "lucide-react";
+import type { AttachedFileRef, DirEntry } from "@shared/types";
 import { Button } from "@/components/ui/Button";
+import { Dialog } from "@/components/ui/Dialog";
+import { EmptyState, ErrorState, LoadingRows } from "@/components/ui/primitives";
+import { errorMessage, unwrap } from "@/lib/api";
 import { cn } from "@/lib/cn";
-import type { DirEntry, AttachedFileRef } from "@shared/types";
+import { formatBytes } from "@/lib/format";
 
 interface AttachFilesDialogProps {
   open: boolean;
@@ -13,104 +16,150 @@ interface AttachFilesDialogProps {
   onConfirm: (files: AttachedFileRef[]) => void;
 }
 
-/**
- * Navega SOMENTE dentro de `rootPath` (o projeto escolhido na conversa).
- * Nada é enviado para a IA sem o usuário marcar explicitamente o arquivo aqui
- * e confirmar — ver spec seção 5, "sistema de permissões".
- */
-export function AttachFilesDialog({
-  open,
-  rootPath,
-  initiallySelected,
-  onClose,
-  onConfirm,
-}: AttachFilesDialogProps) {
-  const [currentPath, setCurrentPath] = useState(rootPath);
-  const [entries, setEntries] = useState<DirEntry[]>([]);
-  const [selected, setSelected] = useState<Map<string, AttachedFileRef>>(
-    new Map(initiallySelected.map((f) => [f.path, f]))
-  );
+const MAX_FILES = 20;
 
-  useEffect(() => {
-    if (open) setCurrentPath(rootPath);
-  }, [open, rootPath]);
+/**
+ * Navega SOMENTE dentro de `rootPath` (o projeto da conversa). Nada vai para a
+ * IA sem o usuário marcar o arquivo aqui e confirmar — e a lista do que será
+ * enviado fica visível antes do envio.
+ */
+export function AttachFilesDialog({ open, rootPath, initiallySelected, onClose, onConfirm }: AttachFilesDialogProps) {
+  const [currentPath, setCurrentPath] = useState(rootPath);
+  const [entries, setEntries] = useState<DirEntry[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Map<string, AttachedFileRef>>(new Map());
 
   useEffect(() => {
     if (!open) return;
-    void window.workspace.files.list(currentPath).then((res) => {
-      if (res.ok) setEntries(res.data);
-    });
-  }, [open, currentPath]);
+    setCurrentPath(rootPath);
+    setSelected(new Map(initiallySelected.map((f) => [f.path, f])));
+  }, [open, rootPath, initiallySelected]);
 
-  if (!open) return null;
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setEntries(null);
+    setError(null);
+    unwrap(window.workspace.files.list(currentPath))
+      .then((list) => {
+        if (!cancelled) setEntries([...list].sort((a, b) => Number(b.isDirectory) - Number(a.isDirectory) || a.name.localeCompare(b.name, "pt-BR")));
+      })
+      .catch((err) => !cancelled && setError(errorMessage(err)));
+    return () => {
+      cancelled = true;
+    };
+  }, [open, currentPath]);
 
   function toggle(entry: DirEntry) {
     setSelected((prev) => {
       const next = new Map(prev);
       if (next.has(entry.path)) next.delete(entry.path);
-      else next.set(entry.path, { path: entry.path, name: entry.name });
+      else if (next.size < MAX_FILES) next.set(entry.path, { path: entry.path, name: entry.name });
       return next;
     });
   }
 
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
-      <div
-        className="flex max-h-[70vh] w-full max-w-md flex-col rounded-card border border-border bg-bg-elevated shadow-card"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center gap-2 border-b border-border-subtle px-3.5 py-2.5">
-          {currentPath !== rootPath && (
-            <button onClick={() => setCurrentPath((p) => p.split(/[\\/]/).slice(0, -1).join("/"))}>
-              <ArrowLeft size={14} className="text-text-faint" />
-            </button>
-          )}
-          <span className="truncate text-xs text-text-faint">{currentPath}</span>
+  const relative = currentPath.slice(rootPath.length).replace(/^[\\/]+/, "");
+  const goUp = () => {
+    const parts = currentPath.split(/[\\/]/);
+    parts.pop();
+    const parent = parts.join(currentPath.includes("\\") ? "\\" : "/");
+    // Nunca sai da raiz do projeto.
+    setCurrentPath(parent.length >= rootPath.length ? parent : rootPath);
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      size="lg"
+      title="Anexar arquivos do projeto"
+      description="Só os arquivos marcados são lidos e enviados para a IA junto com a mensagem."
+      footer={
+        <>
+          <span className="mr-auto text-xs text-text-faint">
+            {selected.size} de até {MAX_FILES} arquivo(s)
+          </span>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button size="sm" onClick={() => onConfirm(Array.from(selected.values()))}>
+            Confirmar anexos
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 text-xs text-text-muted">
+          <Button size="icon-sm" variant="ghost" onClick={goUp} disabled={currentPath === rootPath} aria-label="Voltar">
+            <ArrowLeft size={13} />
+          </Button>
+          <span className="truncate font-mono">{relative ? `./${relative.replace(/\\/g, "/")}` : "./"}</span>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-1.5">
-          {entries.map((entry) => (
-            <div
-              key={entry.path}
-              className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 hover:bg-bg-card"
-            >
-              {!entry.isDirectory && (
-                <input
-                  type="checkbox"
-                  checked={selected.has(entry.path)}
-                  onChange={() => toggle(entry)}
-                  className="h-3.5 w-3.5 accent-accent"
-                />
-              )}
-              {entry.isDirectory ? (
-                <Folder size={14} className="text-accent" />
-              ) : (
-                <File size={14} className="text-text-faint" />
-              )}
-              <button
-                className={cn("flex-1 truncate text-left text-sm text-text")}
-                onClick={() => entry.isDirectory && setCurrentPath(entry.path)}
-              >
-                {entry.name}
-              </button>
-              {entry.isDirectory && <ChevronRight size={13} className="text-text-faint" />}
+        <div className="max-h-[42vh] overflow-y-auto rounded-lg border border-border-subtle">
+          {error ? (
+            <div className="p-3">
+              <ErrorState message={error} />
             </div>
-          ))}
+          ) : entries === null ? (
+            <div className="p-3">
+              <LoadingRows />
+            </div>
+          ) : entries.length === 0 ? (
+            <EmptyState className="py-6" icon={Folder} title="Pasta vazia" />
+          ) : (
+            entries.map((entry) => {
+              const checked = selected.has(entry.path);
+              return (
+                <div
+                  key={entry.path}
+                  onClick={() => (entry.isDirectory ? setCurrentPath(entry.path) : toggle(entry))}
+                  className={cn("flex cursor-pointer items-center gap-2.5 px-3 py-1.5 text-sm hover:bg-bg-hover/60", checked && "bg-accent/5")}
+                >
+                  {entry.isDirectory ? (
+                    <Folder size={14} className="shrink-0 text-accent" />
+                  ) : (
+                    <input type="checkbox" readOnly checked={checked} className="h-3.5 w-3.5 shrink-0 accent-accent" tabIndex={-1} />
+                  )}
+                  <span className="min-w-0 flex-1 truncate text-text">{entry.name}</span>
+                  {entry.isDirectory ? (
+                    <ChevronRight size={13} className="text-text-faint" />
+                  ) : (
+                    <span className="text-[11px] text-text-faint">{formatBytes(entry.size)}</span>
+                  )}
+                </div>
+              );
+            })
+          )}
         </div>
 
-        <div className="flex items-center justify-between border-t border-border-subtle px-3.5 py-2.5">
-          <span className="text-xs text-text-faint">{selected.size} arquivo(s) selecionado(s)</span>
-          <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button size="sm" onClick={() => onConfirm(Array.from(selected.values()))}>
-              Anexar
-            </Button>
+        {selected.size > 0 && (
+          <div>
+            <p className="section-title mb-1.5">Serão enviados</p>
+            <div className="flex flex-wrap gap-1.5">
+              {Array.from(selected.values()).map((f) => (
+                <span key={f.path} title={f.path} className="inline-flex items-center gap-1 rounded-md border border-border-subtle bg-bg px-1.5 py-0.5 text-[11px] text-text">
+                  <File size={10} className="text-text-faint" /> {f.name}
+                  <button
+                    onClick={() =>
+                      setSelected((prev) => {
+                        const next = new Map(prev);
+                        next.delete(f.path);
+                        return next;
+                      })
+                    }
+                    className="text-text-faint hover:text-danger"
+                    aria-label={`Remover ${f.name}`}
+                  >
+                    <X size={10} />
+                  </button>
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
-    </div>,
-    document.body
+    </Dialog>
   );
 }

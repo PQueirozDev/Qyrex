@@ -95,11 +95,11 @@ export function formatDuration(ms: number): string {
 }
 
 export function basename(p: string): string {
-  return p.split(/[\/]/).filter(Boolean).pop() ?? p;
+  return p.split(/[\\/]/).filter(Boolean).pop() ?? p;
 }
 
 export function dirname(p: string): string {
-  const parts = p.split(/[\/]/);
+  const parts = p.split(/[\\/]/);
   parts.pop();
   return parts.join("\\") || p;
 }

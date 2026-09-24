@@ -13,7 +13,8 @@ import {
 } from "../../src/main/security/paths";
 import { freshDb, removeDir, tempAllowedDir } from "../helpers";
 
-describe("isWithin", () => {
+// Caminhos no formato do Windows só fazem sentido com o `path` do Windows.
+describe.runIf(process.platform === "win32")("isWithin (Windows)", () => {
   it("aceita o próprio root e subpastas", () => {
     expect(isWithin("C:\\Projetos", "C:\\Projetos")).toBe(true);
     expect(isWithin("C:\\Projetos", "C:\\Projetos\\site\\src")).toBe(true);
@@ -25,6 +26,21 @@ describe("isWithin", () => {
 
   it("rejeita subir de nível com ..", () => {
     expect(isWithin("C:\\Projetos", "C:\\Projetos\\..\\Windows")).toBe(false);
+  });
+});
+
+describe.runIf(process.platform !== "win32")("isWithin (POSIX)", () => {
+  it("aceita o próprio root e subpastas", () => {
+    expect(isWithin("/projetos", "/projetos")).toBe(true);
+    expect(isWithin("/projetos", "/projetos/site/src")).toBe(true);
+  });
+
+  it("não confunde pastas irmãs com prefixo em comum", () => {
+    expect(isWithin("/proj", "/projetos/x")).toBe(false);
+  });
+
+  it("rejeita subir de nível com ..", () => {
+    expect(isWithin("/projetos", "/projetos/../etc")).toBe(false);
   });
 });
 
