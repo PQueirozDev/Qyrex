@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { WebContents } from "electron";
-import { getDb } from "../database/db.js";
+import { getDb, getSettings } from "../database/db.js";
 import { deleteSecret, getSecret, hasSecret, maskKey, saveSecret } from "../security/secrets.js";
 import { getProvider, PROVIDERS, PROVIDER_LABELS } from "../integrations/providers/index.js";
 import type { ModelListing, ProviderMessage } from "../integrations/providers/types.js";
@@ -216,8 +216,10 @@ export function buildFileContext(files: AttachedFileRef[]): string {
 
 function systemPrompt(projectId: string | null): string {
   const lines = [
-    "Você é um assistente dentro do PQueiroz Workspace, a central de trabalho de um desenvolvedor que cria sites, automações, bots e marketing para Instagram.",
-    "Responda em português do Brasil, a menos que o usuário peça outro idioma.",
+    "Você é um assistente dentro do QrzSpace, a central de trabalho de um desenvolvedor que cria sites, automações, bots e marketing para Instagram.",
+    getSettings().language === "en"
+      ? "Answer in English unless the user writes in or asks for another language."
+      : "Responda em português do Brasil, a menos que o usuário peça outro idioma.",
     "Quando sugerir comandos de terminal, coloque cada um num bloco de código ```powershell separado. Você não executa comandos: o usuário decide se executa, e comandos destrutivos exigem confirmação dele.",
   ];
   const project = projectId ? getProject(projectId) : null;

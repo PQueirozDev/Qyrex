@@ -1,6 +1,7 @@
 import { Notification } from "electron";
 import { getDb, getSettings } from "../database/db.js";
 import { createLogger } from "../logger.js";
+import { translate } from "../../shared/i18n.js";
 
 const log = createLogger("notifications");
 
@@ -48,7 +49,8 @@ export interface Reminder {
 
 /** Calcula os lembretes devidos em `now` — função pura sobre o banco, testável. */
 export function dueReminders(now: Date): Reminder[] {
-  const prefs = getSettings().notifications;
+  const { notifications: prefs, language } = getSettings();
+  const tr = (text: string, vars?: Record<string, string | number>) => translate(language, text, vars);
   const db = getDb();
   const today = localDate(now);
   const nowStr = localDateTime(now);
@@ -64,7 +66,7 @@ export function dueReminders(now: Date): Reminder[] {
       )
       .all(today, nowStr, soon) as { id: string; title: string; due_time: string }[];
     for (const t of timed) {
-      reminders.push({ key: `task:${t.id}:${today}`, title: "Tarefa vencendo", body: `${t.due_time} · ${t.title}`, page: "tarefas" });
+      reminders.push({ key: `task:${t.id}:${today}`, title: tr("Tarefa vencendo"), body: `${t.due_time} · ${t.title}`, page: "tarefas" });
     }
     // Resumo matinal das tarefas do dia sem horário.
     if (now.getHours() >= 8) {
@@ -76,8 +78,8 @@ export function dueReminders(now: Date): Reminder[] {
       if (count > 0) {
         reminders.push({
           key: `tasks-today:${today}`,
-          title: "Tarefas de hoje",
-          body: `Você tem ${count} tarefa(s) para hoje.`,
+          title: tr("Tarefas de hoje"),
+          body: tr("Você tem {n} tarefa(s) para hoje.", { n: count }),
           page: "tarefas",
         });
       }
@@ -91,7 +93,7 @@ export function dueReminders(now: Date): Reminder[] {
     for (const e of events) {
       reminders.push({
         key: `event:${e.id}:${e.starts_at}`,
-        title: "Compromisso em breve",
+        title: tr("Compromisso em breve"),
         body: `${e.starts_at.slice(11, 16)} · ${e.title}`,
         page: "agenda",
       });
@@ -104,7 +106,7 @@ export function dueReminders(now: Date): Reminder[] {
       .all(today) as { id: string; name: string; monthly_value: number | null }[];
     for (const c of clients) {
       const value = c.monthly_value != null ? ` · R$ ${c.monthly_value.toFixed(2).replace(".", ",")}` : "";
-      reminders.push({ key: `billing:${c.id}:${today}`, title: "Cobrança hoje", body: `${c.name}${value}`, page: "clientes" });
+      reminders.push({ key: `billing:${c.id}:${today}`, title: tr("Cobrança hoje"), body: `${c.name}${value}`, page: "clientes" });
     }
   }
 
@@ -115,7 +117,7 @@ export function dueReminders(now: Date): Reminder[] {
     for (const m of items) {
       reminders.push({
         key: `marketing:${m.id}:${today}`,
-        title: "Conteúdo programado para hoje",
+        title: tr("Conteúdo programado para hoje"),
         body: `${m.type.toUpperCase()} · ${m.title}`,
         page: "marketing",
       });

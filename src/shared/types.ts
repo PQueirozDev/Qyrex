@@ -292,9 +292,24 @@ export interface NotificationPrefs {
   marketing: boolean;
 }
 
+export type ThemeId = "dark" | "light" | "midnight" | "violet" | "sand";
+export type Language = "pt" | "en";
+
+export interface DiscordPrefs {
+  enabled: boolean;
+  /** ID público do aplicativo criado no Discord Developer Portal. */
+  clientId: string | null;
+  /** Mostrar o nome do projeto aberto (desligado por padrão: pode ser de cliente). */
+  showProject: boolean;
+}
+
 export interface AppSettings {
   userName: string;
-  theme: "dark" | "light" | "system";
+  theme: ThemeId | "system";
+  language: Language;
+  discord: DiscordPrefs;
+  autoUpdate: boolean;
+  lastSeenVersion: string | null;
   startWithSystem: boolean;
   minimizeToTray: boolean;
   allowedProjectDirs: string[];
@@ -326,3 +341,19 @@ export interface ConfirmationRequest {
 export type AppCommand = "new-task" | "open-projects" | "open-ai" | "open-palette";
 
 export type IpcResult<T> = { ok: true; data: T } | { ok: false; error: string };
+
+// --- Atualizações -------------------------------------------------------------
+
+export type UpdateStatus =
+  | { state: "idle" }
+  | { state: "disabled"; reason: string }
+  | { state: "checking" }
+  | { state: "available"; version: string }
+  | { state: "not-available"; version: string }
+  | { state: "downloading"; version: string; percent: number }
+  | { state: "downloaded"; version: string }
+  | { state: "error"; message: string };
+
+// --- Discord ----------------------------------------------------------------------
+
+export type DiscordStatus = "disabled" | "connecting" | "connected" | "discord-not-running" | "error";

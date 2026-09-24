@@ -1,6 +1,6 @@
 {
-  "appId": "com.pedroqueiroz.workspace",
-  "productName": "PQueiroz Workspace",
+  "appId": "com.pedroqueiroz.qrzspace",
+  "productName": "QrzSpace",
   "copyright": "Copyright © Pedro Queiroz",
   "directories": {
     "output": "release",
@@ -33,7 +33,7 @@
       }
     ],
     "icon": "build/icon.ico",
-    "artifactName": "PQueiroz-Workspace-Setup-${version}.${ext}"
+    "artifactName": "QrzSpace-Setup-${version}.${ext}"
   },
   "nsis": {
     "oneClick": false,
@@ -41,8 +41,8 @@
     "allowToChangeInstallationDirectory": true,
     "createDesktopShortcut": true,
     "createStartMenuShortcut": true,
-    "shortcutName": "PQueiroz Workspace",
-    "uninstallDisplayName": "PQueiroz Workspace",
+    "shortcutName": "QrzSpace",
+    "uninstallDisplayName": "QrzSpace",
     "installerIcon": "build/icon.ico",
     "uninstallerIcon": "build/icon.ico",
     "deleteAppDataOnUninstall": false,

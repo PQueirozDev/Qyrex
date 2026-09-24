@@ -1,4 +1,4 @@
-# PQueiroz Workspace
+# QrzSpace
 
 Central de trabalho desktop de Pedro Queiroz: um app Electron para Windows que
 reúne projetos, tarefas, arquivos, IA, clientes, marketing, agenda e
@@ -86,7 +86,7 @@ npm run icons        # regenera build/icon.png e build/icon.ico
 ## Build e instalador
 
 ```bash
-npm run dist         # gera release/PQueiroz-Workspace-Setup-<versão>.exe
+npm run dist         # gera release/QrzSpace-Setup-<versão>.exe
 ```
 
 O instalador NSIS (x64) é gerado pelo `electron-builder` (config em

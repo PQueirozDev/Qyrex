@@ -252,7 +252,7 @@ export function Settings() {
         </Section>
 
         <Section title="Sobre">
-          <p className="text-sm text-text">PQueiroz Workspace {system ? `v${system.appVersion}` : ""}</p>
+          <p className="text-sm text-text">QrzSpace {system ? `v${system.appVersion}` : ""}</p>
           <p className="text-xs text-text-muted">
             Central de trabalho: projetos, tarefas, arquivos, IA, clientes, marketing e integrações. Tudo local, no SQLite desta máquina.
           </p>

@@ -23,6 +23,9 @@ import { getSettings, updateSettings } from "../database/db.js";
 import { assertAuthorizableDir, assertPathAllowed } from "../security/paths.js";
 import * as v from "../security/validation.js";
 import { createLogger, getLogDir } from "../logger.js";
+import { translate } from "../../shared/i18n.js";
+import * as updateService from "../services/updateService.js";
+import { getDiscordStatus, setDiscordActivity } from "../integrations/discord.js";
 
 const log = createLogger("ipc");
 
@@ -36,6 +39,12 @@ const log = createLogger("ipc");
  */
 
 let devServerUrl: string | null = null;
+let settingsChangedHook: (() => void) | null = null;
+
+/** Chamado depois de salvar configurações (atualiza bandeja, Discord...). */
+export function setSettingsChangedHook(hook: () => void): void {
+  settingsChangedHook = hook;
+}
 
 export function setDevServerUrl(url: string | null): void {
   devServerUrl = url;
@@ -58,7 +67,13 @@ function handle(channel: string, fn: Handler): void {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       log.warn(`${channel} falhou: ${message}`);
-      return { ok: false, error: message };
+      let language: "pt" | "en" = "pt";
+      try {
+        language = getSettings().language;
+      } catch {
+        // banco indisponível: mantém português
+      }
+      return { ok: false, error: translate(language, message) };
     }
   });
 }
@@ -76,6 +91,7 @@ export function registerIpcHandlers(): void {
     const parsed = v.parse(v.settingsPatch, patch);
     const updated = updateSettings(parsed);
     if (parsed.startWithSystem !== undefined) systemService.applyStartWithSystem(parsed.startWithSystem);
+    settingsChangedHook?.();
     return updated;
   });
   handle("settings:addAllowedDir", async (e, dir) => {
@@ -92,6 +108,21 @@ export function registerIpcHandlers(): void {
     const target = v.parse(v.filePath, dir);
     return updateSettings({ allowedProjectDirs: getSettings().allowedProjectDirs.filter((d) => d !== target) });
   });
+
+  // --- Atualizações --------------------------------------------------------------
+  handle("update:status", () => updateService.getUpdateStatus());
+  handle("update:check", (_e, download) => updateService.checkForUpdates(download === true));
+  handle("update:download", () => updateService.downloadUpdate());
+  handle("update:install", () => updateService.installUpdate());
+
+  // --- Discord Rich Presence ---------------------------------------------------------
+  handle("discord:status", () => getDiscordStatus());
+  handle("discord:setActivity", (_e, page, project) =>
+    setDiscordActivity(
+      v.parse(z.string().max(40), page),
+      project === undefined || project === null ? null : v.parse(z.string().max(200), project)
+    )
+  );
 
   // --- Sistema ---------------------------------------------------------------------
   handle("system:info", () => ({

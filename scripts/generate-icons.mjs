@@ -2,7 +2,7 @@
 //   build/icon.png  (512×512, usado pela janela, bandeja e Linux/macOS)
 //   build/icon.ico  (16–256 px, usado pelo instalador e pelo .exe no Windows)
 //
-// O desenho ("PQ" branco sobre um quadrado arredondado com degradê no azul do
+// O desenho ("Q" branco sobre um quadrado arredondado com degradê no azul do
 // app) é vetorial: cada tamanho é rasterizado direto das formas, com
 // supersampling para suavizar as bordas — nada de reduzir um PNG grande.
 //
@@ -20,7 +20,7 @@ const PNG_SIZE = 512;
 
 const GRADIENT_FROM = [76, 110, 245]; // accent (tema claro)
 const GRADIENT_TO = [128, 160, 255]; // accent-hover (tema escuro)
-const STROKE = 0.0375; // metade da espessura das letras
+const STROKE = 0.052; // metade da espessura do traço
 
 function roundedRectSdf(x, y, inset, radius) {
   const half = 0.5 - inset;
@@ -37,30 +37,11 @@ function segmentDistance(x, y, ax, ay, bx, by) {
   return Math.hypot(x - (ax + t * dx), y - (ay + t * dy));
 }
 
-/** Meio anel do lado direito (a "barriga" do P). */
-function rightHalfRingDistance(x, y, cx, cy, r) {
-  if (x >= cx) return Math.abs(Math.hypot(x - cx, y - cy) - r);
-  return Math.min(Math.hypot(x - cx, y - (cy - r)), Math.hypot(x - cx, y - (cy + r)));
-}
-
 function letterDistance(x, y) {
-  // P
-  const stemX = 0.22;
-  const bowlX = 0.3;
-  const bowlY = 0.42;
-  const bowlR = 0.1;
-  const p = Math.min(
-    segmentDistance(x, y, stemX, 0.32, stemX, 0.68),
-    segmentDistance(x, y, stemX, bowlY - bowlR, bowlX, bowlY - bowlR),
-    segmentDistance(x, y, stemX, bowlY + bowlR, bowlX, bowlY + bowlR),
-    rightHalfRingDistance(x, y, bowlX, bowlY, bowlR)
-  );
-  // Q
-  const qx = 0.655;
-  const qy = 0.5;
-  const qr = 0.135;
-  const q = Math.min(Math.abs(Math.hypot(x - qx, y - qy) - qr), segmentDistance(x, y, 0.75, 0.595, 0.795, 0.675));
-  return Math.min(p, q) - STROKE;
+  // "Q" do QrzSpace: anel + cauda diagonal.
+  const ring = Math.abs(Math.hypot(x - 0.5, y - 0.475) - 0.2);
+  const tail = segmentDistance(x, y, 0.575, 0.58, 0.725, 0.745);
+  return Math.min(ring, tail) - STROKE;
 }
 
 /** Cor (RGBA, 0–255) de um ponto do ícone, antes da suavização. */

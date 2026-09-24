@@ -60,7 +60,7 @@ export function Onboarding() {
           <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-accent-hover text-sm font-bold text-accent-fg shadow">
             PQ
           </div>
-          <h1 className="text-xl font-semibold tracking-tight text-text">Bem-vindo ao PQueiroz Workspace</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-text">Bem-vindo ao QrzSpace</h1>
           <p className="mt-1 text-sm text-text-muted">Vamos configurar o essencial. Leva menos de um minuto.</p>
         </div>
 

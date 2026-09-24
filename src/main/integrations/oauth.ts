@@ -2,6 +2,8 @@ import http from "node:http";
 import { createHash, randomBytes } from "node:crypto";
 import type { AddressInfo } from "node:net";
 import { shell } from "electron";
+import { getSettings } from "../database/db.js";
+import { translate } from "../../shared/i18n.js";
 
 /**
  * Fluxo OAuth 2.0 para apps desktop (RFC 8252):
@@ -28,13 +30,16 @@ export interface LoopbackResult {
   verifier: string;
 }
 
-const SUCCESS_HTML = `<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>PQueiroz Workspace</title>
+function page(title: string, body: string): string {
+  const lang = getSettings().language;
+  return `<!doctype html><html lang="${lang === "en" ? "en" : "pt-BR"}"><meta charset="utf-8"><title>QrzSpace</title>
 <body style="font-family:system-ui;background:#0b0d10;color:#e6e8eb;display:grid;place-items:center;height:100vh;margin:0">
-<div style="text-align:center"><h2>Conectado ✔</h2><p>Você já pode fechar esta aba e voltar ao PQueiroz Workspace.</p></div></body></html>`;
+<div style="text-align:center"><h2>${title}</h2><p>${body}</p></div></body></html>`;
+}
 
-const ERROR_HTML = (msg: string) => `<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>PQueiroz Workspace</title>
-<body style="font-family:system-ui;background:#0b0d10;color:#e6e8eb;display:grid;place-items:center;height:100vh;margin:0">
-<div style="text-align:center"><h2>Não foi possível conectar</h2><p>${msg.replace(/[<>&"]/g, "")}</p></div></body></html>`;
+const tr = (text: string) => translate(getSettings().language, text);
+const SUCCESS_HTML = () => page(tr("Conectado ✔"), tr("Você já pode fechar esta aba e voltar ao QrzSpace."));
+const ERROR_HTML = (msg: string) => page(tr("Não foi possível conectar"), msg.replace(/[<>&"]/g, ""));
 
 /**
  * Abre `buildAuthUrl(redirectUri, state, challenge)` no navegador e espera o
@@ -64,7 +69,7 @@ export function runLoopbackFlow(options: {
         settled = true;
         clearTimeout(timer);
         res.writeHead(err ? 400 : 200, { "Content-Type": "text/html; charset=utf-8" });
-        res.end(err ? ERROR_HTML(err.message) : SUCCESS_HTML);
+        res.end(err ? ERROR_HTML(tr(err.message)) : SUCCESS_HTML());
         server.close();
         if (err) reject(err);
         else resolve({ code: code!, redirectUri, verifier });

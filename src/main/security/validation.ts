@@ -46,7 +46,21 @@ const url = z.string().url().max(2048);
 export const settingsPatch = z
   .object({
     userName: z.string().trim().max(60),
-    theme: z.enum(["dark", "light", "system"]),
+    theme: z.enum(["dark", "light", "system", "midnight", "violet", "sand"]),
+    language: z.enum(["pt", "en"]),
+    autoUpdate: z.boolean(),
+    lastSeenVersion: z.string().regex(/^d+.d+.d+([-+][w.]+)?$/).nullable(),
+    discord: z.object({
+      enabled: z.boolean(),
+      // ID público de aplicativo do Discord (snowflake numérico).
+      clientId: z
+        .string()
+        .trim()
+        .regex(/^d{17,20}$/, "Client ID do Discord inválido (são 17 a 20 dígitos)")
+        .nullable()
+        .or(z.literal("").transform(() => null)),
+      showProject: z.boolean(),
+    }),
     startWithSystem: z.boolean(),
     minimizeToTray: z.boolean(),
     defaultTerminal: z.enum(["powershell", "cmd"]),

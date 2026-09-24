@@ -12,6 +12,8 @@ import type {
   Client,
   CommandAssessment,
   CommandRunResult,
+  DiscordStatus,
+  UpdateStatus,
   DirEntry,
   FilePreview,
   GitChangedFile,
@@ -244,6 +246,18 @@ const api = {
     connect: (clientId: string, clientSecret: string) => invoke<void>("googleCalendar:connect", { clientId, clientSecret }),
     disconnect: () => invoke<void>("googleCalendar:disconnect"),
     sync: () => invoke<number>("googleCalendar:sync"),
+  },
+  updates: {
+    status: () => invoke<UpdateStatus>("update:status"),
+    check: (download: boolean) => invoke<UpdateStatus>("update:check", download),
+    download: () => invoke<void>("update:download"),
+    install: () => invoke<void>("update:install"),
+    onStatus: (callback: (status: UpdateStatus) => void) => subscribe<UpdateStatus>("update:status", callback),
+  },
+  discord: {
+    status: () => invoke<DiscordStatus>("discord:status"),
+    setActivity: (page: string, project?: string | null) => invoke<void>("discord:setActivity", page, project ?? null),
+    onStatus: (callback: (status: DiscordStatus) => void) => subscribe<DiscordStatus>("discord:status", callback),
   },
   app: {
     onCommand: (callback: (command: AppCommand) => void) => subscribe<AppCommand>("app:command", callback),

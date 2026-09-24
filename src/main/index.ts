@@ -1,6 +1,6 @@
 import { app, BrowserWindow, Menu, Tray, nativeImage, session, shell } from "electron";
 import path from "node:path";
-import { registerIpcHandlers, setDevServerUrl } from "./ipc/handlers.js";
+import { registerIpcHandlers, setDevServerUrl, setSettingsChangedHook } from "./ipc/handlers.js";
 import { closeDb, getDb, getSettings } from "./database/db.js";
 import { createLogger, initLogger } from "./logger.js";
 import { isProtocolAllowed } from "./security/commands.js";
@@ -11,7 +11,22 @@ import { startNotifications, stopNotifications } from "./services/notificationSe
 import { killAll as killAllTerminals } from "./services/terminalService.js";
 import { listIntegrationStatus } from "./services/integrationsService.js";
 import * as googleCalendar from "./integrations/googleCalendar.js";
-import type { AppCommand } from "../shared/types.js";
+import { applyDiscordSettings, onDiscordStatus, stopDiscord } from "./integrations/discord.js";
+import { attachUpdateListener, startAutoUpdate } from "./services/updateService.js";
+import { translate } from "../shared/i18n.js";
+import type { AppCommand, AppSettings } from "../shared/types.js";
+
+/** Cor de fundo da janela antes do React carregar (evita "flash" branco/preto). */
+const WINDOW_BG: Record<AppSettings["theme"], string> = {
+  dark: "#0b0d10",
+  light: "#f6f7f9",
+  system: "#0b0d10",
+  midnight: "#070b16",
+  violet: "#0d0b14",
+  sand: "#f7f3ec",
+};
+
+const tr = (text: string) => translate(getSettings().language, text);
 
 const isDev = !app.isPackaged;
 const DEV_SERVER_URL = "http://localhost:5173";
@@ -30,7 +45,7 @@ if (!app.requestSingleInstanceLock()) {
   app.quit();
 }
 
-app.setAppUserModelId("com.pedroqueiroz.workspace");
+app.setAppUserModelId("com.pedroqueiroz.qrzspace");
 
 function resourcePath(...segments: string[]): string {
   // Em dev, direto da pasta build/ do repo. Empacotado, o electron-builder
@@ -67,8 +82,8 @@ function createWindow(): void {
     minWidth: 980,
     minHeight: 640,
     show: false,
-    title: "PQueiroz Workspace",
-    backgroundColor: "#0b0d10",
+    title: "QrzSpace",
+    backgroundColor: WINDOW_BG[getSettings().theme] ?? "#0b0d10",
     autoHideMenuBar: true,
     icon: resourcePath("icon.png"),
     webPreferences: {
@@ -81,6 +96,12 @@ function createWindow(): void {
       spellcheck: false,
       preload: path.join(__dirname, "../preload/index.js"),
     },
+  });
+
+  attachUpdateListener(mainWindow.webContents);
+  const wc = mainWindow.webContents;
+  onDiscordStatus((st) => {
+    if (!wc.isDestroyed()) wc.send("discord:status", st);
   });
 
   mainWindow.once("ready-to-show", () => {
@@ -126,19 +147,19 @@ function buildTrayMenu(): Menu {
     .filter((p) => p.lastOpenedAt)
     .slice(0, 5);
   return Menu.buildFromTemplate([
-    { label: "PQueiroz Workspace", enabled: false },
+    { label: "QrzSpace", enabled: false },
     { type: "separator" },
-    { label: "Abrir Workspace", click: showWindow },
-    { label: "Nova tarefa", click: () => sendCommand("new-task") },
+    { label: tr("Abrir QrzSpace"), click: showWindow },
+    { label: tr("Nova tarefa"), click: () => sendCommand("new-task") },
     {
-      label: "Abrir VS Code",
+      label: tr("Abrir VS Code"),
       click: () => {
         const exe = detectVSCode();
         if (exe) void spawnDetached(exe, []).catch((err) => log.error("Falha ao abrir VS Code:", err));
       },
     },
     {
-      label: "Abrir projeto recente",
+      label: tr("Abrir projeto recente"),
       enabled: recent.length > 0,
       submenu: recent.map((p) => ({
         label: p.name,
@@ -147,7 +168,7 @@ function buildTrayMenu(): Menu {
     },
     { type: "separator" },
     {
-      label: "Sair",
+      label: tr("Sair"),
       click: () => {
         isQuitting = true;
         app.quit();
@@ -159,7 +180,7 @@ function buildTrayMenu(): Menu {
 function createTray(): void {
   const icon = nativeImage.createFromPath(resourcePath("icon.png")).resize({ width: 16, height: 16 });
   tray = new Tray(icon);
-  tray.setToolTip("PQueiroz Workspace");
+  tray.setToolTip("QrzSpace");
   tray.setContextMenu(buildTrayMenu());
   tray.on("click", showWindow);
   // Recria o menu ao abrir, para a lista de projetos recentes estar atualizada.
@@ -228,10 +249,17 @@ app.whenReady().then(() => {
   configureSession();
   setDevServerUrl(isDev ? DEV_SERVER_URL : null);
   registerIpcHandlers();
+  // Idioma e Discord mudam em tempo real: o menu da bandeja e a presença acompanham.
+  setSettingsChangedHook(() => {
+    tray?.setContextMenu(buildTrayMenu());
+    applyDiscordSettings();
+  });
   createWindow();
   createTray();
+  applyDiscordSettings();
+  startAutoUpdate();
   startNotifications(navigate);
-  log.info(`PQueiroz Workspace ${app.getVersion()} iniciado${isDev ? " (dev)" : ""}`);
+  log.info(`QrzSpace ${app.getVersion()} iniciado${isDev ? " (dev)" : ""}`);
 
   // Sincronização do Google Calendar sob demanda: só se estiver conectado, e
   // depois do startup, para não atrasar a abertura do app.
@@ -255,6 +283,7 @@ app.on("before-quit", () => {
   isQuitting = true;
   stopNotifications();
   killAllTerminals();
+  stopDiscord();
 });
 
 app.on("will-quit", () => {

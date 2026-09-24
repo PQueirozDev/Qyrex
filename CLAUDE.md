@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Guia para o Claude Code continuar o **PQueiroz Workspace**: um app desktop (Electron + React + TypeScript + SQLite) que funciona como central de trabalho de um dev/freelancer. Ele reúne projetos, tarefas, arquivos, IA, clientes, marketing, agenda, WhatsApp, Spotify e GitHub. O app **orquestra** os programas externos (VS Code, terminal, Explorer) e não recria nenhum deles.
+Guia para o Claude Code continuar o **QrzSpace**: um app desktop (Electron + React + TypeScript + SQLite) que funciona como central de trabalho de um dev/freelancer. Ele reúne projetos, tarefas, arquivos, IA, clientes, marketing, agenda, WhatsApp, Spotify e GitHub. O app **orquestra** os programas externos (VS Code, terminal, Explorer) e não recria nenhum deles.
 
 Sempre responda e comente o código em **português do Brasil**, com acentuação correta.
 
@@ -14,11 +14,11 @@ Backend e nova UI prontos. `npm run check` passa (typecheck, lint sem warnings e
 - `src/shared/types.ts`: contrato de tipos.
 - Renderer: todas as páginas no novo padrão (`pageParam`, `attempt()`/`unwrap()`, `confirmAction()`/`promptText()`, `PageHeader`, `EmptyState`, loading/erro): Onboarding, Dashboard, Projects, TerminalPage, Tasks, FilesPage, Agenda, Clients, Marketing, WhatsApp, AICenter (chat + AI Council), Integrations e Settings. `MessageBubble` tem o botão "Executar" com diálogo de permissão e `AttachFilesDialog` foi reescrito.
 - `scripts/generate-icons.mjs` (`npm run icons`) gera `build/icon.png` (512px) e `build/icon.ico` (16–256px) sem dependências.
-- `electron-builder.json`: NSIS x64, `artifactName: "PQueiroz-Workspace-Setup-${version}.${ext}"`, `asarUnpack` de `better-sqlite3` e `@lydell/**`, atalhos, desinstalador e `publish: null` (sem auto-update).
+- `electron-builder.json`: NSIS x64, `artifactName: "QrzSpace-Setup-${version}.${ext}"`, `asarUnpack` de `better-sqlite3` e `@lydell/**`, atalhos, desinstalador e `publish: null` (sem auto-update).
 - `README.md` reescrito.
 
 ### Validado no Windows (2026-09-24)
-- `npm run dist` gera `release/PQueiroz-Workspace-Setup-0.1.0.exe`. O `electron-builder.json` usa `npmRebuild: false`: `better-sqlite3` e `@lydell/node-pty` são N-API com binários pré-compilados, então não precisam de Visual Studio Build Tools.
+- `npm run dist` gera `release/QrzSpace-Setup-0.1.0.exe`. O `electron-builder.json` usa `npmRebuild: false`: `better-sqlite3` e `@lydell/node-pty` são N-API com binários pré-compilados, então não precisam de Visual Studio Build Tools.
 - Smoke test E2E via DevTools Protocol, no Electron em dev e no app empacotado:
   - todas as 12 páginas abrem sem erros de console;
   - IPC, SQLite, git status/log, detecção de projeto e VS Code funcionam;

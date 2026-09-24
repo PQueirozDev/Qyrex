@@ -2,7 +2,7 @@ import Database from "better-sqlite3";
 import fs from "node:fs";
 import path from "node:path";
 import { app } from "electron";
-import type { AppSettings, NotificationPrefs } from "../../shared/types.js";
+import type { AppSettings, DiscordPrefs, NotificationPrefs } from "../../shared/types.js";
 
 let db: Database.Database | null = null;
 
@@ -93,8 +93,13 @@ interface SettingsRow {
   notifications: string;
   onboarding_completed: number;
   vscode_path: string | null;
+  language: string;
+  discord: string;
+  auto_update: number;
+  last_seen_version: string | null;
 }
 
+const DEFAULT_DISCORD: DiscordPrefs = { enabled: false, clientId: null, showProject: false };
 const DEFAULT_NOTIFICATIONS: NotificationPrefs = { tasks: true, events: true, billing: true, marketing: true };
 
 function parseJson<T>(raw: string, fallback: T): T {
@@ -120,6 +125,10 @@ export function getSettings(): AppSettings {
     notifications: { ...DEFAULT_NOTIFICATIONS, ...parseJson<Partial<NotificationPrefs>>(row.notifications, {}) },
     onboardingCompleted: Boolean(row.onboarding_completed),
     vscodePath: row.vscode_path,
+    language: row.language === "en" ? "en" : "pt",
+    discord: { ...DEFAULT_DISCORD, ...parseJson<Partial<DiscordPrefs>>(row.discord, {}) },
+    autoUpdate: Boolean(row.auto_update),
+    lastSeenVersion: row.last_seen_version,
   };
 }
 
@@ -132,7 +141,8 @@ export function updateSettings(partial: Partial<AppSettings>): AppSettings {
         user_name = ?, theme = ?, start_with_system = ?, minimize_to_tray = ?,
         allowed_project_dirs = ?, default_terminal = ?,
         ai_default_provider = ?, ai_default_model = ?,
-        notifications = ?, onboarding_completed = ?, vscode_path = ?
+        notifications = ?, onboarding_completed = ?, vscode_path = ?,
+        language = ?, discord = ?, auto_update = ?, last_seen_version = ?
        WHERE id = 1`
     )
     .run(
@@ -146,7 +156,11 @@ export function updateSettings(partial: Partial<AppSettings>): AppSettings {
       merged.aiDefaultModel,
       JSON.stringify(merged.notifications),
       merged.onboardingCompleted ? 1 : 0,
-      merged.vscodePath
+      merged.vscodePath,
+      merged.language,
+      JSON.stringify(merged.discord),
+      merged.autoUpdate ? 1 : 0,
+      merged.lastSeenVersion
     );
 
   return merged;
