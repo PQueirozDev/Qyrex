@@ -4,43 +4,22 @@ Guia para o Claude Code continuar o **PQueiroz Workspace**: um app desktop (Elec
 
 Sempre responda e comente o código em **português do Brasil**, com acentuação correta.
 
-## Estado atual (WIP)
+## Estado atual
 
-O **backend (main process) está pronto** e os **142 testes passam**. A **nova UI está pela metade**: o `App.tsx` já importa páginas que ainda **não foram reescritas**, então o renderer **não compila** até elas existirem.
+Backend e nova UI prontos. `npm run check` passa (typecheck, lint sem warnings e 142 testes; 3 testes de caminho do Windows são pulados fora do Windows) e `npm run build` gera o renderer.
 
 ### Feito
-- `src/main/**`: tudo reescrito. Inclui ipc/handlers com validação zod e checagem de remetente, services, integrações (Claude via `@anthropic-ai/sdk`, OpenAI e Gemini via REST, GitHub com PAT, Spotify com PKCE, Google Calendar com OAuth loopback), segurança (paths, commands, exec, secrets, validation), logger com redaction, notificações, terminal node-pty, tray e CSP.
-- `src/preload/index.ts`: API completa exposta em `window.workspace` (fonte da verdade dos canais IPC).
+- `src/main/**`: ipc/handlers com validação zod e checagem de remetente, services, integrações (Claude via `@anthropic-ai/sdk`, OpenAI e Gemini via REST, GitHub com PAT, Spotify com PKCE, Google Calendar com OAuth loopback), segurança (paths, commands, exec, secrets, validation), logger com redaction, notificações, terminal node-pty, tray e CSP.
+- `src/preload/index.ts`: API completa em `window.workspace` (fonte da verdade dos canais IPC).
 - `src/shared/types.ts`: contrato de tipos.
-- Renderer:
-  - `lib/` (api, format, fuzzy, cn)
-  - `stores/` (UI, settings, projects, tasks, clients, marketing, calendar, AI)
-  - `components/ui/` (Button, Card, Dialog e `primitives.tsx`, com Badge, Segmented, Switch, Menu, Drawer, EmptyState etc.)
-  - `components/` (Overlays, TaskFormDialog, Sidebar, SpotifyMiniPlayer, CommandPalette, Header)
-  - `App.tsx`, `pages/Onboarding.tsx`, `pages/Dashboard.tsx`, `pages/Tasks.tsx`
+- Renderer: todas as páginas no novo padrão (`pageParam`, `attempt()`/`unwrap()`, `confirmAction()`/`promptText()`, `PageHeader`, `EmptyState`, loading/erro): Onboarding, Dashboard, Projects, TerminalPage, Tasks, FilesPage, Agenda, Clients, Marketing, WhatsApp, AICenter (chat + AI Council), Integrations e Settings. `MessageBubble` tem o botão "Executar" com diálogo de permissão e `AttachFilesDialog` foi reescrito.
+- `scripts/generate-icons.mjs` (`npm run icons`) gera `build/icon.png` (512px) e `build/icon.ico` (16–256px) sem dependências.
+- `electron-builder.json`: NSIS x64, `artifactName: "PQueiroz-Workspace-Setup-${version}.${ext}"`, `asarUnpack` de `better-sqlite3` e `@lydell/**`, atalhos, desinstalador e `publish: null` (sem auto-update).
+- `README.md` reescrito.
 
-### Falta (em ordem sugerida)
-1. **Reescrever as páginas** com o novo padrão: `useUIStore().pageParam`, `attempt()`/`unwrap()`, `confirmAction()`/`promptText()`, `PageHeader`, `EmptyState` e estados de loading/erro.
-   - `pages/Projects.tsx`: grid com favoritos. O diálogo "Novo projeto" usa `system.pickDirectory` + `projects.detect` para pré-preencher. Tem um Drawer de detalhes com git (status, `git.changes`, `git.commits`), GitHub (`github.overview` com issues e PRs), botões Commit/Pull/Push com `confirmAction({danger:true})` e `confirmed:true`, edição, remoção e tarefas do projeto. `pageParam === "new"` abre o diálogo; um id de projeto abre o drawer.
-   - `pages/TerminalPage.tsx` (NOVO): xterm.js (`@xterm/xterm`, `@xterm/addon-fit`) ligado a `window.workspace.terminal.*`, com abas e escolha de projeto/pasta autorizada e shell (PowerShell/CMD). `pageParam` = id do projeto. Se `terminal.available()` for false, faz fallback para `system.openTerminal`.
-   - `pages/FilesPage.tsx`: escolha do diretório autorizado, breadcrumb e lista. Ações: abrir (`system.openFile`), renomear (`promptText`), copiar/mover (área de "colar aqui"), nova pasta, abrir no Explorer, abrir no VS Code, copiar caminho, excluir (confirm danger) e busca (`files.search`). Painel de preview (`files.preview`: imagem, texto com highlight, markdown renderizado). `pageParam` = "search" ou o caminho de um arquivo/pasta.
-   - `pages/Agenda.tsx`: visões dia, semana e mês, com criar/editar/excluir evento. Eventos `source:"google"` são só leitura. Tem um botão "Sincronizar Google" (`googleCalendar.sync`) e as datas são locais ("AAAA-MM-DDTHH:MM:SS"). `pageParam === "new"` abre a criação.
-   - `pages/Clients.tsx`: lista/busca e Drawer do cliente com dados editáveis, status, financeiro (manutenção e próxima cobrança), projetos e tarefas vinculados, marketing do cliente, pasta de arquivos (`filesPath`, escolhida com `pickDirectory`) e atalhos para WhatsApp (`system.openWhatsAppChat`), Instagram, email e telefone. `pageParam` = "new", "search" ou id.
-   - `pages/Marketing.tsx`: Kanban por status (Ideia → Produzindo → Pronto → Publicado), calendário de conteúdo semanal, input rápido de IDEIAS e diálogo com tipo (post/story/reel), cliente, título, descrição, legenda, data e arquivos relacionados. `pageParam` = "new" ou id.
-   - `pages/WhatsApp.tsx` (NOVO): abrir o Desktop (`system.whatsappStatus` indica se está instalado) ou o Web, lista de contatos dos clientes com "Abrir conversa" e mensagem opcional, campo de número avulso (link `wa.me`) e uma nota sobre a futura WhatsApp Cloud API. **Nunca usar bibliotecas não oficiais.**
-   - `pages/AICenter.tsx`:
-     - Chat: lista de conversas; nova conversa com provider/modelo/projeto (use `useAIStore`); `providers[].models` e `refreshModels`; streaming, interromper e regenerar (`ai.regenerate`); anexar arquivos só do projeto, mostrando claramente quais vão ser enviados.
-     - Aba **AI Council**: seleção de providers conectados e um diálogo que mostra quantos providers serão usados **antes** de enviar. O `confirmedCount` deve bater com `targets.length`. Respostas lado a lado via `onStreamRequest(requestId)` e "Sintetizar respostas" (`ai.council.synthesize`).
-     - `pageParam`: "anthropic", "openai", "google" ou "council".
-     - Adaptar `components/MessageBubble.tsx`: nos blocos ```powershell/bash/sh/cmd, adicionar um botão "Executar". Ele chama `commands.assess` e abre o diálogo "Claude deseja executar: ..." com [Cancelar] [Permitir uma vez] [Permitir]. Se `risk === "dangerous"`, mostrar "⚠️ AÇÃO SENSÍVEL" só com Cancelar/Confirmar, sem "Permitir sempre". Depois chama `commands.run({command, cwd: projeto.localPath, decision, confirmed:true})` e mostra a saída.
-     - Adaptar `components/AttachFilesDialog.tsx`.
-   - `pages/Integrations.tsx`: cards para Claude, OpenAI, Gemini, GitHub, Google Calendar, Spotify e WhatsApp, com status 🟢/⚪/🔴 (`integrations.list`) e Conectar/Desconectar/Testar. As keys aparecem só mascaradas (`maskedKey`). Instruções: Spotify precisa do redirect `http://127.0.0.1:43821/callback` e só do Client ID; Google precisa de um OAuth Client "App para computador" (Client ID + Secret); GitHub usa um fine-grained PAT.
-   - `pages/Settings.tsx`: Aparência (Dark/Light/System), Inicialização (iniciar com Windows, minimizar para a bandeja), Perfil (nome), Diretórios autorizados (`settings.addAllowedDir()` sem argumento abre o seletor), VS Code (`system.pickVSCode`), Terminal, IA (provider e modelo padrão), Notificações (4 toggles), Privacidade (lista `commands.listAllowed` e `revoke`, botão "Abrir pasta de logs" via `system.openLogs`) e Sobre.
-2. Remover `components/ComingSoon.tsx` e `components/ConfirmDialog.tsx` (substituídos por `confirmAction`).
-3. `npm run typecheck && npm run lint && npm test` sem erros nem warnings.
-4. Criar `scripts/generate-icons.mjs` (gera `build/icon.png` 512px e `build/icon.ico`; o ícone atual é placeholder) e revisar o `electron-builder.json`: NSIS, `artifactName: "PQueiroz-Workspace-Setup-${version}.${ext}"`, `asarUnpack` para `better-sqlite3` e `@lydell/node-pty`, atalhos e desinstalador, **sem** auto-update habilitado.
-5. `npm run dist` → `release/PQueiroz-Workspace-Setup-x.y.z.exe`.
-6. Reescrever o `README.md` (funcionalidades, stack, instalação, dev, build, configuração das integrações, segurança, roadmap).
+### Falta
+1. `npm run dist` **no Windows** → `release/PQueiroz-Workspace-Setup-x.y.z.exe`. Em Linux o electron-builder falha ao recompilar `better-sqlite3` para Windows (cross-compile não é suportado).
+2. Testar o app de verdade no Electron (Windows): terminal integrado (node-pty), OAuth do Google/Spotify, git commit/pull/push e o fluxo "Executar" de comandos. Na web as páginas só foram testadas no Chromium com `window.workspace` simulado.
 
 ## Comandos
 

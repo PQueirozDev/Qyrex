@@ -1,123 +1,169 @@
 # PQueiroz Workspace
 
-Central de trabalho desktop de Pedro Queiroz: um app Electron que reúne projetos,
-tarefas, arquivos, IA, clientes, marketing e integrações num único lugar — sem
-recriar VS Code, WhatsApp ou Spotify, apenas orquestrando-os.
-
-> Status: **FASE 1 (Fundação)**, **FASE 2 (Central de IA)** e **FASE 3 (Clientes,
-> Marketing, Agenda)** implementadas. Veja o roadmap abaixo.
+Central de trabalho desktop de Pedro Queiroz: um app Electron para Windows que
+reúne projetos, tarefas, arquivos, IA, clientes, marketing, agenda e
+integrações num lugar só. Ele **orquestra** VS Code, terminal, Explorer,
+WhatsApp e Spotify, sem tentar substituir nenhum deles.
 
 ## Funcionalidades
 
-**FASE 1**
-- Dashboard com tarefas do dia, projetos recentes e ações rápidas
-- Gerenciador de projetos: detecta tecnologias via `package.json`, mostra branch/status
-  git, abre no VS Code, terminal ou Explorer
-- Tarefas: criar, concluir, filtrar (Hoje / Próximas / Todas / Concluídas), excluir
-- Arquivos: navegação, criação de pastas, exclusão com confirmação — restrito aos
-  diretórios que você autorizar em Configurações
-- Command Palette global (`Ctrl+K`) com fuzzy search
-- Banco local SQLite com migrations versionadas
-- Bandeja do sistema (Windows) e ciclo de vida de janela
+- **Início**: saudação, tarefas em foco, compromissos do dia, cobranças da
+  semana, projetos recentes, commits recentes e ações rápidas.
+- **Projetos**: cards com favoritos, tecnologias detectadas pelo `package.json`
+  e status git. Abre no VS Code, no terminal, no Explorer ou no GitHub. O
+  painel de detalhes mostra alterações, commits recentes, commit/pull/push
+  (sempre com confirmação, push nunca com `--force`), issues e PRs do GitHub e
+  as tarefas do projeto.
+- **Terminal**: terminal integrado (xterm.js + node-pty) com abas, PowerShell
+  ou CMD, aberto na pasta de um projeto ou de um diretório autorizado. Se o
+  terminal integrado não estiver disponível, abre um terminal externo.
+- **Arquivos**: navegação só dentro das pastas autorizadas, busca por nome,
+  nova pasta, renomear, copiar, mover e excluir (com confirmação), copiar
+  caminho, abrir no Explorer ou no VS Code e preview de imagem, código (com
+  destaque de sintaxe) e Markdown.
+- **Agenda**: visões de dia, semana e mês, com eventos locais e do Google
+  Agenda (esses em modo somente leitura).
+- **Tarefas**: lista (Hoje / Próximas / Todas / Concluídas) ou kanban, com
+  prioridade, prazo, horário, tags, projeto e cliente. `Ctrl+Shift+T` cria uma
+  tarefa de qualquer lugar.
+- **Clientes**: status (ativo, prospecto, inativo), manutenção mensal, próxima
+  cobrança, pasta de arquivos, projetos, tarefas e conteúdos vinculados, e
+  atalhos para WhatsApp, Instagram, email e telefone.
+- **Marketing**: quadro Ideia → Produzindo → Pronto → Publicado (arrastar e
+  soltar), calendário semanal, captura rápida de ideias e posts, stories e
+  reels com legenda, data e arquivos relacionados.
+- **WhatsApp**: abre o app desktop ou o WhatsApp Web, conversas com clientes e
+  números avulsos, com mensagem inicial opcional. Usa só links oficiais.
+- **IA**:
+  - Chat com Claude, OpenAI e Gemini, com streaming, interromper, regenerar,
+    troca de modelo e histórico salvo.
+  - Anexo explícito de arquivos do projeto: você vê exatamente o que será
+    enviado.
+  - Blocos de comando (PowerShell/bash/cmd) nas respostas têm o botão
+    **Executar**. Ele avalia o risco e pede sua permissão (uma vez ou sempre).
+    Comandos perigosos só aceitam confirmação pontual.
+  - **AI Council**: a mesma pergunta para vários modelos, respostas lado a
+    lado e uma síntese final. Antes de enviar, o app mostra quantos providers
+    vão ser usados.
+- **Integrações**: Claude, OpenAI, Gemini, GitHub, Google Agenda, Spotify
+  (mini player na barra lateral) e WhatsApp, com status, testar e desconectar.
+- **Command Palette** (`Ctrl+K`) com busca fuzzy, busca global no topo,
+  bandeja do sistema e notificações desktop.
 
-**FASE 2 — Central de IA**
-- Providers modulares para Claude (Anthropic), OpenAI e Gemini (Google), atrás de uma
-  interface comum (`src/main/integrations/providers`) — adicionar um novo provider é
-  um arquivo novo + uma linha no registro
-- Conversas com histórico persistido no SQLite, streaming token a token, botão de
-  **interromper geração** e **regenerar resposta**
-- Markdown renderizado, syntax highlighting e botão de copiar em blocos de código
-- Contexto de projeto: você escolhe explicitamente quais arquivos anexar a uma
-  mensagem — nada é enviado à IA automaticamente, e os arquivos anexados ficam
-  visíveis na própria mensagem
-- Página Integrações: conectar/testar/desconectar cada provider, com a API key
-  cifrada pelo `safeStorage` do Electron (cofre de credenciais do SO), nunca em
-  texto puro
-
-**FASE 3 — Clientes, Marketing, Agenda**
-- Clientes (CRM): busca, status (Ativo/Inativo/Prospecto), manutenção mensal e
-  próxima cobrança, atalhos para WhatsApp/telefone/Instagram/email
-- Marketing: quadro por status (Ideia → Produzindo → Pronto → Publicado), tipos
-  Post/Story/Reel, vínculo opcional com cliente e data agendada
-- Agenda: visão de mês + lista de próximos compromissos, criação de evento por
-  clique no dia; arquitetura pronta para sincronizar com Google Calendar (fonte
-  `"google"` já modelada no schema), mas a integração OAuth em si ainda não está
-  ligada — ver "Outras integrações"
-
-As demais áreas (WhatsApp, Spotify, GitHub, AI Council) aparecem na interface como
-"em breve" — ver Roadmap.
+Atalhos: `Ctrl+K` palette · `Ctrl+Shift+T` nova tarefa · `Ctrl+Shift+P`
+projetos · `Ctrl+Shift+A` IA.
 
 ## Tecnologias
 
-Electron · React 18 · TypeScript · Vite · Tailwind CSS · Zustand · better-sqlite3 ·
-react-markdown + rehype-highlight (Central de IA)
+Electron · React 18 · TypeScript (strict) · Vite · Tailwind CSS · Zustand ·
+better-sqlite3 · zod · xterm.js + @lydell/node-pty · react-markdown +
+rehype-highlight · @anthropic-ai/sdk · Vitest
 
-## Instalação e desenvolvimento
+## Instalação (desenvolvimento)
 
-Pré-requisitos: Node.js 20+, e no Windows as ferramentas de build nativas
-(`npm install --global windows-build-tools` ou Visual Studio Build Tools, exigidas
-pelo `better-sqlite3`, que é um módulo nativo).
+Pré-requisito: Node.js 20+ no Windows. `better-sqlite3` e `@lydell/node-pty`
+vêm com binários prontos, então não é preciso instalar o Visual Studio Build
+Tools.
 
 ```bash
 npm install
-npm run dev:app     # sobe o Vite + Electron juntos, com hot reload no renderer
+npm run dev:app      # compila o main e sobe Vite (5173) + Electron com hot reload
 ```
+
+Se o binário do Electron não for baixado no `npm install`, rode
+`node node_modules/electron/install.js`.
 
 Comandos úteis:
 
 ```bash
-npm run typecheck   # checa os dois tsconfig (renderer e main)
-npm run lint
-npm run test
+npm run typecheck    # tsconfig.main.json + tsconfig.renderer.json
+npm run lint         # eslint, sem nenhum warning permitido
+npm test             # vitest rodando dentro do Electron (mesmo ABI dos módulos nativos)
+npm run check        # typecheck + lint + test
+npm run icons        # regenera build/icon.png e build/icon.ico
 ```
 
-## Build / instalador Windows
+## Build e instalador
 
 ```bash
-npm run dist         # gera PQueiroz-Workspace-Setup-<versão>.exe em /release
+npm run dist         # gera release/PQueiroz-Workspace-Setup-<versão>.exe
 ```
 
-O instalador é gerado pelo `electron-builder` (config em `electron-builder.json`):
-NSIS, com atalhos de desktop/menu iniciar e desinstalador.
+O instalador NSIS (x64) é gerado pelo `electron-builder` (config em
+`electron-builder.json`). Ele deixa escolher a pasta de instalação, cria
+atalhos na área de trabalho e no menu Iniciar e inclui o desinstalador. Não há
+auto-update. O build precisa rodar **no Windows**, porque os módulos nativos
+não podem ser compilados para Windows a partir de outro sistema.
 
 ## Configuração inicial
 
-Na primeira execução, vá em **Configurações → Diretórios autorizados** e adicione
-as pastas onde ficam seus projetos (ex.: `C:\Projetos`). O Workspace **só** lê,
-lista ou modifica arquivos dentro desses diretórios — é a base do modelo de
-segurança do app.
+Na primeira execução, o onboarding pede seu nome e as pastas onde ficam seus
+projetos (ex.: `C:\Projetos`). O Workspace **só** lê, lista ou altera arquivos
+dentro dessas pastas. Você gerencia a lista em **Configurações → Diretórios
+autorizados**.
+
+## Integrações
+
+Tudo fica em **Integrações**. Cada chave ou token é guardado cifrado no cofre
+do sistema e aparece na tela só mascarado.
+
+| Integração | O que você precisa |
+| --- | --- |
+| Claude (Anthropic) | API key de [console.anthropic.com](https://console.anthropic.com/settings/keys) |
+| OpenAI | API key de [platform.openai.com](https://platform.openai.com/api-keys) |
+| Gemini (Google) | API key do [Google AI Studio](https://aistudio.google.com/app/apikey) |
+| GitHub | Fine-grained personal access token com leitura de Metadata, Issues e Pull requests |
+| Google Agenda | No Google Cloud Console: ative a Google Calendar API e crie um OAuth Client do tipo **App para computador**. Informe o Client ID e o Client Secret. |
+| Spotify | No [Spotify Developer Dashboard](https://developer.spotify.com/dashboard), crie um app com o Redirect URI `http://127.0.0.1:43821/callback`. Só o Client ID é necessário (PKCE). |
+| WhatsApp | Nada: usa os links oficiais (`wa.me` e o app desktop). |
 
 ## Segurança
 
-- `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true` na janela principal
-- O renderer só fala com o main process através de canais IPC explícitos e
-  tipados (`src/preload/index.ts` → `src/main/ipc/handlers.ts`)
-- Todo processo externo (`code`, `powershell`, `git`) é disparado via `spawn` com
-  argumentos em array — nunca por concatenação de string num shell
-- Todo acesso a arquivo passa por `assertPathAllowed`, que valida o caminho
-  resolvido contra a allowlist configurada pelo usuário (proteção contra path
-  traversal)
-- Ações destrutivas (excluir arquivo, etc.) exigem confirmação explícita do
-  usuário antes de chegar ao handler IPC — inclusive quando sugeridas por uma IA
-- Nenhuma API key fica hardcoded ou é logada; tokens de integrações (fase 2+)
-  serão guardados no keychain do sistema operacional, não em texto puro no SQLite
+- Janela com `contextIsolation: true`, `nodeIntegration: false` e
+  `sandbox: true`. O renderer só fala com o main process pela API exposta em
+  `window.workspace` (`src/preload/index.ts`).
+- Todo canal IPC confere a origem da chamada, valida a entrada com zod e
+  devolve `IpcResult`, sem vazar stack trace.
+- Todo acesso a arquivo passa pela allowlist de diretórios autorizados, com
+  resolução de `..`, symlinks e junctions. Raiz de disco, pastas do sistema e
+  a pasta do usuário inteira não podem ser autorizadas.
+- Processos externos rodam via `spawn` com argumentos em array e
+  `shell: false`. Input do usuário nunca é concatenado num comando.
+- Ações sensíveis (excluir ou mover arquivo, commit/pull/push, executar
+  comando) só acontecem depois de um diálogo de confirmação.
+- A IA nunca executa nada sozinha. Comandos sugeridos só rodam depois da sua
+  permissão, e comandos perigosos nunca podem ser "permitidos sempre".
+- API keys e tokens ficam só no cofre do sistema (`safeStorage`/DPAPI). Nunca
+  vão para o SQLite, para o renderer ou para os logs, que têm redação
+  automática.
+- CSP restritiva e links externos limitados a http, https, mailto e tel.
+  Executáveis nunca são abertos, só mostrados no Explorer.
+- AI Council: nunca dispara para mais providers do que você confirmou.
+- WhatsApp: nenhuma biblioteca não oficial.
 
 ## Estrutura
 
 ```
 src/
-  main/          # processo Electron: ipc, services, security, database
+  main/          # processo Electron: ipc, services, integrations, security, database
   preload/       # única ponte exposta ao renderer via contextBridge
-  renderer/      # React (components, pages, hooks, stores, services)
-  shared/        # tipos compartilhados entre os três mundos acima
+  renderer/      # React (pages, components, stores, lib)
+  shared/        # tipos compartilhados (contrato main ↔ renderer)
+tests/           # vitest: segurança, banco, IPC, arquivos e integrações
+scripts/         # testes dentro do Electron, cópia das migrations e geração de ícones
+build/           # ícones do app e do instalador
 ```
 
 ## Roadmap
 
-- ~~**FASE 2** — Central de IA (Claude / OpenAI / Gemini, providers modulares),
-  contexto de projeto com seleção explícita de arquivos, Integrações~~ ✅
-- ~~**FASE 3** — Clientes (CRM), Marketing (calendário de conteúdo), Agenda~~ ✅
-  (a sincronização OAuth com Google Calendar em si ainda não está implementada)
-- **FASE 4** — Spotify (mini player via Web API), GitHub (commits/PRs/issues),
-  WhatsApp (`wa.me` → futura Cloud API), notificações desktop
-- **FASE 5** — AI Council (multi-agente + síntese), automações avançadas
+- ✅ Fundação: projetos, tarefas, arquivos, palette, SQLite, bandeja
+- ✅ Central de IA: Claude / OpenAI / Gemini, anexos explícitos, execução de
+  comandos com permissão
+- ✅ Clientes, Marketing e Agenda com Google Agenda (leitura)
+- ✅ Terminal integrado, GitHub, Spotify, WhatsApp (links oficiais),
+  notificações
+- ✅ AI Council com síntese
+- ⏳ WhatsApp Cloud API oficial (lembretes de cobrança e confirmações)
+- ⏳ Criar e editar eventos no Google Agenda direto pelo app
+- ⏳ Automações entre módulos (ex.: tarefa ao publicar conteúdo, lembrete de
+  cobrança)
