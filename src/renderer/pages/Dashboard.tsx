@@ -121,7 +121,7 @@ export function Dashboard() {
             {greeting()}
             {settings?.userName ? `, ${settings.userName}` : ""}
           </h1>
-          <p className="mt-0.5 text-sm capitalize text-text-muted">
+          <p className="mt-0.5 text-sm first-letter:uppercase text-text-muted">
             {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
             {" · "}
             <span className="normal-case">

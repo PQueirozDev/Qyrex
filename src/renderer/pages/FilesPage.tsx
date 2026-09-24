@@ -94,7 +94,7 @@ function PreviewPanel({ entry, onClose }: { entry: DirEntry; onClose: () => void
   else if (preview?.kind === "text") {
     if (preview.language === "markdown") {
       body = (
-        <div className="prose prose-sm max-w-none dark:prose-invert prose-pre:bg-bg-hover">
+        <div className="prose prose-sm max-w-none dark:prose-invert prose-pre:bg-bg-hover prose-code:before:content-none prose-code:after:content-none">
           <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
             {preview.content}
           </ReactMarkdown>

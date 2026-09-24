@@ -245,7 +245,7 @@ export function MessageBubble({ role, content, attachedFiles = [], run = null, f
           className={cn(
             "min-w-0 rounded-card px-3.5 py-2.5 text-sm leading-relaxed",
             isUser ? "bg-accent-muted text-text" : "border border-border-subtle bg-bg-card text-text",
-            "prose prose-sm max-w-none dark:prose-invert prose-p:my-1.5 prose-pre:m-0 prose-pre:bg-transparent prose-pre:p-0"
+            "prose prose-sm max-w-none dark:prose-invert prose-p:my-1.5 prose-pre:m-0 prose-pre:bg-transparent prose-pre:p-0 prose-code:before:content-none prose-code:after:content-none"
           )}
         >
           {isUser ? (

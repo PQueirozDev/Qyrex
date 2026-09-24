@@ -473,7 +473,7 @@ export function Agenda() {
         <Button size="sm" variant="secondary" onClick={() => setCursor(new Date())}>
           Hoje
         </Button>
-        <h2 className="ml-1 text-sm font-semibold capitalize text-text">{title}</h2>
+        <h2 className="ml-1 text-sm font-semibold first-letter:uppercase text-text">{title}</h2>
         {loading && <Spinner />}
         <Segmented
           className="ml-auto"
@@ -507,7 +507,7 @@ export function Agenda() {
                       <span className="truncate">{e.title}</span>
                       {e.source === "google" && <Badge tone="success">Google</Badge>}
                     </div>
-                    <div className="text-[11px] capitalize text-text-faint">
+                    <div className="text-[11px] first-letter:uppercase text-text-faint">
                       {parseLocalDate(e.startsAt).toLocaleDateString("pt-BR", { weekday: "short", day: "numeric", month: "short" })} · {timeLabel(e)}
                     </div>
                   </button>
