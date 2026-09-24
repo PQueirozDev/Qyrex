@@ -1,0 +1,114 @@
+@import "highlight.js/styles/github-dark.css";
+@import "@xterm/xterm/css/xterm.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tokens de cor (RGB separados por espaço para suportar /opacidade no Tailwind). */
+:root {
+  --bg: 246 247 249;
+  --bg-elevated: 255 255 255;
+  --bg-card: 255 255 255;
+  --bg-hover: 240 241 244;
+  --border: 222 225 230;
+  --border-subtle: 232 234 238;
+  --text: 22 24 29;
+  --text-muted: 88 94 106;
+  --text-faint: 138 144 156;
+  --accent: 76 110 245;
+  --accent-hover: 62 94 226;
+  --accent-muted: 228 234 255;
+  --accent-fg: 255 255 255;
+  --danger: 220 53 69;
+  --success: 22 163 74;
+  --warning: 217 119 6;
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow-pop: 0 16px 40px -12px rgba(16, 24, 40, 0.25);
+  color-scheme: light;
+}
+
+:root.dark {
+  --bg: 11 13 16;
+  --bg-elevated: 17 20 24;
+  --bg-card: 21 24 29;
+  --bg-hover: 28 32 38;
+  --border: 38 42 49;
+  --border-subtle: 28 31 37;
+  --text: 230 232 235;
+  --text-muted: 154 161 172;
+  --text-faint: 104 111 122;
+  --accent: 104 140 255;
+  --accent-hover: 128 160 255;
+  --accent-muted: 36 48 84;
+  --accent-fg: 255 255 255;
+  --danger: 229 72 77;
+  --success: 61 214 140;
+  --warning: 245 166 35;
+  --shadow-card: 0 1px 0 0 rgba(255, 255, 255, 0.02) inset, 0 8px 24px -12px rgba(0, 0, 0, 0.5);
+  --shadow-pop: 0 24px 60px -16px rgba(0, 0, 0, 0.7);
+  color-scheme: dark;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--border)) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--border));
+  border-radius: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  background: rgb(var(--bg));
+  color: rgb(var(--text));
+}
+
+::selection {
+  background: rgb(var(--accent) / 0.3);
+}
+
+/* Destaque de código legível também no tema claro. */
+:root:not(.dark) .hljs {
+  background: rgb(var(--bg-hover));
+  color: rgb(var(--text));
+}
+
+@layer components {
+  .input {
+    @apply w-full rounded-md border border-border bg-bg px-2.5 py-1.5 text-sm text-text placeholder:text-text-faint
+      transition-colors focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:opacity-50;
+  }
+  .label {
+    @apply mb-1 block text-xs font-medium text-text-muted;
+  }
+  .section-title {
+    @apply text-[11px] font-semibold uppercase tracking-wider text-text-faint;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
