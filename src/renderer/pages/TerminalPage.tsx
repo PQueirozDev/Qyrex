@@ -65,6 +65,8 @@ function TerminalView({ tab, active, onExit }: { tab: Tab; active: boolean; onEx
       fontSize: 13,
       cursorBlink: true,
       allowProposedApi: false,
+      // Garante texto legível (WCAG AA) mesmo com as cores ANSI no tema claro.
+      minimumContrastRatio: 4.5,
       theme: {
         background: cssColor("--bg"),
         foreground: cssColor("--text"),

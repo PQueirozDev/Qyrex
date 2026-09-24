@@ -27,7 +27,13 @@ async function gh<T>(path: string, token = getSecret("github")): Promise<T> {
   if (!res.ok) {
     const body = (await res.json().catch(() => ({}))) as { message?: string };
     if (res.status === 401) throw new Error("GitHub: token inválido ou expirado.");
-    if (res.status === 404) throw new Error("GitHub: repositório não encontrado (ou sem acesso com este token).");
+    if (res.status === 404) {
+      throw new Error(
+        token
+          ? "GitHub: repositório não encontrado (ou este token não tem acesso a ele)."
+          : "GitHub: repositório não encontrado. Se ele for privado, conecte um token do GitHub em Integrações."
+      );
+    }
     if (res.status === 403 && res.headers.get("x-ratelimit-remaining") === "0") {
       throw new Error("GitHub: limite de requisições atingido. Conecte um token para aumentar o limite.");
     }

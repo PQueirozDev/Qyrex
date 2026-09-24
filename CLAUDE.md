@@ -17,9 +17,19 @@ Backend e nova UI prontos. `npm run check` passa (typecheck, lint sem warnings e
 - `electron-builder.json`: NSIS x64, `artifactName: "PQueiroz-Workspace-Setup-${version}.${ext}"`, `asarUnpack` de `better-sqlite3` e `@lydell/**`, atalhos, desinstalador e `publish: null` (sem auto-update).
 - `README.md` reescrito.
 
-### Falta
-1. `npm run dist` **no Windows** → `release/PQueiroz-Workspace-Setup-x.y.z.exe`. Em Linux o electron-builder falha ao recompilar `better-sqlite3` para Windows (cross-compile não é suportado).
-2. Testar o app de verdade no Electron (Windows): terminal integrado (node-pty), OAuth do Google/Spotify, git commit/pull/push e o fluxo "Executar" de comandos. Na web as páginas só foram testadas no Chromium com `window.workspace` simulado.
+### Validado no Windows (2026-09-24)
+- `npm run dist` gera `release/PQueiroz-Workspace-Setup-0.1.0.exe`. O `electron-builder.json` usa `npmRebuild: false`: `better-sqlite3` e `@lydell/node-pty` são N-API com binários pré-compilados, então não precisam de Visual Studio Build Tools.
+- Smoke test E2E via DevTools Protocol, no Electron em dev e no app empacotado:
+  - todas as 12 páginas abrem sem erros de console;
+  - IPC, SQLite, git status/log, detecção de projeto e VS Code funcionam;
+  - o terminal xterm + node-pty roda comandos reais;
+  - `commands.assess`/`run` funcionam, e comando perigoso é bloqueado como "sempre";
+  - path traversal e autorização de raiz de disco são bloqueados;
+  - CSP ativa e renderer sem `require`/`process`.
+
+### Falta (depende de credenciais do usuário)
+- Testar com contas reais: OAuth do Spotify e do Google Calendar, token do GitHub e API keys de Claude, OpenAI e Gemini (chat, streaming e AI Council).
+- Opcional: assinatura de código do instalador (sem certificado, o Windows SmartScreen avisa na primeira execução).
 
 ## Comandos
 
