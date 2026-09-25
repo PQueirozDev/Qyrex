@@ -44,6 +44,15 @@ describe("Discord Rich Presence (protocolo IPC)", () => {
   });
 });
 
+describe("atualizador: logs enxutos", () => {
+  it("registra só a primeira linha do erro (nunca cabeçalhos/cookies da resposta)", async () => {
+    const { firstLine } = await import("../../src/main/services/updateService");
+    const err = new Error('HttpError: 404 \n"Headers": {\n  "set-cookie": ["_gh_sess=secreto"]\n}');
+    expect(firstLine(err)).toBe("Error: HttpError: 404 ");
+    expect(firstLine("x".repeat(1000)).length).toBe(300);
+  });
+});
+
 describe("configurações novas (idioma, tema, Discord, atualização)", () => {
   beforeEach(() => freshDb());
 

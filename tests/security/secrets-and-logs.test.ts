@@ -14,6 +14,9 @@ describe("redact (logs sem segredos)", () => {
     ["token ghp_1234567890abcdefghijABCDEFGHIJ", "ghp_1234567890abcdef"],
     ["github_pat_11ABCDEFG0123456789_abcdefghijklmnop", "11ABCDEFG0123456789"],
     ["client_secret=GOCSPX-abcdef123456", "GOCSPX-abcdef"],
+    ['"set-cookie": ["_gh_sess=BuUvTpV8btfOogkRVc3bvaU6; path=/"]', "BuUvTpV8btfOogkRVc3bvaU6"],
+    ["Cookie: user_session=Zx9ABCDEF123456; logged_in=yes", "Zx9ABCDEF123456"],
+    ["_octo=GH1.1.1591798244.1790310419; domain=.github.com", "1591798244"],
   ])("mascara %s", (input, secret) => {
     const out = redact(input);
     expect(out).not.toContain(secret);

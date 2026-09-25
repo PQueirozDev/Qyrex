@@ -19,7 +19,8 @@
     "test": "node scripts/run-tests.mjs",
     "check": "npm run typecheck && npm run lint && npm run test",
     "icons": "node scripts/generate-icons.mjs",
-    "dist": "npm run build && electron-builder --win --x64"
+    "dist": "npm run build && electron-builder --win --x64 --publish never",
+    "release": "npm run check && npm run build && node scripts/release.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",

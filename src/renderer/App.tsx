@@ -155,6 +155,9 @@ export function App() {
   if (!settings.onboardingCompleted) {
     return (
       <>
+        <div className="fixed inset-x-0 top-0 z-40">
+          <UpdateBanner />
+        </div>
         <Onboarding />
         <Toaster />
         <ConfirmHost />

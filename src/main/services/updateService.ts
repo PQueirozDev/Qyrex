@@ -53,13 +53,16 @@ function init(): void {
   if (initialized) return;
   initialized = true;
 
+  // O electron-updater despeja respostas HTTP inteiras (com cabeçalhos e
+  // cookies) nos erros: registramos só a primeira linha, já sem segredos.
   autoUpdater.logger = {
-    info: (m: unknown) => log.info(String(m)),
-    warn: (m: unknown) => log.warn(String(m)),
-    error: (m: unknown) => log.error(String(m)),
+    info: (m: unknown) => log.info(firstLine(m)),
+    warn: (m: unknown) => log.warn(firstLine(m)),
+    error: (m: unknown) => log.error(firstLine(m)),
     debug: () => undefined,
   };
   autoUpdater.allowDowngrade = false;
+  autoUpdater.disableWebInstaller = true;
   autoUpdater.allowPrerelease = false;
   autoUpdater.autoInstallOnAppQuit = true;
 
@@ -83,9 +86,15 @@ function init(): void {
     setStatus({ state: "downloaded", version: info.version });
   });
   autoUpdater.on("error", (err) => {
-    log.warn("Falha na atualização:", err);
+    log.warn("Falha na atualização:", firstLine(err));
     setStatus({ state: "error", message: friendlyError(err) });
   });
+}
+
+/** Primeira linha da mensagem, limitada — nunca o corpo/cabeçalhos da resposta. */
+export function firstLine(value: unknown): string {
+  const text = value instanceof Error ? `${value.name}: ${value.message}` : String(value);
+  return text.split(/\r?\n/)[0].slice(0, 300);
 }
 
 function friendlyError(err: unknown): string {

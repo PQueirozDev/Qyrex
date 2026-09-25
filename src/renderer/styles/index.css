@@ -164,6 +164,12 @@ body {
   color: rgb(var(--text));
 }
 
+.theme-switching *,
+.theme-switching *::before,
+.theme-switching *::after {
+  transition: none !important;
+}
+
 /* Brilho ambiente bem sutil no topo da área principal, na cor do tema. */
 .app-ambient {
   background:

@@ -15,6 +15,9 @@ let logDir: string | null = null;
 const MAX_FILES = 14;
 
 const SECRET_PATTERNS: [RegExp, string][] = [
+  // Cookies de sessão (cabeçalhos Cookie / Set-Cookie ou pares nome=valor típicos)
+  [/((?:set-)?cookie["']?\s*[:=]\s*)[^\n]*/gi, "$1[REDACTED]"],
+  [/\b(_gh_sess|_octo|user_session|__Host-[\w-]+|session(?:id)?|sid)=[^;\s"']+/gi, "$1=[REDACTED]"],
   // Cabeçalhos e esquemas de autenticação
   [/(authorization\s*[:=]\s*)(bearer\s+)?[^\s,"']+/gi, "$1$2[REDACTED]"],
   [/\bbearer\s+[A-Za-z0-9._~+/=-]{8,}/gi, "Bearer [REDACTED]"],

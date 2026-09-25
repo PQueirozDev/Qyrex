@@ -53,9 +53,14 @@ export const useSettingsStore = create<SettingsState>((set) => ({
 export function applyTheme(theme: AppSettings["theme"]): () => void {
   const media = window.matchMedia("(prefers-color-scheme: dark)");
   const apply = () => {
+    const root = document.documentElement;
     const def = getTheme(theme, media.matches);
-    document.documentElement.dataset.theme = def.id;
-    document.documentElement.classList.toggle("dark", def.dark);
+    if (root.dataset.theme === def.id) return;
+    // Troca instantânea: sem isso cada elemento "anima" as cores do tema antigo para o novo.
+    root.classList.add("theme-switching");
+    root.dataset.theme = def.id;
+    root.classList.toggle("dark", def.dark);
+    requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove("theme-switching")));
   };
   apply();
   try {

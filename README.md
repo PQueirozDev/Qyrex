@@ -5,6 +5,11 @@ reúne projetos, tarefas, arquivos, IA, clientes, marketing, agenda e
 integrações num lugar só. Ele **orquestra** VS Code, terminal, Explorer,
 WhatsApp e Spotify, sem tentar substituir nenhum deles.
 
+**Download:** a versão mais recente fica em
+[PQueirozDev/QrzSpace-releases](https://github.com/PQueirozDev/QrzSpace-releases/releases/latest)
+(repositório público só com os instaladores; o código é privado). Depois de
+instalado, o app se atualiza sozinho.
+
 ## Funcionalidades
 
 - **Início**: saudação, tarefas em foco, compromissos do dia, cobranças da
@@ -49,6 +54,17 @@ WhatsApp e Spotify, sem tentar substituir nenhum deles.
   (mini player na barra lateral) e WhatsApp, com status, testar e desconectar.
 - **Command Palette** (`Ctrl+K`) com busca fuzzy, busca global no topo,
   bandeja do sistema e notificações desktop.
+- **Temas**: Escuro, Claro, Meia-noite, Violeta, Areia ou Sistema, escolhidos
+  por prévia em **Configurações → Aparência**.
+- **Idioma**: português ou inglês (interface, notificações, menu da bandeja e
+  respostas da IA).
+- **Discord Rich Presence** (opcional): mostra no seu perfil do Discord a área
+  do QrzSpace em uso. O nome do projeto só aparece se você ligar essa opção.
+- **Atualização automática**: ao abrir, o app procura, baixa, confere o SHA-512
+  e instala novas versões, com contagem para reiniciar e opção de adiar. Pode
+  ser desligada em Configurações.
+- **Novidades**: aba com as patch notes de cada versão e um resumo mostrado uma
+  vez depois de cada atualização.
 
 Atalhos: `Ctrl+K` palette · `Ctrl+Shift+T` nova tarefa · `Ctrl+Shift+P`
 projetos · `Ctrl+Shift+A` IA.
@@ -57,7 +73,7 @@ projetos · `Ctrl+Shift+A` IA.
 
 Electron · React 18 · TypeScript (strict) · Vite · Tailwind CSS · Zustand ·
 better-sqlite3 · zod · xterm.js + @lydell/node-pty · react-markdown +
-rehype-highlight · @anthropic-ai/sdk · Vitest
+rehype-highlight · @anthropic-ai/sdk · electron-updater · Inter · Vitest
 
 ## Instalação (desenvolvimento)
 
@@ -91,16 +107,27 @@ npm run dist         # gera release/QrzSpace-Setup-<versão>.exe
 
 O instalador NSIS (x64) é gerado pelo `electron-builder` (config em
 `electron-builder.json`). Ele deixa escolher a pasta de instalação, cria
-atalhos na área de trabalho e no menu Iniciar e inclui o desinstalador. Não há
-auto-update. O build precisa rodar **no Windows**, porque os módulos nativos
-não podem ser compilados para Windows a partir de outro sistema.
+atalhos na área de trabalho e no menu Iniciar e inclui o desinstalador. O build
+precisa rodar **no Windows**.
+
+### Publicar uma nova versão (atualização automática)
+
+1. Suba a versão no `package.json` (ex.: `1.0.1`) e adicione a entrada em
+   `src/shared/changelog.ts` (pt e en). O teste falha se o changelog não
+   tiver a versão atual.
+2. `npm run release`: roda `check`, gera o instalador e publica a release
+   `v<versão>` em **PQueirozDev/QrzSpace-releases** (usa o token do `gh`).
+
+Os apps instalados encontram a versão nova ao abrir, baixam, conferem o
+SHA-512 do `latest.yml` e instalam. Um download adulterado é descartado.
+Nunca há downgrade nem pré-release.
 
 ## Configuração inicial
 
 Na primeira execução, o onboarding pede seu nome e as pastas onde ficam seus
-projetos (ex.: `C:\Projetos`). O Workspace **só** lê, lista ou altera arquivos
-dentro dessas pastas. Você gerencia a lista em **Configurações → Diretórios
-autorizados**.
+projetos (ex.: `C:\Projetos`). O QrzSpace **só** lê, lista ou altera arquivos
+dentro dessas pastas. Você gerencia a lista em **Configurações → Pastas
+autorizadas**.
 
 ## Integrações
 
@@ -116,6 +143,7 @@ do sistema e aparece na tela só mascarado.
 | Google Agenda | No Google Cloud Console: ative a Google Calendar API e crie um OAuth Client do tipo **App para computador**. Informe o Client ID e o Client Secret. |
 | Spotify | No [Spotify Developer Dashboard](https://developer.spotify.com/dashboard), crie um app com o Redirect URI `http://127.0.0.1:43821/callback`. Só o Client ID é necessário (PKCE). |
 | WhatsApp | Nada: usa os links oficiais (`wa.me` e o app desktop). |
+| Discord (em Configurações) | Em [discord.com/developers](https://discord.com/developers/applications), crie um aplicativo chamado **QrzSpace**, envie `build/icon.png` em Rich Presence → Art Assets com o nome `qrzspace` e cole o Application ID. Precisa do app do Discord aberto no PC. |
 
 ## Segurança
 
@@ -140,6 +168,11 @@ do sistema e aparece na tela só mascarado.
   Executáveis nunca são abertos, só mostrados no Explorer.
 - AI Council: nunca dispara para mais providers do que você confirmou.
 - WhatsApp: nenhuma biblioteca não oficial.
+- Atualizações: origem fixa no app (GitHub Releases via HTTPS), integridade
+  por SHA-512, sem downgrade. Os logs do atualizador guardam só a primeira
+  linha dos erros, e cookies também são redigidos.
+- Discord: comunicação só com o app do Discord local (named pipe). Nomes de
+  projeto ficam ocultos por padrão.
 
 ## Estrutura
 
@@ -163,6 +196,8 @@ build/           # ícones do app e do instalador
 - ✅ Terminal integrado, GitHub, Spotify, WhatsApp (links oficiais),
   notificações
 - ✅ AI Council com síntese
+- ✅ QrzSpace 1.0: temas, idioma PT/EN, Discord Rich Presence, atualização
+  automática e patch notes
 - ⏳ WhatsApp Cloud API oficial (lembretes de cobrança e confirmações)
 - ⏳ Criar e editar eventos no Google Agenda direto pelo app
 - ⏳ Automações entre módulos (ex.: tarefa ao publicar conteúdo, lembrete de

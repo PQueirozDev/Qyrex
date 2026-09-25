@@ -12,7 +12,7 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     version: "1.0.0",
-    date: "2026-09-24",
+    date: "2026-09-25",
     title: { pt: "Nasce o QrzSpace", en: "Say hello to QrzSpace" },
     sections: [
       {
