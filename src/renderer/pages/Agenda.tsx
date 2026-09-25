@@ -11,9 +11,10 @@ import { addDays, formatTime, parseLocalDate, parseLocalDateTime, todayISO, toLo
 import { useCalendarStore } from "@/stores/useCalendarStore";
 import { confirmAction, toast, useUIStore } from "@/stores/useUIStore";
 
+import { getLocale, tr } from "@/lib/i18n";
 type View = "dia" | "semana" | "mes";
 
-const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+const WEEKDAYS = [tr("Dom"), tr("Seg"), tr("Ter"), tr("Qua"), tr("Qui"), tr("Sex"), tr("Sáb")];
 
 function startOfWeek(d: Date): Date {
   return addDays(d, -d.getDay());
@@ -140,7 +141,7 @@ function EventDialog({ open, event, draft, onClose }: { open: boolean; event: Ca
 
   async function handleDelete() {
     if (!event) return;
-    const ok = await confirmAction({ title: `Excluir "${event.title}"?`, description: "Essa ação não pode ser desfeita.", danger: true, confirmLabel: "Excluir" });
+    const ok = await confirmAction({ title: tr("Excluir \"{name}\"?", { name: event.title }), description: tr("Essa ação não pode ser desfeita."), danger: true, confirmLabel: tr("Excluir") });
     if (!ok) return;
     await remove(event.id);
     onClose();
@@ -151,62 +152,55 @@ function EventDialog({ open, event, draft, onClose }: { open: boolean; event: Ca
       open={open}
       onClose={onClose}
       dismissable={readOnly}
-      title={readOnly ? event?.title : event ? "Editar evento" : "Novo evento"}
-      description={readOnly ? "Evento do Google Agenda — somente leitura. Edite pelo Google Agenda e sincronize." : undefined}
+      title={readOnly ? event?.title : event ? tr("Editar evento") : tr("Novo evento")}
+      description={readOnly ? tr("Evento do Google Agenda — somente leitura. Edite pelo Google Agenda e sincronize.") : undefined}
       footer={
         readOnly ? (
-          <Button size="sm" variant="secondary" onClick={onClose}>
-            Fechar
-          </Button>
+          <Button size="sm" variant="secondary" onClick={onClose}>{tr("Fechar")}</Button>
         ) : (
           <>
             {event && (
               <Button size="sm" variant="danger" className="mr-auto" onClick={() => void handleDelete()}>
-                <Trash2 size={13} /> Excluir
-              </Button>
+                <Trash2 size={13} />{" "}{tr("Excluir")}</Button>
             )}
-            <Button size="sm" variant="ghost" onClick={onClose}>
-              Cancelar
-            </Button>
+            <Button size="sm" variant="ghost" onClick={onClose}>{tr("Cancelar")}</Button>
             <Button size="sm" onClick={() => void save()} disabled={invalid} loading={saving}>
-              {event ? "Salvar" : "Criar evento"}
+              {event ? tr("Salvar") : tr("Criar evento")}
             </Button>
           </>
         )
       }
     >
       <fieldset disabled={readOnly} className="space-y-3">
-        <input className="input text-[15px] font-medium" placeholder="Título do evento" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <input className="input text-[15px] font-medium" placeholder={tr("Título do evento")} value={title} onChange={(e) => setTitle(e.target.value)} />
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Início">
+          <Field label={tr("Início")}>
             <input type="date" className="input" value={date} onChange={(e) => {
               setDate(e.target.value);
               if (!endDate || endDate < e.target.value) setEndDate(e.target.value);
             }} />
           </Field>
-          <Field label="Término">
+          <Field label={tr("Término")}>
             <input type="date" className="input" value={endDate} min={date} onChange={(e) => setEndDate(e.target.value)} />
           </Field>
           {!allDay && (
             <>
-              <Field label="Hora de início">
+              <Field label={tr("Hora de início")}>
                 <input type="time" className="input" value={start} onChange={(e) => setStart(e.target.value)} />
               </Field>
-              <Field label="Hora de término">
+              <Field label={tr("Hora de término")}>
                 <input type="time" className="input" value={end} onChange={(e) => setEnd(e.target.value)} />
               </Field>
             </>
           )}
         </div>
         <label className="flex items-center gap-2 text-xs text-text-muted">
-          <input type="checkbox" className="accent-accent" checked={allDay} onChange={(e) => setAllDay(e.target.checked)} />
-          Dia inteiro
-        </label>
-        {endsAt !== null && endsAt < startsAt && <p className="text-xs text-danger">O término precisa ser depois do início.</p>}
-        <Field label="Local">
-          <input className="input" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Opcional" />
+          <input type="checkbox" className="accent-accent" checked={allDay} onChange={(e) => setAllDay(e.target.checked)} />{tr("Dia inteiro")}</label>
+        {endsAt !== null && endsAt < startsAt && <p className="text-xs text-danger">{tr("O término precisa ser depois do início.")}</p>}
+        <Field label={tr("Local")}>
+          <input className="input" value={location} onChange={(e) => setLocation(e.target.value)} placeholder={tr("Opcional")} />
         </Field>
-        <Field label="Descrição">
+        <Field label={tr("Descrição")}>
           <textarea className="input min-h-[70px] resize-y" value={description} onChange={(e) => setDescription(e.target.value)} />
         </Field>
       </fieldset>
@@ -269,7 +263,7 @@ function MonthView({
                 {items.slice(0, 3).map((e) => (
                   <EventChip key={e.id} event={e} compact onClick={() => onOpen(e)} />
                 ))}
-                {items.length > 3 && <p className="px-1 text-[10px] text-text-faint">+{items.length - 3} mais</p>}
+                {items.length > 3 && <p className="px-1 text-[10px] text-text-faint">+{items.length - 3}{" "}{tr("mais")}</p>}
               </div>
             </div>
           );
@@ -318,7 +312,7 @@ function DayView({ day, events, onCreate, onOpen }: { day: string; events: Calen
     <Card className="overflow-hidden">
       {allDay.length > 0 && (
         <div className="space-y-1 border-b border-border-subtle p-3">
-          <p className="section-title">Dia todo</p>
+          <p className="section-title">{tr("Dia todo")}</p>
           {allDay.map((e) => (
             <EventChip key={e.id} event={e} onClick={() => onOpen(e)} />
           ))}
@@ -426,53 +420,47 @@ export function Agenda() {
     const count = await attempt(window.workspace.googleCalendar.sync());
     setSyncing(false);
     if (count !== undefined) {
-      toast.success(`Google Agenda sincronizado: ${count} evento(s)`);
+      toast.success(tr("Google Agenda sincronizado: {n} evento(s)", { n: count }));
       void load();
     }
   }
 
   const title =
     view === "dia"
-      ? cursor.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
+      ? cursor.toLocaleDateString(getLocale(), { weekday: "long", day: "numeric", month: "long", year: "numeric" })
       : view === "semana"
-        ? `${parseLocalDate(range.days[0]).toLocaleDateString("pt-BR", { day: "numeric", month: "short" })} – ${parseLocalDate(range.days[6]).toLocaleDateString("pt-BR", { day: "numeric", month: "short", year: "numeric" })}`
-        : cursor.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+        ? `${parseLocalDate(range.days[0]).toLocaleDateString(getLocale(), { day: "numeric", month: "short" })} – ${parseLocalDate(range.days[6]).toLocaleDateString(getLocale(), { day: "numeric", month: "short", year: "numeric" })}`
+        : cursor.toLocaleDateString(getLocale(), { month: "long", year: "numeric" });
 
   const upcoming = events.filter((e) => (e.endsAt ?? e.startsAt) >= `${todayISO()}T00:00:00`).slice(0, 8);
 
   return (
     <div>
       <PageHeader
-        title="Agenda"
-        description="Compromissos locais e do Google Agenda (somente leitura)."
+        title={tr("Agenda")}
+        description={tr("Compromissos locais e do Google Agenda (somente leitura).")}
         actions={
           <>
             {googleConnected ? (
               <Button size="sm" variant="secondary" onClick={() => void syncGoogle()} loading={syncing}>
-                {!syncing && <RefreshCw size={13} />} Sincronizar Google
-              </Button>
+                {!syncing && <RefreshCw size={13} />}{" "}{tr("Sincronizar Google")}</Button>
             ) : (
-              <Button size="sm" variant="ghost" onClick={() => navigate("integracoes")}>
-                Conectar Google Agenda
-              </Button>
+              <Button size="sm" variant="ghost" onClick={() => navigate("integracoes")}>{tr("Conectar Google Agenda")}</Button>
             )}
             <Button size="sm" onClick={() => openCreate({ date: toLocalDate(cursor) })}>
-              <Plus size={14} /> Novo evento
-            </Button>
+              <Plus size={14} />{" "}{tr("Novo evento")}</Button>
           </>
         }
       />
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <Button size="icon" variant="ghost" onClick={() => move(-1)} aria-label="Anterior">
+        <Button size="icon" variant="ghost" onClick={() => move(-1)} aria-label={tr("Anterior")}>
           <ChevronLeft size={16} />
         </Button>
-        <Button size="icon" variant="ghost" onClick={() => move(1)} aria-label="Próximo">
+        <Button size="icon" variant="ghost" onClick={() => move(1)} aria-label={tr("Próximo")}>
           <ChevronRight size={16} />
         </Button>
-        <Button size="sm" variant="secondary" onClick={() => setCursor(new Date())}>
-          Hoje
-        </Button>
+        <Button size="sm" variant="secondary" onClick={() => setCursor(new Date())}>{tr("Hoje")}</Button>
         <h2 className="ml-1 text-sm font-semibold first-letter:uppercase text-text">{title}</h2>
         {loading && <Spinner />}
         <Segmented
@@ -480,9 +468,9 @@ export function Agenda() {
           value={view}
           onChange={setView}
           options={[
-            { value: "dia", label: "Dia" },
-            { value: "semana", label: "Semana" },
-            { value: "mes", label: "Mês" },
+            { value: "dia", label: tr("Dia") },
+            { value: "semana", label: tr("Semana") },
+            { value: "mes", label: tr("Mês") },
           ]}
         />
       </div>
@@ -496,19 +484,19 @@ export function Agenda() {
 
         {view === "mes" && (
           <Card className="h-fit p-3">
-            <p className="section-title mb-2">Próximos neste mês</p>
+            <p className="section-title mb-2">{tr("Próximos neste mês")}</p>
             {upcoming.length === 0 ? (
-              <EmptyState className="py-6" icon={CalendarDays} title="Nada por vir" />
+              <EmptyState className="py-6" icon={CalendarDays} title={tr("Nada por vir")} />
             ) : (
               <div className="space-y-2">
                 {upcoming.map((e) => (
                   <button key={e.id} onClick={() => openEvent(e)} className="block w-full rounded-md px-1.5 py-1 text-left hover:bg-bg-hover">
                     <div className="flex items-center gap-1.5 text-sm text-text">
                       <span className="truncate">{e.title}</span>
-                      {e.source === "google" && <Badge tone="success">Google</Badge>}
+                      {e.source === "google" && <Badge tone="success">{tr("Google")}</Badge>}
                     </div>
                     <div className="text-[11px] first-letter:uppercase text-text-faint">
-                      {parseLocalDate(e.startsAt).toLocaleDateString("pt-BR", { weekday: "short", day: "numeric", month: "short" })} · {timeLabel(e)}
+                      {parseLocalDate(e.startsAt).toLocaleDateString(getLocale(), { weekday: "short", day: "numeric", month: "short" })} · {timeLabel(e)}
                     </div>
                   </button>
                 ))}

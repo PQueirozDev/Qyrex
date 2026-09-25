@@ -4,6 +4,7 @@ import type { SpotifyPlayback } from "@shared/types";
 import { formatDuration } from "@/lib/format";
 import { toast, useUIStore } from "@/stores/useUIStore";
 import { cn } from "@/lib/cn";
+import { tr } from "@/lib/i18n";
 
 /**
  * Mini player do Spotify (Web API oficial). Só aparece quando a integração está
@@ -82,7 +83,7 @@ export function SpotifyMiniPlayer() {
           className="flex w-full items-center gap-2 rounded-md px-1 py-0.5 text-[11px] text-text-faint hover:text-text-muted"
         >
           <Music2 size={13} />
-          {connected ? "Nada tocando no Spotify" : "Spotify"}
+          {connected ? tr("Nada tocando no Spotify") : tr("Spotify")}
         </button>
       </div>
     );
@@ -127,18 +128,18 @@ export function SpotifyMiniPlayer() {
       </div>
 
       <div className="mt-1 flex items-center justify-center gap-1">
-        <button disabled={busy} onClick={() => void control("previous")} className="rounded-md p-1.5 text-text-muted hover:bg-bg-hover hover:text-text" aria-label="Anterior">
+        <button disabled={busy} onClick={() => void control("previous")} className="rounded-md p-1.5 text-text-muted hover:bg-bg-hover hover:text-text" aria-label={tr("Anterior")}>
           <SkipBack size={14} />
         </button>
         <button
           disabled={busy}
           onClick={() => void control(playback.isPlaying ? "pause" : "play")}
           className="rounded-full bg-text p-1.5 text-bg transition-transform hover:scale-105"
-          aria-label={playback.isPlaying ? "Pausar" : "Tocar"}
+          aria-label={playback.isPlaying ? tr("Pausar") : tr("Tocar")}
         >
           {playback.isPlaying ? <Pause size={14} /> : <Play size={14} />}
         </button>
-        <button disabled={busy} onClick={() => void control("next")} className="rounded-md p-1.5 text-text-muted hover:bg-bg-hover hover:text-text" aria-label="Próxima">
+        <button disabled={busy} onClick={() => void control("next")} className="rounded-md p-1.5 text-text-muted hover:bg-bg-hover hover:text-text" aria-label={tr("Próxima")}>
           <SkipForward size={14} />
         </button>
       </div>
@@ -153,7 +154,7 @@ export function SpotifyMiniPlayer() {
             value={playback.volumePercent}
             onChange={(e) => changeVolume(Number(e.target.value))}
             className={cn("h-1 flex-1 accent-success")}
-            aria-label="Volume"
+            aria-label={tr("Volume")}
           />
         </div>
       )}

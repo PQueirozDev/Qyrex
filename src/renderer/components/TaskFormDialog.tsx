@@ -6,9 +6,10 @@ import { useTasksStore } from "@/stores/useTasksStore";
 import { useProjectsStore } from "@/stores/useProjectsStore";
 import { useClientsStore } from "@/stores/useClientsStore";
 import type { Task, TaskPriority, TaskStatus } from "@shared/types";
+import { tr } from "@/lib/i18n";
 
-export const PRIORITY_LABEL: Record<TaskPriority, string> = { baixa: "Baixa", normal: "Normal", alta: "Alta", urgente: "Urgente" };
-export const STATUS_LABEL: Record<TaskStatus, string> = { pendente: "Pendente", em_andamento: "Em andamento", concluido: "Concluído" };
+export const PRIORITY_LABEL: Record<TaskPriority, string> = { baixa: tr("Baixa"), normal: tr("Normal"), alta: tr("Alta"), urgente: tr("Urgente") };
+export const STATUS_LABEL: Record<TaskStatus, string> = { pendente: tr("Pendente"), em_andamento: tr("Em andamento"), concluido: tr("Concluído") };
 
 interface Props {
   open: boolean;
@@ -89,16 +90,14 @@ export function TaskFormDialog({ open, onClose, task, defaults }: Props) {
     <Dialog
       open={open}
       onClose={onClose}
-      title={task ? "Editar tarefa" : "Nova tarefa"}
+      title={task ? tr("Editar tarefa") : tr("Nova tarefa")}
       dismissable={false}
       footer={
         <>
-          <span className="mr-auto text-[11px] text-text-faint">Ctrl+Enter para salvar</span>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            Cancelar
-          </Button>
+          <span className="mr-auto text-[11px] text-text-faint">{tr("Ctrl+Enter para salvar")}</span>
+          <Button variant="ghost" size="sm" onClick={onClose}>{tr("Cancelar")}</Button>
           <Button size="sm" onClick={save} disabled={!title.trim()} loading={saving}>
-            {task ? "Salvar" : "Criar tarefa"}
+            {task ? tr("Salvar") : tr("Criar tarefa")}
           </Button>
         </>
       }
@@ -111,19 +110,19 @@ export function TaskFormDialog({ open, onClose, task, defaults }: Props) {
       >
         <input
           className="input text-[15px] font-medium"
-          placeholder="O que precisa ser feito?"
+          placeholder={tr("O que precisa ser feito?")}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && void save()}
         />
         <textarea
           className="input min-h-[70px] resize-y"
-          placeholder="Descrição (opcional)"
+          placeholder={tr("Descrição (opcional)")}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Status">
+          <Field label={tr("Status")}>
             <select className="input" value={status} onChange={(e) => setStatus(e.target.value as TaskStatus)}>
               {Object.entries(STATUS_LABEL).map(([v, l]) => (
                 <option key={v} value={v}>
@@ -132,7 +131,7 @@ export function TaskFormDialog({ open, onClose, task, defaults }: Props) {
               ))}
             </select>
           </Field>
-          <Field label="Prioridade">
+          <Field label={tr("Prioridade")}>
             <select className="input" value={priority} onChange={(e) => setPriority(e.target.value as TaskPriority)}>
               {Object.entries(PRIORITY_LABEL).map(([v, l]) => (
                 <option key={v} value={v}>
@@ -141,15 +140,15 @@ export function TaskFormDialog({ open, onClose, task, defaults }: Props) {
               ))}
             </select>
           </Field>
-          <Field label="Prazo">
+          <Field label={tr("Prazo")}>
             <input type="date" className="input" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
           </Field>
-          <Field label="Horário (opcional)">
+          <Field label={tr("Horário (opcional)")}>
             <input type="time" className="input" value={dueTime} disabled={!dueDate} onChange={(e) => setDueTime(e.target.value)} />
           </Field>
-          <Field label="Projeto">
+          <Field label={tr("Projeto")}>
             <select className="input" value={projectId} onChange={(e) => setProjectId(e.target.value)}>
-              <option value="">Nenhum</option>
+              <option value="">{tr("Nenhum")}</option>
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
@@ -157,9 +156,9 @@ export function TaskFormDialog({ open, onClose, task, defaults }: Props) {
               ))}
             </select>
           </Field>
-          <Field label="Cliente">
+          <Field label={tr("Cliente")}>
             <select className="input" value={clientId} onChange={(e) => setClientId(e.target.value)}>
-              <option value="">Nenhum</option>
+              <option value="">{tr("Nenhum")}</option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -168,8 +167,8 @@ export function TaskFormDialog({ open, onClose, task, defaults }: Props) {
             </select>
           </Field>
         </div>
-        <Field label="Tags" hint="Separe por vírgula: site, urgente, instagram">
-          <input className="input" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="site, cliente" />
+        <Field label={tr("Tags")} hint={tr("Separe por vírgula: site, urgente, instagram")}>
+          <input className="input" value={tags} onChange={(e) => setTags(e.target.value)} placeholder={tr("site, cliente")} />
         </Field>
       </div>
     </Dialog>

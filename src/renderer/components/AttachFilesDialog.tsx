@@ -8,6 +8,7 @@ import { errorMessage, unwrap } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { formatBytes } from "@/lib/format";
 
+import { tr } from "@/lib/i18n";
 interface AttachFilesDialogProps {
   open: boolean;
   rootPath: string;
@@ -73,25 +74,20 @@ export function AttachFilesDialog({ open, rootPath, initiallySelected, onClose, 
       open={open}
       onClose={onClose}
       size="lg"
-      title="Anexar arquivos do projeto"
-      description="Só os arquivos marcados são lidos e enviados para a IA junto com a mensagem."
+      title={tr("Anexar arquivos do projeto")}
+      description={tr("Só os arquivos marcados são lidos e enviados para a IA junto com a mensagem.")}
       footer={
         <>
           <span className="mr-auto text-xs text-text-faint">
-            {selected.size} de até {MAX_FILES} arquivo(s)
-          </span>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button size="sm" onClick={() => onConfirm(Array.from(selected.values()))}>
-            Confirmar anexos
-          </Button>
+            {tr("{n} de até {max} arquivo(s)", { n: selected.size, max: MAX_FILES })}</span>
+          <Button variant="ghost" size="sm" onClick={onClose}>{tr("Cancelar")}</Button>
+          <Button size="sm" onClick={() => onConfirm(Array.from(selected.values()))}>{tr("Confirmar anexos")}</Button>
         </>
       }
     >
       <div className="space-y-3">
         <div className="flex items-center gap-2 text-xs text-text-muted">
-          <Button size="icon-sm" variant="ghost" onClick={goUp} disabled={currentPath === rootPath} aria-label="Voltar">
+          <Button size="icon-sm" variant="ghost" onClick={goUp} disabled={currentPath === rootPath} aria-label={tr("Voltar")}>
             <ArrowLeft size={13} />
           </Button>
           <span className="truncate font-mono">{relative ? `./${relative.replace(/\\/g, "/")}` : "./"}</span>
@@ -107,7 +103,7 @@ export function AttachFilesDialog({ open, rootPath, initiallySelected, onClose, 
               <LoadingRows />
             </div>
           ) : entries.length === 0 ? (
-            <EmptyState className="py-6" icon={Folder} title="Pasta vazia" />
+            <EmptyState className="py-6" icon={Folder} title={tr("Pasta vazia")} />
           ) : (
             entries.map((entry) => {
               const checked = selected.has(entry.path);
@@ -136,7 +132,7 @@ export function AttachFilesDialog({ open, rootPath, initiallySelected, onClose, 
 
         {selected.size > 0 && (
           <div>
-            <p className="section-title mb-1.5">Serão enviados</p>
+            <p className="section-title mb-1.5">{tr("Serão enviados")}</p>
             <div className="flex flex-wrap gap-1.5">
               {Array.from(selected.values()).map((f) => (
                 <span key={f.path} title={f.path} className="inline-flex items-center gap-1 rounded-md border border-border-subtle bg-bg px-1.5 py-0.5 text-[11px] text-text">

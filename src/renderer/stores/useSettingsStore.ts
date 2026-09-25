@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { AppSettings, SystemInfo } from "@shared/types";
 import { attempt } from "@/lib/api";
+import { getTheme } from "@/lib/themes";
 
 type SettingsPatch = Parameters<typeof window.workspace.settings.update>[0];
 
@@ -43,15 +44,38 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   },
 }));
 
-/** Aplica Dark / Light / System na raiz do documento. */
+/**
+ * Aplica o tema: `data-theme` escolhe a paleta (styles/index.css) e a classe
+ * `dark` liga os estilos escuros (ex.: destaque de código). "Sistema"
+ * acompanha o Windows. O tema também fica no localStorage para a próxima
+ * abertura já pintar certo antes das configurações carregarem.
+ */
 export function applyTheme(theme: AppSettings["theme"]): () => void {
   const media = window.matchMedia("(prefers-color-scheme: dark)");
   const apply = () => {
-    const dark = theme === "dark" || (theme === "system" && media.matches);
-    document.documentElement.classList.toggle("dark", dark);
+    const def = getTheme(theme, media.matches);
+    document.documentElement.dataset.theme = def.id;
+    document.documentElement.classList.toggle("dark", def.dark);
   };
   apply();
+  try {
+    localStorage.setItem(THEME_KEY, theme);
+  } catch {
+    // sem storage: só perde o "pintar certo" na abertura
+  }
   if (theme !== "system") return () => undefined;
   media.addEventListener("change", apply);
   return () => media.removeEventListener("change", apply);
+}
+
+const THEME_KEY = "qrz.theme";
+
+/** Chamado antes do React montar: aplica o último tema usado. */
+export function applyStoredTheme(): void {
+  try {
+    const stored = localStorage.getItem(THEME_KEY) as AppSettings["theme"] | null;
+    if (stored) applyTheme(stored);
+  } catch {
+    // ignora
+  }
 }

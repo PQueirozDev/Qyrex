@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { CalendarEvent } from "@shared/types";
 import { attempt, errorMessage, unwrap } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 type CreateInput = Parameters<typeof window.workspace.calendar.create>[0];
 type UpdatePatch = Parameters<typeof window.workspace.calendar.update>[1];
@@ -34,17 +35,17 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
     }
   },
   create: async (input) => {
-    const ok = await attempt(window.workspace.calendar.create(input), "Evento criado");
+    const ok = await attempt(window.workspace.calendar.create(input), tr("Evento criado"));
     if (ok) await get().load();
     return Boolean(ok);
   },
   update: async (id, patch) => {
-    const ok = await attempt(window.workspace.calendar.update(id, patch), "Evento atualizado");
+    const ok = await attempt(window.workspace.calendar.update(id, patch), tr("Evento atualizado"));
     if (ok) await get().load();
     return Boolean(ok);
   },
   remove: async (id) => {
-    await attempt(window.workspace.calendar.delete(id), "Evento excluído");
+    await attempt(window.workspace.calendar.delete(id), tr("Evento excluído"));
     await get().load();
   },
 }));

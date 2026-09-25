@@ -18,3 +18,11 @@ export function translate(lang: Language, text: string, vars?: Record<string, st
 export function hasTranslation(text: string): boolean {
   return Object.prototype.hasOwnProperty.call(EN, text);
 }
+
+/**
+ * Marca um texto para tradução sem traduzi-lo agora (ele é traduzido depois,
+ * onde for exibido). Serve para o extrator de chaves (scripts/i18n-keys.cjs).
+ */
+export function tm(text: string): string {
+  return text;
+}

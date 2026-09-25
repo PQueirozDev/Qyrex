@@ -1,7 +1,7 @@
 import net from "node:net";
 import { randomUUID } from "node:crypto";
 import { getSettings } from "../database/db.js";
-import { translate } from "../../shared/i18n.js";
+import { tm, translate } from "../../shared/i18n.js";
 import { createLogger } from "../logger.js";
 import type { DiscordStatus } from "../../shared/types.js";
 
@@ -103,24 +103,24 @@ async function openSocket(): Promise<net.Socket | null> {
 }
 
 const PAGE_LABEL: Record<string, string> = {
-  inicio: "No painel inicial",
-  ia: "Conversando com IA",
-  projetos: "Gerenciando projetos",
-  terminal: "No terminal",
-  arquivos: "Organizando arquivos",
-  agenda: "Planejando a agenda",
-  tarefas: "Organizando tarefas",
-  clientes: "Atendendo clientes",
-  marketing: "Criando conteúdo",
-  whatsapp: "No WhatsApp",
-  integracoes: "Configurando integrações",
-  configuracoes: "Nas configurações",
-  novidades: "Lendo as novidades",
+  inicio: tm("No painel inicial"),
+  ia: tm("Conversando com IA"),
+  projetos: tm("Gerenciando projetos"),
+  terminal: tm("No terminal"),
+  arquivos: tm("Organizando arquivos"),
+  agenda: tm("Planejando a agenda"),
+  tarefas: tm("Organizando tarefas"),
+  clientes: tm("Atendendo clientes"),
+  marketing: tm("Criando conteúdo"),
+  whatsapp: tm("No WhatsApp"),
+  integracoes: tm("Configurando integrações"),
+  configuracoes: tm("Nas configurações"),
+  novidades: tm("Lendo as novidades"),
 };
 
 /** Monta a atividade exibida no perfil. Exportado para testes. */
 export function buildActivity(page: string, project: string | null, showProject: boolean, lang: "pt" | "en", start: number) {
-  const details = translate(lang, PAGE_LABEL[page] ?? "Trabalhando");
+  const details = translate(lang, PAGE_LABEL[page] ?? tm("Trabalhando"));
   const state = showProject && project ? translate(lang, "Projeto: {name}", { name: project.slice(0, 100) }) : undefined;
   return {
     details,

@@ -49,14 +49,14 @@ export const settingsPatch = z
     theme: z.enum(["dark", "light", "system", "midnight", "violet", "sand"]),
     language: z.enum(["pt", "en"]),
     autoUpdate: z.boolean(),
-    lastSeenVersion: z.string().regex(/^d+.d+.d+([-+][w.]+)?$/).nullable(),
+    lastSeenVersion: z.string().regex(/^\d+\.\d+\.\d+([-+][\w.]+)?$/).nullable(),
     discord: z.object({
       enabled: z.boolean(),
       // ID público de aplicativo do Discord (snowflake numérico).
       clientId: z
         .string()
         .trim()
-        .regex(/^d{17,20}$/, "Client ID do Discord inválido (são 17 a 20 dígitos)")
+        .regex(/^\d{17,20}$/, "Client ID do Discord inválido (são 17 a 20 dígitos)")
         .nullable()
         .or(z.literal("").transform(() => null)),
       showProject: z.boolean(),

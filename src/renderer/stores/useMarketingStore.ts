@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { MarketingContent } from "@shared/types";
 import { attempt, errorMessage, unwrap } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 type CreateInput = Parameters<typeof window.workspace.marketing.create>[0];
 type UpdatePatch = Parameters<typeof window.workspace.marketing.update>[1];
@@ -33,7 +34,7 @@ export const useMarketingStore = create<MarketingState>((set, get) => ({
     }
   },
   create: async (input) => {
-    const ok = await attempt(window.workspace.marketing.create(input), "Conteúdo salvo");
+    const ok = await attempt(window.workspace.marketing.create(input), tr("Conteúdo salvo"));
     if (ok) await get().load();
     return Boolean(ok);
   },
@@ -44,7 +45,7 @@ export const useMarketingStore = create<MarketingState>((set, get) => ({
     return Boolean(ok);
   },
   remove: async (id) => {
-    await attempt(window.workspace.marketing.delete(id), "Conteúdo excluído");
+    await attempt(window.workspace.marketing.delete(id), tr("Conteúdo excluído"));
     await get().load();
   },
 }));

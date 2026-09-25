@@ -32,6 +32,7 @@ import { useTasksStore } from "@/stores/useTasksStore";
 import { useMarketingStore } from "@/stores/useMarketingStore";
 import { confirmAction, toast, useUIStore } from "@/stores/useUIStore";
 
+import { tr } from "@/lib/i18n";
 export const CLIENT_STATUS_LABEL: Record<ClientStatus, string> = { ativo: "Ativo", inativo: "Inativo", prospecto: "Prospecto" };
 const STATUS_TONE = { ativo: "success", inativo: "neutral", prospecto: "accent" } as const;
 
@@ -61,23 +62,23 @@ function ContactButtons({ client, size = "xs" }: { client: Client; size?: "xs" |
   return (
     <div className="flex flex-wrap gap-1" onClick={(e) => e.stopPropagation()}>
       {whatsapp && (
-        <Button size={size} variant="secondary" onClick={() => void openClientWhatsApp(whatsapp)} title="WhatsApp">
-          <MessageCircle size={12} className="text-success" /> {size === "sm" && "WhatsApp"}
+        <Button size={size} variant="secondary" onClick={() => void openClientWhatsApp(whatsapp)} title={tr("WhatsApp")}>
+          <MessageCircle size={12} className="text-success" /> {size === "sm" && tr("WhatsApp")}
         </Button>
       )}
       {client.instagram && (
-        <Button size={size} variant="secondary" onClick={() => open(instagramUrl(client.instagram!))} title="Instagram">
-          <Instagram size={12} /> {size === "sm" && "Instagram"}
+        <Button size={size} variant="secondary" onClick={() => open(instagramUrl(client.instagram!))} title={tr("Instagram")}>
+          <Instagram size={12} /> {size === "sm" && tr("Instagram")}
         </Button>
       )}
       {client.email && (
-        <Button size={size} variant="secondary" onClick={() => open(`mailto:${client.email}`)} title="Email">
-          <Mail size={12} /> {size === "sm" && "Email"}
+        <Button size={size} variant="secondary" onClick={() => open(`mailto:${client.email}`)} title={tr("Email")}>
+          <Mail size={12} /> {size === "sm" && tr("Email")}
         </Button>
       )}
       {client.phone && (
-        <Button size={size} variant="secondary" onClick={() => open(`tel:${client.phone!.replace(/[^\d+]/g, "")}`)} title="Ligar">
-          <Phone size={12} /> {size === "sm" && "Ligar"}
+        <Button size={size} variant="secondary" onClick={() => open(`tel:${client.phone!.replace(/[^\d+]/g, "")}`)} title={tr("Ligar")}>
+          <Phone size={12} /> {size === "sm" && tr("Ligar")}
         </Button>
       )}
     </div>
@@ -159,7 +160,7 @@ function ClientDrawer({ client, onClose }: { client: Client | null; onClose: () 
       notes: form.notes.trim() || null,
     };
     if (client) {
-      if (await update(client.id, payload)) toast.success("Cliente salvo");
+      if (await update(client.id, payload)) toast.success(tr("Cliente salvo"));
     } else {
       const created = await create(payload);
       if (created) navigate("clientes", created.id);
@@ -168,11 +169,11 @@ function ClientDrawer({ client, onClose }: { client: Client | null; onClose: () 
   }
 
   async function pickFolder() {
-    const dir = await attempt(window.workspace.system.pickDirectory("Pasta de arquivos do cliente"));
+    const dir = await attempt(window.workspace.system.pickDirectory(tr("Pasta de arquivos do cliente")));
     if (!dir) return;
     const allowed = await attempt(window.workspace.files.isAllowed(dir));
     if (!allowed) {
-      toast.error("Essa pasta não está dentro de um diretório autorizado (Configurações → Diretórios autorizados).");
+      toast.error(tr("Essa pasta não está dentro de um diretório autorizado (Configurações → Diretórios autorizados)."));
       return;
     }
     set("filesPath", dir);
@@ -181,10 +182,10 @@ function ClientDrawer({ client, onClose }: { client: Client | null; onClose: () 
   async function handleDelete() {
     if (!client) return;
     const ok = await confirmAction({
-      title: `Excluir o cliente "${client.name}"?`,
-      description: "Projetos, tarefas e conteúdos vinculados continuam existindo, só perdem o vínculo.",
+      title: tr("Excluir o cliente \"{name}\"?", { name: client.name }),
+      description: tr("Projetos, tarefas e conteúdos vinculados continuam existindo, só perdem o vínculo."),
       danger: true,
-      confirmLabel: "Excluir",
+      confirmLabel: tr("Excluir"),
     });
     if (!ok) return;
     await remove(client.id);
@@ -200,10 +201,10 @@ function ClientDrawer({ client, onClose }: { client: Client | null; onClose: () 
       open
       onClose={onClose}
       width={580}
-      title={client ? client.name : "Novo cliente"}
+      title={client ? client.name : tr("Novo cliente")}
       actions={
         client && (
-          <Button size="icon-sm" variant="ghost" onClick={() => void handleDelete()} title="Excluir cliente">
+          <Button size="icon-sm" variant="ghost" onClick={() => void handleDelete()} title={tr("Excluir cliente")}>
             <Trash2 size={13} className="text-danger" />
           </Button>
         )
@@ -214,15 +215,15 @@ function ClientDrawer({ client, onClose }: { client: Client | null; onClose: () 
 
         <section className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Nome">
+            <Field label={tr("Nome")}>
               <input className="input" value={form.name} onChange={(e) => set("name", e.target.value)} />
             </Field>
-            <Field label="Empresa">
+            <Field label={tr("Empresa")}>
               <input className="input" value={form.company} onChange={(e) => set("company", e.target.value)} />
             </Field>
           </div>
           <div>
-            <span className="label">Status</span>
+            <span className="label">{tr("Status")}</span>
             <Segmented
               value={form.status}
               onChange={(v) => set("status", v)}
@@ -230,16 +231,16 @@ function ClientDrawer({ client, onClose }: { client: Client | null; onClose: () 
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="WhatsApp" hint="Com DDD. Ex.: 11 99999-0000">
+            <Field label={tr("WhatsApp")} hint={tr("Com DDD. Ex.: 11 99999-0000")}>
               <input className="input" value={form.whatsapp} onChange={(e) => set("whatsapp", e.target.value)} />
             </Field>
-            <Field label="Telefone">
+            <Field label={tr("Telefone")}>
               <input className="input" value={form.phone} onChange={(e) => set("phone", e.target.value)} />
             </Field>
-            <Field label="Instagram">
+            <Field label={tr("Instagram")}>
               <input className="input" value={form.instagram} onChange={(e) => set("instagram", e.target.value)} placeholder="@perfil" />
             </Field>
-            <Field label="Email">
+            <Field label={tr("Email")}>
               <input type="email" className="input" value={form.email} onChange={(e) => set("email", e.target.value)} />
             </Field>
           </div>
@@ -247,10 +248,9 @@ function ClientDrawer({ client, onClose }: { client: Client | null; onClose: () 
 
         <section>
           <p className="section-title mb-2 flex items-center gap-1.5">
-            <Wallet size={12} /> Financeiro
-          </p>
+            <Wallet size={12} />{" "}{tr("Financeiro")}</p>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Manutenção mensal (R$)">
+            <Field label={tr("Manutenção mensal (R$)")}>
               <input
                 className={cn("input", money === "invalid" && "border-danger")}
                 value={form.monthlyValue}
@@ -260,8 +260,8 @@ function ClientDrawer({ client, onClose }: { client: Client | null; onClose: () 
               />
             </Field>
             <Field
-              label="Próxima cobrança"
-              hint={form.nextBillingDate && form.nextBillingDate < todayISO() ? <span className="text-danger">Cobrança atrasada</span> : undefined}
+              label={tr("Próxima cobrança")}
+              hint={form.nextBillingDate && form.nextBillingDate < todayISO() ? <span className="text-danger">{tr("Cobrança atrasada")}</span> : undefined}
             >
               <input type="date" className="input" value={form.nextBillingDate} onChange={(e) => set("nextBillingDate", e.target.value)} />
             </Field>
@@ -269,18 +269,17 @@ function ClientDrawer({ client, onClose }: { client: Client | null; onClose: () 
         </section>
 
         <section>
-          <p className="section-title mb-2">Pasta de arquivos</p>
+          <p className="section-title mb-2">{tr("Pasta de arquivos")}</p>
           <div className="flex gap-2">
-            <input className="input font-mono text-xs" value={form.filesPath} readOnly placeholder="Nenhuma pasta vinculada" />
+            <input className="input font-mono text-xs" value={form.filesPath} readOnly placeholder={tr("Nenhuma pasta vinculada")} />
             <Button variant="secondary" onClick={() => void pickFolder()}>
-              <FolderSearch size={14} /> Escolher
-            </Button>
+              <FolderSearch size={14} />{" "}{tr("Escolher")}</Button>
             {form.filesPath && (
               <>
-                <Button variant="ghost" size="icon" onClick={() => navigate("arquivos", form.filesPath)} title="Abrir em Arquivos">
+                <Button variant="ghost" size="icon" onClick={() => navigate("arquivos", form.filesPath)} title={tr("Abrir em Arquivos")}>
                   <FolderOpen size={14} />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => set("filesPath", "")} title="Desvincular pasta">
+                <Button variant="ghost" size="icon" onClick={() => set("filesPath", "")} title={tr("Desvincular pasta")}>
                   <X size={14} />
                 </Button>
               </>
@@ -288,18 +287,16 @@ function ClientDrawer({ client, onClose }: { client: Client | null; onClose: () 
           </div>
         </section>
 
-        <Field label="Observações">
+        <Field label={tr("Observações")}>
           <textarea className="input min-h-[80px] resize-y" value={form.notes} onChange={(e) => set("notes", e.target.value)} />
         </Field>
 
         <div className="flex justify-end gap-2">
           {client && dirty && (
-            <Button size="sm" variant="ghost" onClick={() => setForm(toForm(client))}>
-              Descartar
-            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setForm(toForm(client))}>{tr("Descartar")}</Button>
           )}
           <Button size="sm" onClick={() => void save()} loading={saving} disabled={!form.name.trim() || money === "invalid" || (client !== null && !dirty)}>
-            {client ? "Salvar alterações" : "Criar cliente"}
+            {client ? tr("Salvar alterações") : tr("Criar cliente")}
           </Button>
         </div>
 
@@ -307,10 +304,9 @@ function ClientDrawer({ client, onClose }: { client: Client | null; onClose: () 
           <>
             <section>
               <p className="section-title mb-2 flex items-center gap-1.5">
-                <Code2 size={12} /> Projetos
-              </p>
+                <Code2 size={12} />{" "}{tr("Projetos")}</p>
               {clientProjects.length === 0 ? (
-                <p className="text-xs text-text-faint">Nenhum projeto vinculado. Vincule pelo formulário do projeto.</p>
+                <p className="text-xs text-text-faint">{tr("Nenhum projeto vinculado. Vincule pelo formulário do projeto.")}</p>
               ) : (
                 <div className="flex flex-wrap gap-1.5">
                   {clientProjects.map((p) => (
@@ -325,19 +321,17 @@ function ClientDrawer({ client, onClose }: { client: Client | null; onClose: () 
             <section>
               <div className="mb-2 flex items-center justify-between">
                 <p className="section-title flex items-center gap-1.5">
-                  <CheckSquare size={12} /> Tarefas abertas
-                </p>
+                  <CheckSquare size={12} />{" "}{tr("Tarefas abertas")}</p>
                 <Button size="xs" variant="ghost" onClick={() => setTaskOpen(true)}>
-                  <Plus size={12} /> Nova
-                </Button>
+                  <Plus size={12} />{" "}{tr("Nova")}</Button>
               </div>
               {clientTasks.length === 0 ? (
-                <p className="text-xs text-text-faint">Nenhuma tarefa aberta.</p>
+                <p className="text-xs text-text-faint">{tr("Nenhuma tarefa aberta.")}</p>
               ) : (
                 <div className="space-y-1">
                   {clientTasks.map((t) => (
                     <div key={t.id} className="flex items-center gap-2 text-sm">
-                      <input type="checkbox" className="accent-accent" checked={false} onChange={() => void toggleDone(t)} aria-label="Concluir" />
+                      <input type="checkbox" className="accent-accent" checked={false} onChange={() => void toggleDone(t)} aria-label={tr("Concluir")} />
                       <button className="min-w-0 flex-1 truncate text-left text-text" onClick={() => navigate("tarefas", t.id)}>
                         {t.title}
                       </button>
@@ -351,14 +345,11 @@ function ClientDrawer({ client, onClose }: { client: Client | null; onClose: () 
             <section>
               <div className="mb-2 flex items-center justify-between">
                 <p className="section-title flex items-center gap-1.5">
-                  <Megaphone size={12} /> Marketing em andamento
-                </p>
-                <Button size="xs" variant="ghost" onClick={() => navigate("marketing")}>
-                  Ver quadro
-                </Button>
+                  <Megaphone size={12} />{" "}{tr("Marketing em andamento")}</p>
+                <Button size="xs" variant="ghost" onClick={() => navigate("marketing")}>{tr("Ver quadro")}</Button>
               </div>
               {clientContent.length === 0 ? (
-                <p className="text-xs text-text-faint">Nenhum conteúdo em andamento.</p>
+                <p className="text-xs text-text-faint">{tr("Nenhum conteúdo em andamento.")}</p>
               ) : (
                 <div className="space-y-1">
                   {clientContent.map((m) => (
@@ -427,7 +418,7 @@ export function Clients() {
 
   useEffect(() => {
     if (openId && openId !== "new" && loaded && !clients.some((c) => c.id === openId)) {
-      toast.error("Cliente não encontrado.");
+      toast.error(tr("Cliente não encontrado."));
       setOpenId(null);
     }
   }, [openId, loaded, clients]);
@@ -440,12 +431,11 @@ export function Clients() {
   return (
     <div>
       <PageHeader
-        title="Clientes"
-        description={`${counts.ativo} ativo(s) · ${formatCurrency(monthly)}/mês em manutenção`}
+        title={tr("Clientes")}
+        description={tr("{n} ativo(s) · {value}/mês em manutenção", { n: counts.ativo, value: formatCurrency(monthly) })}
         actions={
           <Button size="sm" onClick={() => setOpenId("new")}>
-            <Plus size={14} /> Novo cliente
-          </Button>
+            <Plus size={14} />{" "}{tr("Novo cliente")}</Button>
         }
       />
 
@@ -454,15 +444,15 @@ export function Clients() {
           value={statusFilter}
           onChange={setStatusFilter}
           options={[
-            { value: "todos", label: "Todos" },
-            { value: "ativo", label: "Ativos", count: counts.ativo },
-            { value: "prospecto", label: "Prospectos", count: counts.prospecto },
-            { value: "inativo", label: "Inativos", count: counts.inativo },
+            { value: "todos", label: tr("Todos") },
+            { value: "ativo", label: tr("Ativos"), count: counts.ativo },
+            { value: "prospecto", label: tr("Prospectos"), count: counts.prospecto },
+            { value: "inativo", label: tr("Inativos"), count: counts.inativo },
           ]}
         />
         <div className="relative ml-auto">
           <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-faint" />
-          <input ref={searchRef} className="input w-64 py-1 pl-7 text-xs" placeholder="Buscar cliente..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input ref={searchRef} className="input w-64 py-1 pl-7 text-xs" placeholder={tr("Buscar cliente...")} value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
       </div>
 
@@ -476,16 +466,15 @@ export function Clients() {
         ) : clients.length === 0 ? (
           <EmptyState
             icon={Users}
-            title="Nenhum cliente ainda"
-            description="Cadastre clientes para acompanhar manutenção mensal, cobranças, projetos e conteúdo."
+            title={tr("Nenhum cliente ainda")}
+            description={tr("Cadastre clientes para acompanhar manutenção mensal, cobranças, projetos e conteúdo.")}
             action={
               <Button size="sm" onClick={() => setOpenId("new")}>
-                <Plus size={14} /> Novo cliente
-              </Button>
+                <Plus size={14} />{" "}{tr("Novo cliente")}</Button>
             }
           />
         ) : filtered.length === 0 ? (
-          <EmptyState icon={Search} title="Nenhum cliente encontrado" />
+          <EmptyState icon={Search} title={tr("Nenhum cliente encontrado")} />
         ) : (
           <div className="divide-y divide-border-subtle">
             {filtered.map((c) => (
@@ -512,7 +501,7 @@ export function Clients() {
                     )}
                   </div>
                 </div>
-                {c.monthlyValue != null && <span className="text-xs text-text-muted">{formatCurrency(c.monthlyValue)}/mês</span>}
+                {c.monthlyValue != null && <span className="text-xs text-text-muted">{formatCurrency(c.monthlyValue)}{tr("/mês")}</span>}
                 {c.nextBillingDate && (
                   <span className={cn("w-24 text-right text-[11px] capitalize", c.nextBillingDate < today ? "text-danger" : "text-text-faint")}>
                     {relativeDay(c.nextBillingDate)}

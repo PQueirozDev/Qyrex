@@ -5,6 +5,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import { useUIStore } from "@/stores/useUIStore";
+import { tr } from "@/lib/i18n";
 
 /** Notificações discretas no canto inferior direito. */
 export function Toaster() {
@@ -28,7 +29,7 @@ export function Toaster() {
               )}
             />
             <p className="min-w-0 flex-1 break-words text-[13px] text-text">{t.message}</p>
-            <button onClick={() => dismiss(t.id)} className="text-text-faint hover:text-text" aria-label="Fechar">
+            <button onClick={() => dismiss(t.id)} className="text-text-faint hover:text-text" aria-label={tr("Fechar")}>
               <X size={13} />
             </button>
           </div>
@@ -54,11 +55,9 @@ export function ConfirmHost() {
       description={options.description}
       footer={
         <>
-          <Button variant="ghost" size="sm" onClick={() => resolve(false)}>
-            Cancelar
-          </Button>
+          <Button variant="ghost" size="sm" onClick={() => resolve(false)}>{tr("Cancelar")}</Button>
           <Button variant={options.danger ? "danger" : "default"} size="sm" onClick={() => resolve(true)} data-autofocus>
-            {options.confirmLabel ?? "Confirmar"}
+            {options.confirmLabel ?? tr("Confirmar")}
           </Button>
         </>
       }
@@ -93,11 +92,9 @@ export function PromptHost() {
       title={options.title}
       footer={
         <>
-          <Button variant="ghost" size="sm" onClick={() => resolve(null)}>
-            Cancelar
-          </Button>
+          <Button variant="ghost" size="sm" onClick={() => resolve(null)}>{tr("Cancelar")}</Button>
           <Button size="sm" onClick={submit} disabled={!value.trim()}>
-            {options.confirmLabel ?? "OK"}
+            {options.confirmLabel ?? tr("OK")}
           </Button>
         </>
       }

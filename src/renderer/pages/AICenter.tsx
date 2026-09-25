@@ -32,6 +32,7 @@ import { useProjectsStore } from "@/stores/useProjectsStore";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { confirmAction, promptText, useUIStore } from "@/stores/useUIStore";
 
+import { tr } from "@/lib/i18n";
 const PROVIDER_IDS: AIProviderId[] = ["anthropic", "openai", "google"];
 
 function ModelSelect({
@@ -65,7 +66,7 @@ function ModelSelect({
         size="icon"
         className="h-[34px] w-[34px]"
         disabled={!provider?.connected || refreshing}
-        title="Atualizar lista de modelos"
+        title={tr("Atualizar lista de modelos")}
         onClick={async () => {
           if (!provider) return;
           setRefreshing(true);
@@ -116,16 +117,12 @@ function NewConversationDialog({ open, initialProvider, onClose }: { open: boole
     <Dialog
       open={open}
       onClose={onClose}
-      title="Nova conversa"
+      title={tr("Nova conversa")}
       footer={
         connected.length > 0 && (
           <>
-            <Button size="sm" variant="ghost" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button size="sm" onClick={() => void create()} loading={creating} disabled={!provider || !model}>
-              Começar
-            </Button>
+            <Button size="sm" variant="ghost" onClick={onClose}>{tr("Cancelar")}</Button>
+            <Button size="sm" onClick={() => void create()} loading={creating} disabled={!provider || !model}>{tr("Começar")}</Button>
           </>
         )
       }
@@ -133,8 +130,8 @@ function NewConversationDialog({ open, initialProvider, onClose }: { open: boole
       {connected.length === 0 ? (
         <EmptyState
           icon={Plug}
-          title="Nenhuma IA conectada"
-          description="Conecte Claude, OpenAI ou Gemini com a sua API key em Integrações."
+          title={tr("Nenhuma IA conectada")}
+          description={tr("Conecte Claude, OpenAI ou Gemini com a sua API key em Integrações.")}
           action={
             <Button
               size="sm"
@@ -142,15 +139,13 @@ function NewConversationDialog({ open, initialProvider, onClose }: { open: boole
                 onClose();
                 useUIStore.getState().navigate("integracoes");
               }}
-            >
-              Abrir Integrações
-            </Button>
+            >{tr("Abrir Integrações")}</Button>
           }
         />
       ) : (
         <div className="space-y-3">
           <div>
-            <span className="label">Provider</span>
+            <span className="label">{tr("Provider")}</span>
             <Segmented
               value={provider || connected[0].id}
               onChange={(p) => {
@@ -160,12 +155,12 @@ function NewConversationDialog({ open, initialProvider, onClose }: { open: boole
               options={connected.map((p) => ({ value: p.id, label: p.label }))}
             />
           </div>
-          <Field label="Modelo">
+          <Field label={tr("Modelo")}>
             <ModelSelect provider={status} value={model} onChange={setModel} />
           </Field>
-          <Field label="Projeto (opcional)" hint="Com um projeto você pode anexar arquivos dele e executar comandos sugeridos na pasta dele.">
+          <Field label={tr("Projeto (opcional)")} hint={tr("Com um projeto você pode anexar arquivos dele e executar comandos sugeridos na pasta dele.")}>
             <select className="input" value={projectId} onChange={(e) => setProjectId(e.target.value)}>
-              <option value="">Nenhum</option>
+              <option value="">{tr("Nenhum")}</option>
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
@@ -185,7 +180,7 @@ function AttachedChips({ files, onRemove }: { files: AttachedFileRef[]; onRemove
   if (files.length === 0) return null;
   return (
     <div className="flex flex-wrap items-center gap-1.5 px-3 pt-2">
-      <span className="text-[11px] text-text-faint">Serão enviados:</span>
+      <span className="text-[11px] text-text-faint">{tr("Serão enviados:")}</span>
       {files.map((f) => (
         <span key={f.path} title={f.path} className="inline-flex items-center gap-1 rounded-md border border-accent/25 bg-accent/5 px-1.5 py-0.5 text-[11px] text-text">
           <Paperclip size={10} className="text-accent" /> {f.name}
@@ -242,12 +237,11 @@ function ChatView({ onNew }: { onNew: () => void }) {
       <EmptyState
         className="h-full"
         icon={MessageSquare}
-        title="Nenhuma conversa selecionada"
-        description="Escolha uma conversa ao lado ou comece uma nova."
+        title={tr("Nenhuma conversa selecionada")}
+        description={tr("Escolha uma conversa ao lado ou comece uma nova.")}
         action={
           <Button size="sm" onClick={onNew}>
-            <Plus size={14} /> Nova conversa
-          </Button>
+            <Plus size={14} />{" "}{tr("Nova conversa")}</Button>
         }
       />
     );
@@ -289,20 +283,20 @@ function ChatView({ onNew }: { onNew: () => void }) {
           trigger={<MoreHorizontal size={15} />}
           items={[
             {
-              label: "Renomear",
+              label: tr("Renomear"),
               icon: Pencil,
               onSelect: async () => {
-                const title = await promptText({ title: "Renomear conversa", initialValue: conversation.title, confirmLabel: "Salvar" });
+                const title = await promptText({ title: tr("Renomear conversa"), initialValue: conversation.title, confirmLabel: tr("Salvar") });
                 if (title) void updateConversation(conversation.id, { title });
               },
             },
             "separator",
             {
-              label: "Excluir conversa",
+              label: tr("Excluir conversa"),
               icon: Trash2,
               danger: true,
               onSelect: async () => {
-                if (await confirmAction({ title: "Excluir esta conversa?", description: "Todo o histórico dela será apagado.", danger: true, confirmLabel: "Excluir" }))
+                if (await confirmAction({ title: tr("Excluir esta conversa?"), description: tr("Todo o histórico dela será apagado."), danger: true, confirmLabel: tr("Excluir") }))
                   void deleteConversation(conversation.id);
               },
             },
@@ -313,7 +307,7 @@ function ChatView({ onNew }: { onNew: () => void }) {
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-3xl space-y-4 px-5 py-5">
           {messages.length === 0 && !isStreaming && (
-            <EmptyState icon={Bot} title={`Converse com ${provider?.label ?? "a IA"}`} description={project ? `Contexto: projeto ${project.name}. Anexe arquivos para a IA ler.` : undefined} />
+            <EmptyState icon={Bot} title={tr("Converse com {name}", { name: provider?.label ?? tr("a IA") })} description={project ? tr("Contexto: projeto {name}. Anexe arquivos para a IA ler.", { name: project.name }) : undefined} />
           )}
           {messages.map((m, i) => (
             <MessageBubble
@@ -325,8 +319,7 @@ function ChatView({ onNew }: { onNew: () => void }) {
               footer={
                 i === messages.length - 1 && lastIsAssistant && !isStreaming ? (
                   <Button size="xs" variant="ghost" onClick={() => void regenerate()}>
-                    <RotateCcw size={11} /> Regenerar resposta
-                  </Button>
+                    <RotateCcw size={11} />{" "}{tr("Regenerar resposta")}</Button>
                 ) : undefined
               }
             />
@@ -343,7 +336,7 @@ function ChatView({ onNew }: { onNew: () => void }) {
           <AttachedChips files={attached} onRemove={(p) => setAttached(attached.filter((f) => f.path !== p))} />
           <textarea
             className="max-h-48 min-h-[56px] w-full resize-none bg-transparent px-3 py-2.5 text-sm text-text placeholder:text-text-faint focus:outline-none"
-            placeholder={`Mensagem para ${provider?.label ?? "a IA"}... (Enter envia, Shift+Enter quebra linha)`}
+            placeholder={tr("Mensagem para {name}... (Enter envia, Shift+Enter quebra linha)", { name: provider?.label ?? tr("a IA") })}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => {
@@ -359,19 +352,16 @@ function ChatView({ onNew }: { onNew: () => void }) {
               variant="ghost"
               onClick={() => setAttachOpen(true)}
               disabled={!project}
-              title={project ? "Anexar arquivos do projeto" : "Vincule um projeto à conversa para anexar arquivos"}
+              title={project ? tr("Anexar arquivos do projeto") : tr("Vincule um projeto à conversa para anexar arquivos")}
             >
-              <Paperclip size={13} /> Anexar
-            </Button>
-            <span className="ml-auto text-[11px] text-text-faint">{provider?.connected === false && "Provider desconectado"}</span>
+              <Paperclip size={13} />{" "}{tr("Anexar")}</Button>
+            <span className="ml-auto text-[11px] text-text-faint">{provider?.connected === false && tr("Provider desconectado")}</span>
             {isStreaming ? (
               <Button size="sm" variant="secondary" onClick={() => void interrupt()}>
-                <Square size={12} /> Interromper
-              </Button>
+                <Square size={12} />{" "}{tr("Interromper")}</Button>
             ) : (
               <Button size="sm" onClick={() => void send()} disabled={!draft.trim() || provider?.connected === false}>
-                <Send size={13} /> Enviar
-              </Button>
+                <Send size={13} />{" "}{tr("Enviar")}</Button>
             )}
           </div>
         </div>
@@ -526,12 +516,10 @@ function CouncilView() {
       <EmptyState
         className="h-full"
         icon={Users}
-        title="O AI Council precisa de pelo menos uma IA conectada"
-        description="Conecte Claude, OpenAI e/ou Gemini para comparar respostas lado a lado."
+        title={tr("O AI Council precisa de pelo menos uma IA conectada")}
+        description={tr("Conecte Claude, OpenAI e/ou Gemini para comparar respostas lado a lado.")}
         action={
-          <Button size="sm" onClick={() => navigate("integracoes")}>
-            Abrir Integrações
-          </Button>
+          <Button size="sm" onClick={() => navigate("integracoes")}>{tr("Abrir Integrações")}</Button>
         }
       />
     );
@@ -541,8 +529,8 @@ function CouncilView() {
     <div className="h-full overflow-y-auto">
       <div className="mx-auto max-w-6xl space-y-4 px-6 py-5">
         <div>
-          <h2 className="text-base font-semibold text-text">AI Council</h2>
-          <p className="text-sm text-text-muted">A mesma pergunta para vários modelos, respostas lado a lado e uma síntese final.</p>
+          <h2 className="text-base font-semibold text-text">{tr("AI Council")}</h2>
+          <p className="text-sm text-text-muted">{tr("A mesma pergunta para vários modelos, respostas lado a lado e uma síntese final.")}</p>
         </div>
 
         <Card className="space-y-3 p-4">
@@ -561,7 +549,7 @@ function CouncilView() {
                       onChange={(e) => setEnabled({ ...enabled, [id]: e.target.checked })}
                     />
                     {p.label}
-                    {!p.connected && <Badge>desconectado</Badge>}
+                    {!p.connected && <Badge>{tr("desconectado")}</Badge>}
                   </label>
                   {p.connected && (
                     <ModelSelect
@@ -578,7 +566,7 @@ function CouncilView() {
 
           <textarea
             className="input min-h-[90px] resize-y"
-            placeholder="Pergunta para o conselho..."
+            placeholder={tr("Pergunta para o conselho...")}
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             onKeyDown={(e) => {
@@ -594,7 +582,7 @@ function CouncilView() {
                 setAttached([]);
               }}
             >
-              <option value="">Sem projeto (sem anexos)</option>
+              <option value="">{tr("Sem projeto (sem anexos)")}</option>
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
@@ -602,17 +590,15 @@ function CouncilView() {
               ))}
             </select>
             <Button size="sm" variant="ghost" disabled={!project} onClick={() => setAttachOpen(true)}>
-              <Paperclip size={13} /> Anexar{attached.length > 0 && ` (${attached.length})`}
+              <Paperclip size={13} />{" "}{tr("Anexar")}{attached.length > 0 && ` (${attached.length})`}
             </Button>
             <div className="ml-auto flex gap-2">
               {running && (
                 <Button size="sm" variant="secondary" onClick={interruptAll}>
-                  <Square size={12} /> Interromper
-                </Button>
+                  <Square size={12} />{" "}{tr("Interromper")}</Button>
               )}
               <Button size="sm" onClick={() => setConfirmOpen(true)} disabled={!prompt.trim() || targets.length === 0 || running}>
-                <Users size={13} /> Perguntar ao conselho
-              </Button>
+                <Users size={13} />{" "}{tr("Perguntar ao conselho")}</Button>
             </div>
           </div>
           <AttachedChips files={attached} onRemove={(p) => setAttached(attached.filter((f) => f.path !== p))} />
@@ -629,12 +615,12 @@ function CouncilView() {
                   <span className="text-sm font-medium text-text">{labelOf(a.provider)}</span>
                   <span className="truncate text-[11px] text-text-faint">{a.model}</span>
                   <span className="ml-auto">
-                    {a.status === "streaming" ? <Spinner className="h-3 w-3" /> : a.status === "error" ? <Badge tone="danger">Erro</Badge> : <Badge tone="success">Pronto</Badge>}
+                    {a.status === "streaming" ? <Spinner className="h-3 w-3" /> : a.status === "error" ? <Badge tone="danger">{tr("Erro")}</Badge> : <Badge tone="success">{tr("Pronto")}</Badge>}
                   </span>
                 </div>
                 <div className="min-w-0 p-3">
                   {a.status === "error" ? (
-                    <ErrorState message={a.error ?? "Erro na IA."} />
+                    <ErrorState message={a.error ?? tr("Erro na IA.")} />
                   ) : (
                     <MessageBubble role="assistant" content={a.text || "…"} />
                   )}
@@ -648,11 +634,10 @@ function CouncilView() {
           <Card className="p-4">
             <div className="flex flex-wrap items-center gap-2">
               <Sparkles size={14} className="text-accent" />
-              <span className="text-sm font-medium text-text">Síntese</span>
+              <span className="text-sm font-medium text-text">{tr("Síntese")}</span>
               <select className="input ml-auto w-44 py-1 text-xs" value={synthProvider} onChange={(e) => setSynthProvider(e.target.value as AIProviderId)}>
                 {connected.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    Sintetizar com {p.label}
+                  <option key={p.id} value={p.id}>{tr("Sintetizar com")}{" "}{p.label}
                   </option>
                 ))}
               </select>
@@ -661,13 +646,11 @@ function CouncilView() {
                 onClick={() => void synthesize()}
                 disabled={synth?.status === "streaming" || !answers.some((a) => a.status === "done" && a.text.trim())}
                 loading={synth?.status === "streaming"}
-              >
-                Sintetizar respostas
-              </Button>
+              >{tr("Sintetizar respostas")}</Button>
             </div>
             {synth && (
               <div className="mt-3">
-                {synth.status === "error" ? <ErrorState message={synth.error ?? "Erro na síntese."} /> : <MessageBubble role="assistant" content={synth.text || "…"} />}
+                {synth.status === "error" ? <ErrorState message={synth.error ?? tr("Erro na síntese.")} /> : <MessageBubble role="assistant" content={synth.text || "…"} />}
               </div>
             )}
           </Card>
@@ -678,15 +661,12 @@ function CouncilView() {
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
         size="sm"
-        title={`Enviar para ${targets.length} provider(s)?`}
-        description="Cada provider cobra pela própria resposta na sua API key."
+        title={tr("Enviar para {n} provider(s)?", { n: targets.length })}
+        description={tr("Cada provider cobra pela própria resposta na sua API key.")}
         footer={
           <>
-            <Button size="sm" variant="ghost" onClick={() => setConfirmOpen(false)}>
-              Cancelar
-            </Button>
-            <Button size="sm" onClick={() => void run()} data-autofocus>
-              Enviar para {targets.length}
+            <Button size="sm" variant="ghost" onClick={() => setConfirmOpen(false)}>{tr("Cancelar")}</Button>
+            <Button size="sm" onClick={() => void run()} data-autofocus>{tr("Enviar para")}{" "}{targets.length}
             </Button>
           </>
         }
@@ -700,7 +680,7 @@ function CouncilView() {
             </li>
           ))}
         </ul>
-        {attached.length > 0 && <p className="mt-2 text-xs text-text-muted">{attached.length} arquivo(s) anexado(s) vão junto para todos.</p>}
+        {attached.length > 0 && <p className="mt-2 text-xs text-text-muted">{attached.length}{" "}{tr("arquivo(s) anexado(s) vão junto para todos.")}</p>}
       </Dialog>
 
       {project && (
@@ -770,22 +750,21 @@ export function AICenter() {
             value={tab}
             onChange={setTab}
             options={[
-              { value: "chat", label: "Chat" },
-              { value: "council", label: "AI Council" },
+              { value: "chat", label: tr("Chat") },
+              { value: "council", label: tr("AI Council") },
             ]}
           />
           {tab === "chat" && (
             <>
               <Button size="sm" className="w-full" onClick={openNew}>
-                <Plus size={14} /> Nova conversa
-              </Button>
-              <input className="input py-1 text-xs" placeholder="Filtrar conversas..." value={filter} onChange={(e) => setFilter(e.target.value)} />
+                <Plus size={14} />{" "}{tr("Nova conversa")}</Button>
+              <input className="input py-1 text-xs" placeholder={tr("Filtrar conversas...")} value={filter} onChange={(e) => setFilter(e.target.value)} />
             </>
           )}
         </div>
         {tab === "chat" ? (
           <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto px-2 pb-3">
-            {visible.length === 0 && <p className="px-2 py-4 text-center text-xs text-text-faint">Nenhuma conversa.</p>}
+            {visible.length === 0 && <p className="px-2 py-4 text-center text-xs text-text-faint">{tr("Nenhuma conversa.")}</p>}
             {visible.map((c) => (
               <button
                 key={c.id}
@@ -803,9 +782,7 @@ export function AICenter() {
             ))}
           </div>
         ) : (
-          <div className="px-4 text-xs leading-relaxed text-text-muted">
-            O Council só dispara para os providers marcados, e você confirma a quantidade antes de enviar.
-          </div>
+          <div className="px-4 text-xs leading-relaxed text-text-muted">{tr("O Council só dispara para os providers marcados, e você confirma a quantidade antes de enviar.")}</div>
         )}
       </aside>
 

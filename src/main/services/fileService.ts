@@ -113,7 +113,7 @@ export function moveEntry(sourcePath: string, destDir: string): string {
 export function deleteEntry(targetPath: string): void {
   const resolved = assertPathAllowedAndExists(targetPath);
   if (getAllowedDirs().some((root) => path.resolve(root) === resolved)) {
-    throw new Error("Um diretório autorizado raiz não pode ser excluído pelo Workspace.");
+    throw new Error("Um diretório autorizado raiz não pode ser excluído pelo QrzSpace.");
   }
   fs.rmSync(resolved, { recursive: true, force: false });
 }

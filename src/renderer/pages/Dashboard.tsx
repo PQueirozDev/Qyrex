@@ -25,10 +25,11 @@ import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useClientsStore } from "@/stores/useClientsStore";
 import { useUIStore } from "@/stores/useUIStore";
 import { attempt } from "@/lib/api";
-import { addDays, formatCurrency, formatDate, formatTime, greeting, relativeDay, timeAgo, todayISO, toLocalDate } from "@/lib/format";
+import { addDays, toLocalDateTime, formatCurrency, formatDate, formatTime, greeting, relativeDay, timeAgo, todayISO, toLocalDate } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { PRIORITY_LABEL } from "@/components/TaskFormDialog";
 
+import { getLocale, tr } from "@/lib/i18n";
 const ACTIVITY_ICON: Record<string, typeof Code2> = {
   project: Code2,
   file: FileText,
@@ -40,10 +41,47 @@ const ACTIVITY_ICON: Record<string, typeof Code2> = {
 const ACTIVITY_TEXT: Record<string, string> = {
   project: "Projeto aberto",
   file: "Arquivo aberto",
-  task_completed: "Tarefa concluída",
+  task_completed: tr("Tarefa concluída"),
   client: "Cliente aberto",
   commit: "Commit",
 };
+
+const TILE_TONES = {
+  accent: "bg-accent/10 text-accent",
+  success: "bg-success/10 text-success",
+  warning: "bg-warning/10 text-warning",
+  danger: "bg-danger/10 text-danger",
+  neutral: "bg-bg-hover text-text-muted",
+} as const;
+
+function StatTile({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  tone,
+  onClick,
+}: {
+  icon: typeof Code2;
+  label: string;
+  value: string | number;
+  sub: string;
+  tone: keyof typeof TILE_TONES;
+  onClick: () => void;
+}) {
+  return (
+    <button onClick={onClick} className="card-interactive rounded-card border border-border-subtle bg-bg-card p-4 text-left shadow-card">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-text-muted">{label}</span>
+        <span className={cn("flex h-7 w-7 items-center justify-center rounded-lg", TILE_TONES[tone])}>
+          <Icon size={14} />
+        </span>
+      </div>
+      <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-text">{value}</p>
+      <p className="mt-0.5 truncate text-[11px] text-text-faint">{sub}</p>
+    </button>
+  );
+}
 
 export function Dashboard() {
   const navigate = useUIStore((s) => s.navigate);
@@ -102,15 +140,21 @@ export function Dashboard() {
     .sort((a, b) => (a.nextBillingDate ?? "").localeCompare(b.nextBillingDate ?? ""))
     .slice(0, 4);
   const lastProject = recentProjects[0];
+  const overdue = tasks.filter((t) => t.status !== "concluido" && t.dueDate && t.dueDate < today).length;
+  const nowTime = toLocalDateTime(new Date());
+  const nextToday = todayEvents.find((e) => e.startsAt >= nowTime);
+  const pendingChanges = projects.filter((p) => (p.git?.modifiedCount ?? 0) > 0).length;
+  const activeClients = clients.filter((c) => c.status === "ativo").length;
+  const monthlyTotal = clients.filter((c) => c.status === "ativo").reduce((sum, c) => sum + (c.monthlyValue ?? 0), 0);
 
   const quickActions = [
-    { label: "Nova tarefa", icon: Plus, run: () => setQuickTaskOpen(true) },
-    { label: "Novo cliente", icon: UserPlus, run: () => navigate("clientes", "new") },
-    { label: "Novo projeto", icon: Code2, run: () => navigate("projetos", "new") },
-    { label: "Abrir VS Code", icon: Code2, run: () => (lastProject ? void openProject(lastProject, "vscode") : navigate("projetos")) },
-    { label: "Abrir terminal", icon: SquareTerminal, run: () => navigate("terminal", lastProject?.id ?? null) },
-    { label: "Abrir WhatsApp", icon: MessageCircle, run: () => navigate("whatsapp") },
-    { label: "Perguntar para IA", icon: Bot, run: () => navigate("ia") },
+    { label: tr("Nova tarefa"), icon: Plus, run: () => setQuickTaskOpen(true) },
+    { label: tr("Novo cliente"), icon: UserPlus, run: () => navigate("clientes", "new") },
+    { label: tr("Novo projeto"), icon: Code2, run: () => navigate("projetos", "new") },
+    { label: tr("Abrir VS Code"), icon: Code2, run: () => (lastProject ? void openProject(lastProject, "vscode") : navigate("projetos")) },
+    { label: tr("Abrir terminal"), icon: SquareTerminal, run: () => navigate("terminal", lastProject?.id ?? null) },
+    { label: tr("Abrir WhatsApp"), icon: MessageCircle, run: () => navigate("whatsapp") },
+    { label: tr("Perguntar para IA"), icon: Bot, run: () => navigate("ia") },
   ];
 
   return (
@@ -122,13 +166,48 @@ export function Dashboard() {
             {settings?.userName ? `, ${settings.userName}` : ""}
           </h1>
           <p className="mt-0.5 text-sm first-letter:uppercase text-text-muted">
-            {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
+            {new Date().toLocaleDateString(getLocale(), { weekday: "long", day: "numeric", month: "long" })}
             {" · "}
             <span className="normal-case">
-              {focusTasks.length} tarefa(s) em foco · {todayEvents.length} compromisso(s) hoje
+              {tr("{tasks} tarefa(s) em foco · {events} compromisso(s) hoje", { tasks: focusTasks.length, events: todayEvents.length })}
             </span>
           </p>
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <StatTile
+          icon={CheckSquare}
+          label={tr("Tarefas em foco")}
+          value={focusTasks.length}
+          sub={overdue > 0 ? tr("{n} atrasada(s)", { n: overdue }) : tr("{n} concluída(s) hoje", { n: doneToday.length })}
+          tone={overdue > 0 ? "danger" : "accent"}
+          onClick={() => navigate("tarefas")}
+        />
+        <StatTile
+          icon={CalendarDays}
+          label={tr("Compromissos hoje")}
+          value={todayEvents.length}
+          sub={nextToday ? tr("Próximo às {time}", { time: formatTime(nextToday.startsAt) }) : tr("Agenda livre")}
+          tone="success"
+          onClick={() => navigate("agenda")}
+        />
+        <StatTile
+          icon={Code2}
+          label={tr("Projetos")}
+          value={projects.length}
+          sub={pendingChanges > 0 ? tr("{n} com alterações no Git", { n: pendingChanges }) : tr("Tudo commitado")}
+          tone="warning"
+          onClick={() => navigate("projetos")}
+        />
+        <StatTile
+          icon={Wallet}
+          label={tr("Manutenção mensal")}
+          value={formatCurrency(monthlyTotal) || formatCurrency(0)}
+          sub={tr("{n} cliente(s) ativo(s)", { n: activeClients })}
+          tone="neutral"
+          onClick={() => navigate("clientes")}
+        />
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -143,26 +222,24 @@ export function Dashboard() {
         {/* Agenda */}
         <Card>
           <CardHeader
-            title="Agenda de hoje"
+            title={tr("Agenda de hoje")}
             icon={<CalendarDays size={12} />}
             action={
-              <Button variant="ghost" size="xs" onClick={() => navigate("agenda")}>
-                Abrir
-              </Button>
+              <Button variant="ghost" size="xs" onClick={() => navigate("agenda")}>{tr("Abrir")}</Button>
             }
           />
           <CardContent>
             {events === null ? (
               <LoadingRows rows={2} />
             ) : todayEvents.length === 0 ? (
-              <p className="py-3 text-sm text-text-faint">Nenhum compromisso hoje.</p>
+              <p className="py-3 text-sm text-text-faint">{tr("Nenhum compromisso hoje.")}</p>
             ) : (
               <ul className="space-y-1">
                 {todayEvents.map((e) => (
                   <li key={e.id} className="flex items-center gap-3 rounded-md px-1 py-1.5">
                     <span className="w-11 font-mono text-xs tabular-nums text-accent">{formatTime(e.startsAt)}</span>
                     <span className="min-w-0 flex-1 truncate text-sm text-text">{e.title}</span>
-                    {e.source === "google" && <Badge>Google</Badge>}
+                    {e.source === "google" && <Badge>{tr("Google")}</Badge>}
                   </li>
                 ))}
               </ul>
@@ -185,14 +262,12 @@ export function Dashboard() {
         {/* Tarefas */}
         <Card>
           <CardHeader
-            title="Tarefas"
+            title={tr("Tarefas")}
             icon={<CheckSquare size={12} />}
             action={
               <div className="flex items-center gap-2">
-                {doneToday.length > 0 && <span className="text-[11px] text-success">{doneToday.length} feita(s) hoje</span>}
-                <Button variant="ghost" size="xs" onClick={() => navigate("tarefas")}>
-                  Ver todas
-                </Button>
+                {doneToday.length > 0 && <span className="text-[11px] text-success">{tr("{n} feita(s) hoje", { n: doneToday.length })}</span>}
+                <Button variant="ghost" size="xs" onClick={() => navigate("tarefas")}>{tr("Ver todas")}</Button>
               </div>
             }
           />
@@ -202,12 +277,11 @@ export function Dashboard() {
             ) : focusTasks.length === 0 ? (
               <EmptyState
                 icon={CheckCircle2}
-                title="Nada pendente para hoje"
+                title={tr("Nada pendente para hoje")}
                 className="py-4"
                 action={
                   <Button size="xs" variant="secondary" onClick={() => setQuickTaskOpen(true)}>
-                    <Plus size={12} /> Nova tarefa
-                  </Button>
+                    <Plus size={12} />{" "}{tr("Nova tarefa")}</Button>
                 }
               />
             ) : (
@@ -227,7 +301,7 @@ export function Dashboard() {
                     {(task.priority === "urgente" || task.priority === "alta") && (
                       <Badge tone={task.priority === "urgente" ? "danger" : "warning"}>{PRIORITY_LABEL[task.priority]}</Badge>
                     )}
-                    {task.dueDate && task.dueDate < today && <Badge tone="danger">Atrasada</Badge>}
+                    {task.dueDate && task.dueDate < today && <Badge tone="danger">{tr("Atrasada")}</Badge>}
                     {task.dueTime && <span className="font-mono text-[11px] text-text-faint">{task.dueTime}</span>}
                   </li>
                 ))}
@@ -238,10 +312,10 @@ export function Dashboard() {
 
         {/* Atividade */}
         <Card>
-          <CardHeader title="Atividade" icon={<GitCommitHorizontal size={12} />} />
+          <CardHeader title={tr("Atividade")} icon={<GitCommitHorizontal size={12} />} />
           <CardContent>
             {activity.length === 0 && commits.length === 0 ? (
-              <p className="py-3 text-sm text-text-faint">Sua atividade recente aparece aqui.</p>
+              <p className="py-3 text-sm text-text-faint">{tr("Sua atividade recente aparece aqui.")}</p>
             ) : (
               <ul className="space-y-1">
                 {commits.slice(0, 3).map((c) => (
@@ -279,12 +353,10 @@ export function Dashboard() {
         {/* Projetos recentes */}
         <Card className="xl:col-span-2">
           <CardHeader
-            title="Projetos recentes"
+            title={tr("Projetos recentes")}
             icon={<Code2 size={12} />}
             action={
-              <Button variant="ghost" size="xs" onClick={() => navigate("projetos")}>
-                Todos os projetos
-              </Button>
+              <Button variant="ghost" size="xs" onClick={() => navigate("projetos")}>{tr("Todos os projetos")}</Button>
             }
           />
           <CardContent>
@@ -293,12 +365,11 @@ export function Dashboard() {
             ) : recentProjects.length === 0 ? (
               <EmptyState
                 icon={Code2}
-                title="Nenhum projeto ainda"
-                description="Adicione a pasta de um projeto para abrir no VS Code, terminal e GitHub com um clique."
+                title={tr("Nenhum projeto ainda")}
+                description={tr("Adicione a pasta de um projeto para abrir no VS Code, terminal e GitHub com um clique.")}
                 action={
                   <Button size="sm" onClick={() => navigate("projetos", "new")}>
-                    <Plus size={13} /> Adicionar projeto
-                  </Button>
+                    <Plus size={13} />{" "}{tr("Adicionar projeto")}</Button>
                 }
               />
             ) : (
@@ -312,21 +383,20 @@ export function Dashboard() {
                     {project.git?.isRepo && (
                       <p className="mt-1.5 text-[11px] text-text-faint">
                         <span className="font-mono text-text-muted">{project.git.branch}</span>
-                        {project.git.modifiedCount > 0 && <span className="text-warning"> · {project.git.modifiedCount} alteração(ões)</span>}
+                        {project.git.modifiedCount > 0 && <span className="text-warning"> · {tr("{n} alteração(ões)", { n: project.git.modifiedCount })}</span>}
                       </p>
                     )}
                     <div className="mt-auto flex gap-1 pt-3">
-                      <Button size="xs" variant="secondary" onClick={() => void openProject(project, "vscode")} title="Abrir no VS Code">
-                        <Code2 size={12} /> VS Code
-                      </Button>
-                      <Button size="xs" variant="secondary" onClick={() => navigate("terminal", project.id)} title="Terminal">
+                      <Button size="xs" variant="secondary" onClick={() => void openProject(project, "vscode")} title={tr("Abrir no VS Code")}>
+                        <Code2 size={12} />{" "}{tr("VS Code")}</Button>
+                      <Button size="xs" variant="secondary" onClick={() => navigate("terminal", project.id)} title={tr("Terminal")}>
                         <SquareTerminal size={12} />
                       </Button>
-                      <Button size="xs" variant="secondary" onClick={() => void openProject(project, "explorer")} title="Pasta">
+                      <Button size="xs" variant="secondary" onClick={() => void openProject(project, "explorer")} title={tr("Pasta")}>
                         <FolderOpen size={12} />
                       </Button>
                       {project.githubUrl && (
-                        <Button size="xs" variant="secondary" onClick={() => void openProject(project, "github")} title="GitHub">
+                        <Button size="xs" variant="secondary" onClick={() => void openProject(project, "github")} title={tr("GitHub")}>
                           <Github size={12} />
                         </Button>
                       )}
@@ -341,17 +411,15 @@ export function Dashboard() {
         {/* Financeiro */}
         <Card>
           <CardHeader
-            title="Cobranças (7 dias)"
+            title={tr("Cobranças (7 dias)")}
             icon={<Wallet size={12} />}
             action={
-              <Button variant="ghost" size="xs" onClick={() => navigate("clientes")}>
-                Clientes
-              </Button>
+              <Button variant="ghost" size="xs" onClick={() => navigate("clientes")}>{tr("Clientes")}</Button>
             }
           />
           <CardContent>
             {billing.length === 0 ? (
-              <p className="py-3 text-sm text-text-faint">Nenhuma cobrança nos próximos 7 dias.</p>
+              <p className="py-3 text-sm text-text-faint">{tr("Nenhuma cobrança nos próximos 7 dias.")}</p>
             ) : (
               <ul className="space-y-1">
                 {billing.map((c) => (
@@ -360,7 +428,7 @@ export function Dashboard() {
                       <span className="min-w-0 flex-1 truncate text-sm text-text">{c.name}</span>
                       <span className="text-xs tabular-nums text-text-muted">{formatCurrency(c.monthlyValue)}</span>
                       <Badge tone={c.nextBillingDate! < today ? "danger" : c.nextBillingDate === today ? "warning" : "neutral"}>
-                        {c.nextBillingDate! < today ? "Vencida" : c.nextBillingDate === today ? "Hoje" : formatDate(c.nextBillingDate)}
+                        {c.nextBillingDate! < today ? tr("Vencida") : c.nextBillingDate === today ? tr("Hoje") : formatDate(c.nextBillingDate)}
                       </Badge>
                     </button>
                   </li>

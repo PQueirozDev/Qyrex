@@ -2,6 +2,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { tr } from "@/lib/i18n";
 
 interface DialogProps {
   open: boolean;
@@ -62,11 +63,11 @@ export function Dialog({ open, onClose, title, description, children, footer, si
       >
         <div className="flex items-start justify-between gap-3 px-5 pb-1 pt-4">
           <div className="min-w-0">
-            {danger && <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-danger">⚠️ Ação sensível</div>}
+            {danger && <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-danger">{tr("⚠️ Ação sensível")}</div>}
             <h2 className="text-[15px] font-semibold text-text">{title}</h2>
             {description && <p className="mt-1 text-sm text-text-muted">{description}</p>}
           </div>
-          <button onClick={onClose} className="rounded-md p-1 text-text-faint hover:bg-bg-hover hover:text-text" aria-label="Fechar">
+          <button onClick={onClose} className="rounded-md p-1 text-text-faint hover:bg-bg-hover hover:text-text" aria-label={tr("Fechar")}>
             <X size={15} />
           </button>
         </div>

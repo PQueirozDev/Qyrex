@@ -29,6 +29,7 @@ import { useClientsStore } from "@/stores/useClientsStore";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { NAV_ITEMS } from "@/components/Sidebar";
 import { Kbd } from "@/components/ui/primitives";
+import { tr } from "@/lib/i18n";
 
 interface Command {
   id: string;
@@ -98,23 +99,23 @@ export function CommandPalette() {
     };
 
     const actions: Command[] = [
-      { id: "new-task", group: "Ações", label: "Nova tarefa", hint: "Ctrl Shift T", icon: Plus, run: act(() => setQuickTaskOpen(true)) },
-      { id: "new-project", group: "Ações", label: "Novo projeto", icon: Code2, run: act(() => navigate("projetos", "new")) },
-      { id: "new-client", group: "Ações", label: "Novo cliente", icon: UserPlus, run: act(() => navigate("clientes", "new")) },
-      { id: "new-event", group: "Ações", label: "Novo evento na agenda", icon: CalendarPlus, run: act(() => navigate("agenda", "new")) },
-      { id: "new-content", group: "Ações", label: "Nova ideia de conteúdo", icon: Megaphone, run: act(() => navigate("marketing", "new")) },
-      { id: "ask-claude", group: "Ações", label: "Perguntar ao Claude", keywords: "ia chat anthropic", icon: Bot, run: act(() => navigate("ia", "anthropic")) },
-      { id: "ask-openai", group: "Ações", label: "Perguntar ao ChatGPT / OpenAI", keywords: "ia chat gpt codex", icon: Bot, run: act(() => navigate("ia", "openai")) },
-      { id: "ask-gemini", group: "Ações", label: "Perguntar ao Gemini", keywords: "ia chat google", icon: Bot, run: act(() => navigate("ia", "google")) },
-      { id: "ai-council", group: "Ações", label: "AI Council (vários modelos)", keywords: "ia comparar", icon: Bot, run: act(() => navigate("ia", "council")) },
-      { id: "search-file", group: "Ações", label: "Pesquisar arquivo", icon: FolderSearch, run: act(() => navigate("arquivos", "search")) },
-      { id: "search-client", group: "Ações", label: "Buscar cliente", icon: Users, run: act(() => navigate("clientes", "search")) },
-      { id: "open-whatsapp", group: "Ações", label: "Abrir WhatsApp", icon: MessageCircle, run: act(() => navigate("whatsapp")) },
-      { id: "open-spotify", group: "Ações", label: "Abrir Spotify", icon: Music2, run: act(() => void window.workspace.system.openSpotifyApp()) },
+      { id: "new-task", group: "Ações", label: tr("Nova tarefa"), hint: tr("Ctrl Shift T"), icon: Plus, run: act(() => setQuickTaskOpen(true)) },
+      { id: "new-project", group: "Ações", label: tr("Novo projeto"), icon: Code2, run: act(() => navigate("projetos", "new")) },
+      { id: "new-client", group: "Ações", label: tr("Novo cliente"), icon: UserPlus, run: act(() => navigate("clientes", "new")) },
+      { id: "new-event", group: "Ações", label: tr("Novo evento na agenda"), icon: CalendarPlus, run: act(() => navigate("agenda", "new")) },
+      { id: "new-content", group: "Ações", label: tr("Nova ideia de conteúdo"), icon: Megaphone, run: act(() => navigate("marketing", "new")) },
+      { id: "ask-claude", group: "Ações", label: tr("Perguntar ao Claude"), keywords: "ia chat anthropic", icon: Bot, run: act(() => navigate("ia", "anthropic")) },
+      { id: "ask-openai", group: "Ações", label: tr("Perguntar ao ChatGPT / OpenAI"), keywords: "ia chat gpt codex", icon: Bot, run: act(() => navigate("ia", "openai")) },
+      { id: "ask-gemini", group: "Ações", label: tr("Perguntar ao Gemini"), keywords: "ia chat google", icon: Bot, run: act(() => navigate("ia", "google")) },
+      { id: "ai-council", group: "Ações", label: tr("AI Council (vários modelos)"), keywords: "ia comparar", icon: Bot, run: act(() => navigate("ia", "council")) },
+      { id: "search-file", group: "Ações", label: tr("Pesquisar arquivo"), icon: FolderSearch, run: act(() => navigate("arquivos", "search")) },
+      { id: "search-client", group: "Ações", label: tr("Buscar cliente"), icon: Users, run: act(() => navigate("clientes", "search")) },
+      { id: "open-whatsapp", group: "Ações", label: tr("Abrir WhatsApp"), icon: MessageCircle, run: act(() => navigate("whatsapp")) },
+      { id: "open-spotify", group: "Ações", label: tr("Abrir Spotify"), icon: Music2, run: act(() => void window.workspace.system.openSpotifyApp()) },
       {
         id: "toggle-theme",
         group: "Ações",
-        label: `Alternar tema (atual: ${settings?.theme === "light" ? "claro" : settings?.theme === "system" ? "sistema" : "escuro"})`,
+        label: tr("Alternar tema claro/escuro"),
         icon: Moon,
         run: act(() => void updateSettings({ theme: settings?.theme === "dark" ? "light" : "dark" })),
       },
@@ -122,15 +123,15 @@ export function CommandPalette() {
 
     if (lastProject) {
       actions.push(
-        { id: "open-vscode", group: "Ações", label: "Abrir VS Code", hint: lastProject.name, icon: Code2, run: act(() => void openProject(lastProject, "vscode")) },
-        { id: "open-terminal", group: "Ações", label: "Abrir terminal", hint: lastProject.name, icon: SquareTerminal, run: act(() => navigate("terminal", lastProject.id)) }
+        { id: "open-vscode", group: "Ações", label: tr("Abrir VS Code"), hint: lastProject.name, icon: Code2, run: act(() => void openProject(lastProject, "vscode")) },
+        { id: "open-terminal", group: "Ações", label: tr("Abrir terminal"), hint: lastProject.name, icon: SquareTerminal, run: act(() => navigate("terminal", lastProject.id)) }
       );
     }
 
     const projectCommands: Command[] = projects.flatMap((p) => [
-      { id: `p-${p.id}`, group: "Projetos", label: `Abrir projeto ${p.name}`, hint: "VS Code", keywords: p.technologies.join(" "), icon: Code2, run: act(() => void openProject(p, "vscode")) },
-      { id: `pt-${p.id}`, group: "Projetos", label: `Terminal em ${p.name}`, icon: SquareTerminal, run: act(() => navigate("terminal", p.id)) },
-      { id: `pd-${p.id}`, group: "Projetos", label: `Detalhes de ${p.name}`, hint: "Git, GitHub, tarefas", icon: Folder, run: act(() => navigate("projetos", p.id)) },
+      { id: `p-${p.id}`, group: "Projetos", label: `Abrir projeto ${p.name}`, hint: tr("VS Code"), keywords: p.technologies.join(" "), icon: Code2, run: act(() => void openProject(p, "vscode")) },
+      { id: `pt-${p.id}`, group: "Projetos", label: tr("Terminal em {name}", { name: p.name }), icon: SquareTerminal, run: act(() => navigate("terminal", p.id)) },
+      { id: `pd-${p.id}`, group: "Projetos", label: tr("Detalhes de {name}", { name: p.name }), hint: tr("Git, GitHub, tarefas"), icon: Folder, run: act(() => navigate("projetos", p.id)) },
     ]);
 
     const clientCommands: Command[] = clients.map((c) => ({
@@ -142,13 +143,10 @@ export function CommandPalette() {
       run: act(() => navigate("clientes", c.id)),
     }));
 
-    const navCommands: Command[] = NAV_ITEMS.concat([
-      { id: "integracoes", label: "Integrações", icon: Bot },
-      { id: "configuracoes", label: "Configurações", icon: Bot },
-    ]).map((n) => ({
+    const navCommands: Command[] = NAV_ITEMS.map((n) => ({
       id: `nav-${n.id}`,
       group: "Navegação",
-      label: `Ir para ${n.label}`,
+      label: tr("Ir para {page}", { page: n.label }),
       hint: "shortcut" in n ? n.shortcut : undefined,
       icon: n.icon,
       run: act(() => navigate(n.id)),
@@ -179,7 +177,7 @@ export function CommandPalette() {
           id: `t-${t.id}`,
           group: "Tarefas",
           label: t.title,
-          hint: t.status === "concluido" ? "Concluída" : t.dueDate ?? undefined,
+          hint: t.status === "concluido" ? tr("Concluída") : t.dueDate ?? undefined,
           icon: CheckSquare,
           run: () => {
             close();
@@ -252,21 +250,21 @@ export function CommandPalette() {
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar projetos, clientes, tarefas, arquivos ou executar um comando..."
+            placeholder={tr("Buscar projetos, clientes, tarefas, arquivos ou executar um comando...")}
             className="w-full bg-transparent text-[14px] text-text placeholder:text-text-faint focus:outline-none"
           />
-          <Kbd>ESC</Kbd>
+          <Kbd>{tr("ESC")}</Kbd>
         </div>
 
         <div ref={listRef} className="max-h-[420px] overflow-y-auto p-1.5">
-          {visible.length === 0 && <div className="px-3 py-8 text-center text-sm text-text-faint">Nenhum resultado para “{query}”.</div>}
+          {visible.length === 0 && <div className="px-3 py-8 text-center text-sm text-text-faint">{tr("Nenhum resultado para “{query}”.", { query })}</div>}
           {visible.map((cmd, index) => {
             const header = cmd.group !== lastGroup ? cmd.group : null;
             lastGroup = cmd.group;
             const Icon = cmd.icon;
             return (
               <div key={cmd.id}>
-                {header && <div className="px-2.5 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-text-faint">{header}</div>}
+                {header && <div className="px-2.5 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-text-faint">{tr(header)}</div>}
                 <button
                   data-index={index}
                   onClick={cmd.run}
@@ -288,11 +286,9 @@ export function CommandPalette() {
         <div className="flex items-center gap-3 border-t border-border-subtle px-4 py-2 text-[11px] text-text-faint">
           <span className="flex items-center gap-1">
             <Kbd>↑</Kbd>
-            <Kbd>↓</Kbd> navegar
-          </span>
+            <Kbd>↓</Kbd>{" "}{tr("navegar")}</span>
           <span className="flex items-center gap-1">
-            <Kbd>Enter</Kbd> executar
-          </span>
+            <Kbd>{tr("Enter")}</Kbd>{" "}{tr("executar")}</span>
         </div>
       </div>
     </div>,

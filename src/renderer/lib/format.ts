@@ -1,3 +1,5 @@
+import { getLocale, tr } from "@/lib/i18n";
+
 // Datas no horário LOCAL. `toISOString()` usa UTC e faria "hoje" virar
 // "amanhã" depois das 21h no Brasil — por isso nada aqui usa UTC.
 
@@ -38,7 +40,7 @@ export function parseLocalDateTime(iso: string): Date {
 
 export function formatDate(iso: string | null | undefined, opts: Intl.DateTimeFormatOptions = { day: "2-digit", month: "2-digit" }): string {
   if (!iso) return "";
-  return parseLocalDate(iso).toLocaleDateString("pt-BR", opts);
+  return parseLocalDate(iso).toLocaleDateString(getLocale(), opts);
 }
 
 export function formatTime(isoDateTime: string): string {
@@ -47,11 +49,11 @@ export function formatTime(isoDateTime: string): string {
 
 export function relativeDay(iso: string): string {
   const diff = Math.round((parseLocalDate(iso).getTime() - parseLocalDate(todayISO()).getTime()) / 86_400_000);
-  if (diff === 0) return "Hoje";
-  if (diff === 1) return "Amanhã";
-  if (diff === -1) return "Ontem";
-  if (diff < 0) return `${-diff} dias atrás`;
-  if (diff < 7) return parseLocalDate(iso).toLocaleDateString("pt-BR", { weekday: "long" });
+  if (diff === 0) return tr("Hoje");
+  if (diff === 1) return tr("Amanhã");
+  if (diff === -1) return tr("Ontem");
+  if (diff < 0) return tr("{n} dias atrás", { n: -diff });
+  if (diff < 7) return parseLocalDate(iso).toLocaleDateString(getLocale(), { weekday: "long" });
   return formatDate(iso);
 }
 
@@ -59,27 +61,27 @@ export function relativeDay(iso: string): string {
 export function timeAgo(isoUtc: string): string {
   const normalized = /Z|[+-]\d{2}:\d{2}$/.test(isoUtc) ? isoUtc : `${isoUtc.replace(" ", "T")}Z`;
   const seconds = Math.round((Date.now() - new Date(normalized).getTime()) / 1000);
-  if (seconds < 60) return "agora";
+  if (seconds < 60) return tr("agora");
   const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `há ${minutes} min`;
+  if (minutes < 60) return tr("há {n} min", { n: minutes });
   const hours = Math.round(minutes / 60);
-  if (hours < 24) return `há ${hours} h`;
+  if (hours < 24) return tr("há {n} h", { n: hours });
   const days = Math.round(hours / 24);
-  if (days < 30) return `há ${days} d`;
-  return new Date(normalized).toLocaleDateString("pt-BR");
+  if (days < 30) return tr("há {n} d", { n: days });
+  return new Date(normalized).toLocaleDateString(getLocale());
 }
 
 export function greeting(date = new Date()): string {
   const h = date.getHours();
-  if (h < 5) return "Boa noite";
-  if (h < 12) return "Bom dia";
-  if (h < 18) return "Boa tarde";
-  return "Boa noite";
+  if (h < 5) return tr("Boa noite");
+  if (h < 12) return tr("Bom dia");
+  if (h < 18) return tr("Boa tarde");
+  return tr("Boa noite");
 }
 
 export function formatCurrency(value: number | null | undefined): string {
   if (value == null) return "";
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  return value.toLocaleString(getLocale(), { style: "currency", currency: "BRL" });
 }
 
 export function formatBytes(bytes: number): string {

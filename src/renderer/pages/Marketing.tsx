@@ -12,6 +12,7 @@ import { useMarketingStore } from "@/stores/useMarketingStore";
 import { useClientsStore } from "@/stores/useClientsStore";
 import { confirmAction, toast, useUIStore } from "@/stores/useUIStore";
 
+import { getLocale, tr } from "@/lib/i18n";
 const STATUSES: MarketingStatus[] = ["ideia", "produzindo", "pronto", "publicado"];
 const STATUS_LABEL: Record<MarketingStatus, string> = { ideia: "Ideia", produzindo: "Produzindo", pronto: "Pronto", publicado: "Publicado" };
 const TYPE_LABEL: Record<MarketingContentType, string> = { post: "Post", story: "Story", reel: "Reel" };
@@ -61,7 +62,7 @@ function ContentDialog({ open, item, defaultDate, onClose }: { open: boolean; it
     if (!p) return;
     const allowed = await attempt(window.workspace.files.isAllowed(p));
     if (!allowed) {
-      toast.error("O arquivo precisa estar dentro de uma pasta autorizada.");
+      toast.error(tr("O arquivo precisa estar dentro de uma pasta autorizada."));
       return;
     }
     if (!files.includes(p)) setFiles([...files, p]);
@@ -98,7 +99,7 @@ function ContentDialog({ open, item, defaultDate, onClose }: { open: boolean; it
 
   async function handleDelete() {
     if (!item) return;
-    if (await confirmAction({ title: `Excluir "${item.title}"?`, description: "Essa ação não pode ser desfeita.", danger: true, confirmLabel: "Excluir" })) {
+    if (await confirmAction({ title: tr("Excluir \"{name}\"?", { name: item.title }), description: tr("Essa ação não pode ser desfeita."), danger: true, confirmLabel: tr("Excluir") })) {
       await remove(item.id);
       onClose();
     }
@@ -110,28 +111,25 @@ function ContentDialog({ open, item, defaultDate, onClose }: { open: boolean; it
       onClose={onClose}
       dismissable={false}
       size="lg"
-      title={item ? "Editar conteúdo" : "Novo conteúdo"}
+      title={item ? tr("Editar conteúdo") : tr("Novo conteúdo")}
       footer={
         <>
           {item && (
             <Button size="sm" variant="danger" className="mr-auto" onClick={() => void handleDelete()}>
-              <Trash2 size={13} /> Excluir
-            </Button>
+              <Trash2 size={13} />{" "}{tr("Excluir")}</Button>
           )}
-          <Button size="sm" variant="ghost" onClick={onClose}>
-            Cancelar
-          </Button>
+          <Button size="sm" variant="ghost" onClick={onClose}>{tr("Cancelar")}</Button>
           <Button size="sm" onClick={() => void save()} disabled={!title.trim()} loading={saving}>
-            {item ? "Salvar" : "Criar"}
+            {item ? tr("Salvar") : tr("Criar")}
           </Button>
         </>
       }
     >
       <div className="space-y-3">
-        <input className="input text-[15px] font-medium" placeholder="Título do conteúdo" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <input className="input text-[15px] font-medium" placeholder={tr("Título do conteúdo")} value={title} onChange={(e) => setTitle(e.target.value)} />
         <div className="flex flex-wrap gap-3">
           <div>
-            <span className="label">Tipo</span>
+            <span className="label">{tr("Tipo")}</span>
             <Segmented
               value={type}
               onChange={setType}
@@ -139,14 +137,14 @@ function ContentDialog({ open, item, defaultDate, onClose }: { open: boolean; it
             />
           </div>
           <div>
-            <span className="label">Status</span>
+            <span className="label">{tr("Status")}</span>
             <Segmented value={status} onChange={setStatus} options={STATUSES.map((s) => ({ value: s, label: STATUS_LABEL[s] }))} />
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Cliente">
+          <Field label={tr("Cliente")}>
             <select className="input" value={clientId} onChange={(e) => setClientId(e.target.value)}>
-              <option value="">Conteúdo próprio</option>
+              <option value="">{tr("Conteúdo próprio")}</option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -154,18 +152,18 @@ function ContentDialog({ open, item, defaultDate, onClose }: { open: boolean; it
               ))}
             </select>
           </Field>
-          <Field label="Data de publicação">
+          <Field label={tr("Data de publicação")}>
             <input type="date" className="input" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} />
           </Field>
         </div>
-        <Field label="Descrição / roteiro">
+        <Field label={tr("Descrição / roteiro")}>
           <textarea className="input min-h-[70px] resize-y" value={description} onChange={(e) => setDescription(e.target.value)} />
         </Field>
-        <Field label="Legenda">
-          <textarea className="input min-h-[70px] resize-y" value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="Texto que vai no post, com hashtags" />
+        <Field label={tr("Legenda")}>
+          <textarea className="input min-h-[70px] resize-y" value={caption} onChange={(e) => setCaption(e.target.value)} placeholder={tr("Texto que vai no post, com hashtags")} />
         </Field>
         <div>
-          <span className="label">Arquivos relacionados</span>
+          <span className="label">{tr("Arquivos relacionados")}</span>
           {files.length > 0 && (
             <div className="mb-2 space-y-1">
               {files.map((f) => (
@@ -174,10 +172,10 @@ function ContentDialog({ open, item, defaultDate, onClose }: { open: boolean; it
                   <span className="min-w-0 flex-1 truncate text-text" title={f}>
                     {basename(f)}
                   </span>
-                  <button onClick={() => void attempt(window.workspace.system.openFile(f))} className="text-text-faint hover:text-text" title="Abrir">
+                  <button onClick={() => void attempt(window.workspace.system.openFile(f))} className="text-text-faint hover:text-text" title={tr("Abrir")}>
                     <ExternalLink size={12} />
                   </button>
-                  <button onClick={() => setFiles(files.filter((x) => x !== f))} className="text-text-faint hover:text-danger" title="Remover">
+                  <button onClick={() => setFiles(files.filter((x) => x !== f))} className="text-text-faint hover:text-danger" title={tr("Remover")}>
                     <X size={12} />
                   </button>
                 </div>
@@ -187,16 +185,14 @@ function ContentDialog({ open, item, defaultDate, onClose }: { open: boolean; it
           <div className="flex gap-2">
             <input
               className="input font-mono text-xs"
-              placeholder="Cole o caminho do arquivo (pasta autorizada)"
+              placeholder={tr("Cole o caminho do arquivo (pasta autorizada)")}
               value={newFile}
               onChange={(e) => setNewFile(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && void addFile()}
             />
-            <Button variant="secondary" onClick={() => void addFile()} disabled={!newFile.trim()}>
-              Adicionar
-            </Button>
+            <Button variant="secondary" onClick={() => void addFile()} disabled={!newFile.trim()}>{tr("Adicionar")}</Button>
           </div>
-          <p className="mt-1 text-[11px] text-text-faint">Dica: em Arquivos, use “Copiar caminho” no menu do arquivo.</p>
+          <p className="mt-1 text-[11px] text-text-faint">{tr("Dica: em Arquivos, use “Copiar caminho” no menu do arquivo.")}</p>
         </div>
       </div>
     </Dialog>
@@ -287,15 +283,15 @@ function WeekCalendar({ items, onOpen, onCreate }: { items: MarketingContent[]; 
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <Button size="icon" variant="ghost" onClick={() => setWeekStart(addDays(weekStart, -7))} aria-label="Semana anterior">
+        <Button size="icon" variant="ghost" onClick={() => setWeekStart(addDays(weekStart, -7))} aria-label={tr("Semana anterior")}>
           <ChevronLeft size={16} />
         </Button>
-        <Button size="icon" variant="ghost" onClick={() => setWeekStart(addDays(weekStart, 7))} aria-label="Próxima semana">
+        <Button size="icon" variant="ghost" onClick={() => setWeekStart(addDays(weekStart, 7))} aria-label={tr("Próxima semana")}>
           <ChevronRight size={16} />
         </Button>
         <span className="text-sm font-semibold text-text">
-          {parseLocalDate(days[0]).toLocaleDateString("pt-BR", { day: "numeric", month: "short" })} –{" "}
-          {parseLocalDate(days[6]).toLocaleDateString("pt-BR", { day: "numeric", month: "short", year: "numeric" })}
+          {parseLocalDate(days[0]).toLocaleDateString(getLocale(), { day: "numeric", month: "short" })} –{" "}
+          {parseLocalDate(days[6]).toLocaleDateString(getLocale(), { day: "numeric", month: "short", year: "numeric" })}
         </span>
       </div>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-7">
@@ -306,7 +302,7 @@ function WeekCalendar({ items, onOpen, onCreate }: { items: MarketingContent[]; 
             <Card key={day} className={cn("group min-h-[200px] p-2", day === today && "border-accent/40")}>
               <div className="mb-2 flex items-center justify-between px-0.5">
                 <span className="text-[11px] font-medium uppercase tracking-wider text-text-faint">
-                  {date.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "")}
+                  {date.toLocaleDateString(getLocale(), { weekday: "short" }).replace(".", "")}
                 </span>
                 <span className={cn("text-sm font-semibold", day === today ? "text-accent" : "text-text")}>{date.getDate()}</span>
               </div>
@@ -318,8 +314,7 @@ function WeekCalendar({ items, onOpen, onCreate }: { items: MarketingContent[]; 
                   onClick={() => onCreate(day)}
                   className="flex w-full items-center justify-center gap-1 rounded-md py-1 text-[11px] text-text-faint opacity-0 transition-opacity hover:bg-bg-hover hover:text-text group-hover:opacity-100"
                 >
-                  <Plus size={11} /> Agendar
-                </button>
+                  <Plus size={11} />{" "}{tr("Agendar")}</button>
               </div>
             </Card>
           );
@@ -327,7 +322,7 @@ function WeekCalendar({ items, onOpen, onCreate }: { items: MarketingContent[]; 
       </div>
       {unscheduled.length > 0 && (
         <div>
-          <p className="section-title mb-2">Sem data</p>
+          <p className="section-title mb-2">{tr("Sem data")}</p>
           <div className="grid grid-cols-1 gap-2 md:grid-cols-3 xl:grid-cols-4">
             {unscheduled.map((i) => (
               <ContentCard key={i.id} item={i} onOpen={() => onOpen(i)} />
@@ -371,7 +366,7 @@ export function Marketing() {
       if (item) {
         setEditing(item);
         setDialogOpen(true);
-      } else toast.error("Conteúdo não encontrado.");
+      } else toast.error(tr("Conteúdo não encontrado."));
     }
     navigate("marketing");
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -394,16 +389,16 @@ export function Marketing() {
   return (
     <div>
       <PageHeader
-        title="Marketing"
-        description="Calendário de conteúdo: da ideia à publicação."
+        title={tr("Marketing")}
+        description={tr("Calendário de conteúdo: da ideia à publicação.")}
         actions={
           <>
             <Segmented
               value={view}
               onChange={setView}
               options={[
-                { value: "quadro", label: "Quadro" },
-                { value: "calendario", label: "Calendário" },
+                { value: "quadro", label: tr("Quadro") },
+                { value: "calendario", label: tr("Calendário") },
               ]}
             />
             <Button
@@ -414,8 +409,7 @@ export function Marketing() {
                 setDialogOpen(true);
               }}
             >
-              <Plus size={14} /> Novo conteúdo
-            </Button>
+              <Plus size={14} />{" "}{tr("Novo conteúdo")}</Button>
           </>
         }
       />
@@ -425,15 +419,15 @@ export function Marketing() {
           <Lightbulb size={14} className="text-warning" />
           <input
             className="flex-1 bg-transparent text-sm text-text placeholder:text-text-faint focus:outline-none"
-            placeholder="Anotar uma IDEIA rápida e pressionar Enter..."
+            placeholder={tr("Anotar uma IDEIA rápida e pressionar Enter...")}
             value={idea}
             onChange={(e) => setIdea(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && void addIdea()}
           />
         </div>
         <select className="input w-48 py-1 text-xs" value={clientFilter} onChange={(e) => setClientFilter(e.target.value)}>
-          <option value="">Todos os clientes</option>
-          <option value="own">Conteúdo próprio</option>
+          <option value="">{tr("Todos os clientes")}</option>
+          <option value="own">{tr("Conteúdo próprio")}</option>
           {clients.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -448,7 +442,7 @@ export function Marketing() {
         <LoadingRows rows={4} />
       ) : items.length === 0 ? (
         <Card>
-          <EmptyState icon={Megaphone} title="Nenhum conteúdo ainda" description="Anote ideias acima e arraste pelo quadro até a publicação." />
+          <EmptyState icon={Megaphone} title={tr("Nenhum conteúdo ainda")} description={tr("Anote ideias acima e arraste pelo quadro até a publicação.")} />
         </Card>
       ) : view === "quadro" ? (
         <Kanban items={filtered} onOpen={openItem} />

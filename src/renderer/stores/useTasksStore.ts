@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { Task } from "@shared/types";
 import { attempt, errorMessage, unwrap } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 type CreateInput = Parameters<typeof window.workspace.tasks.create>[0];
 type UpdatePatch = Parameters<typeof window.workspace.tasks.update>[1];
@@ -34,7 +35,7 @@ export const useTasksStore = create<TasksState>((set, get) => ({
     }
   },
   create: async (input) => {
-    const ok = await attempt(window.workspace.tasks.create(input), "Tarefa criada");
+    const ok = await attempt(window.workspace.tasks.create(input), tr("Tarefa criada"));
     if (ok) await get().load();
     return Boolean(ok);
   },
@@ -51,6 +52,6 @@ export const useTasksStore = create<TasksState>((set, get) => ({
   },
   remove: async (id) => {
     set({ tasks: get().tasks.filter((t) => t.id !== id) });
-    await attempt(window.workspace.tasks.delete(id), "Tarefa excluída");
+    await attempt(window.workspace.tasks.delete(id), tr("Tarefa excluída"));
   },
 }));

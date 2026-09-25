@@ -34,6 +34,7 @@ import { useClientsStore } from "@/stores/useClientsStore";
 import { useTasksStore } from "@/stores/useTasksStore";
 import { confirmAction, toast, useUIStore } from "@/stores/useUIStore";
 
+import { tr } from "@/lib/i18n";
 // --- Diálogo de criação/edição ------------------------------------------------------
 
 function ProjectFormDialog({ open, project, onClose }: { open: boolean; project: ProjectWithGit | null; onClose: () => void }) {
@@ -60,7 +61,7 @@ function ProjectFormDialog({ open, project, onClose }: { open: boolean; project:
   }, [open, project]);
 
   async function pickFolder() {
-    const dir = await attempt(window.workspace.system.pickDirectory("Pasta do projeto"));
+    const dir = await attempt(window.workspace.system.pickDirectory(tr("Pasta do projeto")));
     if (!dir) return;
     setLocalPath(dir);
     setDetecting(true);
@@ -105,43 +106,40 @@ function ProjectFormDialog({ open, project, onClose }: { open: boolean; project:
       open={open}
       onClose={onClose}
       dismissable={false}
-      title={project ? "Editar projeto" : "Novo projeto"}
-      description={project ? undefined : "Escolha a pasta: nome, tecnologias e GitHub são detectados automaticamente."}
+      title={project ? tr("Editar projeto") : tr("Novo projeto")}
+      description={project ? undefined : tr("Escolha a pasta: nome, tecnologias e GitHub são detectados automaticamente.")}
       footer={
         <>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            Cancelar
-          </Button>
+          <Button variant="ghost" size="sm" onClick={onClose}>{tr("Cancelar")}</Button>
           <Button size="sm" onClick={save} loading={saving} disabled={!name.trim() || !localPath}>
-            {project ? "Salvar" : "Adicionar projeto"}
+            {project ? tr("Salvar") : tr("Adicionar projeto")}
           </Button>
         </>
       }
     >
       <div className="space-y-3">
-        <Field label="Pasta" hint={project ? "A pasta de um projeto existente não pode ser trocada." : "Precisa estar dentro de um diretório autorizado."}>
+        <Field label={tr("Pasta")} hint={project ? tr("A pasta de um projeto existente não pode ser trocada.") : tr("Precisa estar dentro de um diretório autorizado.")}>
           <div className="flex gap-2">
-            <input className="input font-mono text-xs" value={localPath} readOnly placeholder="Nenhuma pasta escolhida" />
+            <input className="input font-mono text-xs" value={localPath} readOnly placeholder={tr("Nenhuma pasta escolhida")} />
             {!project && (
               <Button variant="secondary" size="md" onClick={pickFolder} loading={detecting}>
-                <FolderSearch size={14} /> Escolher
-              </Button>
+                <FolderSearch size={14} />{" "}{tr("Escolher")}</Button>
             )}
           </div>
         </Field>
-        <Field label="Nome">
+        <Field label={tr("Nome")}>
           <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="meu-projeto" />
         </Field>
-        <Field label="Descrição">
+        <Field label={tr("Descrição")}>
           <textarea className="input min-h-[60px] resize-y" value={description} onChange={(e) => setDescription(e.target.value)} />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Tecnologias" hint="Separe por vírgula">
-            <input className="input" value={technologies} onChange={(e) => setTechnologies(e.target.value)} placeholder="React, TypeScript" />
+          <Field label={tr("Tecnologias")} hint={tr("Separe por vírgula")}>
+            <input className="input" value={technologies} onChange={(e) => setTechnologies(e.target.value)} placeholder={tr("React, TypeScript")} />
           </Field>
-          <Field label="Cliente">
+          <Field label={tr("Cliente")}>
             <select className="input" value={clientId} onChange={(e) => setClientId(e.target.value)}>
-              <option value="">Nenhum</option>
+              <option value="">{tr("Nenhum")}</option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -150,7 +148,7 @@ function ProjectFormDialog({ open, project, onClose }: { open: boolean; project:
             </select>
           </Field>
         </div>
-        <Field label="Repositório no GitHub">
+        <Field label={tr("Repositório no GitHub")}>
           <input className="input" value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} placeholder="https://github.com/usuario/repo" />
         </Field>
       </div>
@@ -188,22 +186,22 @@ function GitSection({ project, onChanged }: { project: ProjectWithGit; onChanged
   }, [git?.isRepo, load]);
 
   if (!git?.isRepo) {
-    return <p className="text-xs text-text-muted">Esta pasta não é um repositório git.</p>;
+    return <p className="text-xs text-text-muted">{tr("Esta pasta não é um repositório git.")}</p>;
   }
 
   async function doCommit() {
     const msg = message.trim();
     if (!msg) return;
     const ok = await confirmAction({
-      title: "Criar commit?",
-      description: stageAll ? "Todas as alterações serão adicionadas (git add -A) e commitadas." : "Somente o que já está no stage será commitado.",
+      title: tr("Criar commit?"),
+      description: stageAll ? tr("Todas as alterações serão adicionadas (git add -A) e commitadas.") : tr("Somente o que já está no stage será commitado."),
       detail: msg,
       danger: true,
-      confirmLabel: "Commitar",
+      confirmLabel: tr("Commitar"),
     });
     if (!ok) return;
     setBusy("commit");
-    const out = await attempt(window.workspace.git.commit({ projectPath: project.localPath, message: msg, stageAll, confirmed: true }), "Commit criado");
+    const out = await attempt(window.workspace.git.commit({ projectPath: project.localPath, message: msg, stageAll, confirmed: true }), tr("Commit criado"));
     setBusy(null);
     if (out !== undefined) {
       setMessage("");
@@ -217,8 +215,8 @@ function GitSection({ project, onChanged }: { project: ProjectWithGit; onChanged
       title: op === "pull" ? "Fazer pull?" : "Fazer push?",
       description:
         op === "pull"
-          ? `Baixa e integra as alterações do remoto na branch ${git?.branch ?? "atual"}.`
-          : `Envia os commits locais da branch ${git?.branch ?? "atual"} para o remoto (nunca com --force).`,
+          ? tr("Baixa e integra as alterações do remoto na branch {branch}.", { branch: git?.branch ?? tr("atual") })
+          : tr("Envia os commits locais da branch {branch} para o remoto (nunca com --force).", { branch: git?.branch ?? tr("atual") }),
       detail: project.localPath,
       danger: true,
       confirmLabel: op === "pull" ? "Pull" : "Push",
@@ -226,7 +224,7 @@ function GitSection({ project, onChanged }: { project: ProjectWithGit; onChanged
     if (!ok) return;
     setBusy(op);
     const input = { projectPath: project.localPath, confirmed: true as const };
-    const out = await attempt(op === "pull" ? window.workspace.git.pull(input) : window.workspace.git.push(input), op === "pull" ? "Pull concluído" : "Push concluído");
+    const out = await attempt(op === "pull" ? window.workspace.git.pull(input) : window.workspace.git.push(input), op === "pull" ? tr("Pull concluído") : tr("Push concluído"));
     setBusy(null);
     if (out !== undefined) {
       void load();
@@ -238,19 +236,17 @@ function GitSection({ project, onChanged }: { project: ProjectWithGit; onChanged
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2 text-xs">
         <Badge tone="accent">
-          <GitBranch size={11} /> {git.branch ?? "(sem branch)"}
+          <GitBranch size={11} /> {git.branch ?? tr("(sem branch)")}
         </Badge>
-        {git.modifiedCount > 0 ? <Badge tone="warning">{git.modifiedCount} alterado(s)</Badge> : <Badge tone="success">Limpo</Badge>}
+        {git.modifiedCount > 0 ? <Badge tone="warning">{tr("{n} alterado(s)", { n: git.modifiedCount })}</Badge> : <Badge tone="success">{tr("Limpo")}</Badge>}
         {git.ahead > 0 && <Badge>↑ {git.ahead}</Badge>}
         {git.behind > 0 && <Badge>↓ {git.behind}</Badge>}
         <div className="ml-auto flex gap-1.5">
           <Button size="xs" variant="secondary" onClick={() => void remote("pull")} loading={busy === "pull"} disabled={!git.remoteUrl || busy !== null}>
-            <ArrowDownToLine size={12} /> Pull
-          </Button>
+            <ArrowDownToLine size={12} />{" "}{tr("Pull")}</Button>
           <Button size="xs" variant="secondary" onClick={() => void remote("push")} loading={busy === "push"} disabled={!git.remoteUrl || busy !== null}>
-            <ArrowUpFromLine size={12} /> Push
-          </Button>
-          <Button size="icon-sm" variant="ghost" onClick={() => void load()} title="Atualizar">
+            <ArrowUpFromLine size={12} />{" "}{tr("Push")}</Button>
+          <Button size="icon-sm" variant="ghost" onClick={() => void load()} title={tr("Atualizar")}>
             <RefreshCw size={12} />
           </Button>
         </div>
@@ -275,28 +271,25 @@ function GitSection({ project, onChanged }: { project: ProjectWithGit; onChanged
         <div className="space-y-2">
           <textarea
             className="input min-h-[56px] resize-y"
-            placeholder="Mensagem do commit"
+            placeholder={tr("Mensagem do commit")}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
           />
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-2 text-xs text-text-muted">
-              <input type="checkbox" className="accent-accent" checked={stageAll} onChange={(e) => setStageAll(e.target.checked)} />
-              Adicionar todas as alterações
-            </label>
+              <input type="checkbox" className="accent-accent" checked={stageAll} onChange={(e) => setStageAll(e.target.checked)} />{tr("Adicionar todas as alterações")}</label>
             <Button size="sm" onClick={() => void doCommit()} disabled={!message.trim() || busy !== null} loading={busy === "commit"}>
-              <GitCommitHorizontal size={13} /> Commit
-            </Button>
+              <GitCommitHorizontal size={13} />{" "}{tr("Commit")}</Button>
           </div>
         </div>
       )}
 
       <div>
-        <p className="section-title mb-1.5">Commits recentes</p>
+        <p className="section-title mb-1.5">{tr("Commits recentes")}</p>
         {commits === null ? (
           <LoadingRows rows={2} />
         ) : commits.length === 0 ? (
-          <p className="text-xs text-text-faint">Nenhum commit ainda.</p>
+          <p className="text-xs text-text-faint">{tr("Nenhum commit ainda.")}</p>
         ) : (
           <div className="space-y-1">
             {commits.map((c) => (
@@ -342,9 +335,7 @@ function GitHubSection({ url }: { url: string }) {
     return (
       <div className="space-y-2">
         <ErrorState message={error} onRetry={() => void load()} />
-        <Button size="xs" variant="ghost" onClick={() => navigate("integracoes")}>
-          Configurar GitHub em Integrações
-        </Button>
+        <Button size="xs" variant="ghost" onClick={() => navigate("integracoes")}>{tr("Configurar GitHub em Integrações")}</Button>
       </div>
     );
   if (!data) return null;
@@ -370,18 +361,18 @@ function GitHubSection({ url }: { url: string }) {
     <div className="space-y-3">
       <div className="flex items-center gap-2 text-xs text-text-muted">
         <span className="font-medium text-text">{data.repo.fullName}</span>
-        {data.repo.private && <Badge>Privado</Badge>}
+        {data.repo.private && <Badge>{tr("Privado")}</Badge>}
         <span>★ {data.repo.stars}</span>
-        <Button size="icon-sm" variant="ghost" className="ml-auto" onClick={() => open(data.repo.htmlUrl)} title="Abrir no GitHub">
+        <Button size="icon-sm" variant="ghost" className="ml-auto" onClick={() => open(data.repo.htmlUrl)} title={tr("Abrir no GitHub")}>
           <ExternalLink size={12} />
         </Button>
       </div>
       <div>
-        <p className="section-title mb-1">Pull requests abertos</p>
+        <p className="section-title mb-1">{tr("Pull requests abertos")}</p>
         {list(data.pulls, GitPullRequest, "Nenhum PR aberto.")}
       </div>
       <div>
-        <p className="section-title mb-1">Issues abertas</p>
+        <p className="section-title mb-1">{tr("Issues abertas")}</p>
         {list(data.issues, CircleDot, "Nenhuma issue aberta.")}
       </div>
     </div>
@@ -404,11 +395,11 @@ function ProjectDrawer({ project, onClose, onEdit }: { project: ProjectWithGit; 
 
   async function handleRemove() {
     const ok = await confirmAction({
-      title: `Remover "${project.name}" do Workspace?`,
-      description: "Só o cadastro é removido. Nenhum arquivo da pasta é apagado.",
+      title: tr("Remover \"{name}\" do QrzSpace?", { name: project.name }),
+      description: tr("Só o cadastro é removido. Nenhum arquivo da pasta é apagado."),
       detail: project.localPath,
       danger: true,
-      confirmLabel: "Remover",
+      confirmLabel: tr("Remover"),
     });
     if (!ok) return;
     await remove(project.id);
@@ -431,9 +422,9 @@ function ProjectDrawer({ project, onClose, onEdit }: { project: ProjectWithGit; 
           trigger={<MoreHorizontal size={15} />}
           items={[
             { label: project.favorite ? "Remover dos favoritos" : "Favoritar", icon: Star, onSelect: () => void toggleFavorite(project.id) },
-            { label: "Editar", icon: Pencil, onSelect: onEdit },
+            { label: tr("Editar"), icon: Pencil, onSelect: onEdit },
             "separator",
-            { label: "Remover do Workspace", icon: Trash2, danger: true, onSelect: () => void handleRemove() },
+            { label: tr("Remover do QrzSpace"), icon: Trash2, danger: true, onSelect: () => void handleRemove() },
           ]}
         />
       }
@@ -454,48 +445,43 @@ function ProjectDrawer({ project, onClose, onEdit }: { project: ProjectWithGit; 
           </div>
           <div className="flex flex-wrap gap-1.5 pt-1">
             <Button size="sm" onClick={() => void open(project, "vscode")}>
-              <Code2 size={13} /> VS Code
-            </Button>
+              <Code2 size={13} />{" "}{tr("VS Code")}</Button>
             <Button size="sm" variant="secondary" onClick={() => navigate("terminal", project.id)}>
-              <SquareTerminal size={13} /> Terminal
-            </Button>
+              <SquareTerminal size={13} />{" "}{tr("Terminal")}</Button>
             <Button size="sm" variant="secondary" onClick={() => void open(project, "explorer")}>
-              <FolderOpen size={13} /> Explorer
-            </Button>
+              <FolderOpen size={13} />{" "}{tr("Explorer")}</Button>
             {project.githubUrl && (
               <Button size="sm" variant="secondary" onClick={() => void open(project, "github")}>
-                <Github size={13} /> GitHub
-              </Button>
+                <Github size={13} />{" "}{tr("GitHub")}</Button>
             )}
           </div>
         </div>
 
         <section>
-          <p className="section-title mb-2">Git</p>
+          <p className="section-title mb-2">{tr("Git")}</p>
           <GitSection project={project} onChanged={() => void load()} />
         </section>
 
         {project.githubUrl && (
           <section>
-            <p className="section-title mb-2">GitHub</p>
+            <p className="section-title mb-2">{tr("GitHub")}</p>
             <GitHubSection url={project.githubUrl} />
           </section>
         )}
 
         <section>
           <div className="mb-2 flex items-center justify-between">
-            <p className="section-title">Tarefas abertas</p>
+            <p className="section-title">{tr("Tarefas abertas")}</p>
             <Button size="xs" variant="ghost" onClick={() => setTaskOpen(true)}>
-              <Plus size={12} /> Nova
-            </Button>
+              <Plus size={12} />{" "}{tr("Nova")}</Button>
           </div>
           {projectTasks.length === 0 ? (
-            <p className="text-xs text-text-faint">Nenhuma tarefa aberta neste projeto.</p>
+            <p className="text-xs text-text-faint">{tr("Nenhuma tarefa aberta neste projeto.")}</p>
           ) : (
             <div className="space-y-1">
               {projectTasks.map((t) => (
                 <div key={t.id} className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" className="accent-accent" checked={false} onChange={() => void toggleDone(t)} aria-label="Concluir" />
+                  <input type="checkbox" className="accent-accent" checked={false} onChange={() => void toggleDone(t)} aria-label={tr("Concluir")} />
                   <button className="min-w-0 flex-1 truncate text-left text-text" onClick={() => navigate("tarefas", t.id)}>
                     {t.title}
                   </button>
@@ -519,7 +505,7 @@ function ProjectCard({ project, onOpen }: { project: ProjectWithGit; onOpen: () 
   const git = project.git;
 
   return (
-    <Card className="group flex flex-col p-4 transition-colors hover:border-border">
+    <Card className="card-interactive group flex flex-col p-4">
       <div className="flex items-start gap-2">
         <button className="min-w-0 flex-1 text-left" onClick={onOpen}>
           <p className="truncate text-sm font-semibold text-text">{project.name}</p>
@@ -528,7 +514,7 @@ function ProjectCard({ project, onOpen }: { project: ProjectWithGit; onOpen: () 
         <button
           onClick={() => void toggleFavorite(project.id)}
           className={cn("rounded-md p-1 transition-colors hover:bg-bg-hover", project.favorite ? "text-warning" : "text-text-faint opacity-0 group-hover:opacity-100")}
-          aria-label={project.favorite ? "Remover dos favoritos" : "Favoritar"}
+          aria-label={project.favorite ? tr("Remover dos favoritos") : tr("Favoritar")}
         >
           <Star size={14} className={project.favorite ? "fill-warning" : ""} />
         </button>
@@ -545,32 +531,29 @@ function ProjectCard({ project, onOpen }: { project: ProjectWithGit; onOpen: () 
         {git?.isRepo ? (
           <>
             <GitBranch size={11} /> {git.branch ?? "?"}
-            {git.modifiedCount > 0 && <span className="text-warning">· {git.modifiedCount} alterado(s)</span>}
+            {git.modifiedCount > 0 && <span className="text-warning">· {tr("{n} alterado(s)", { n: git.modifiedCount })}</span>}
           </>
         ) : (
-          <span>Sem git</span>
+          <span>{tr("Sem git")}</span>
         )}
-        <span className="ml-auto">{project.lastOpenedAt ? `Aberto ${timeAgo(project.lastOpenedAt)}` : "Nunca aberto"}</span>
+        <span className="ml-auto">{project.lastOpenedAt ? `Aberto ${timeAgo(project.lastOpenedAt)}` : tr("Nunca aberto")}</span>
       </div>
 
       <div className="mt-3 flex gap-1.5 border-t border-border-subtle pt-3">
         <Button size="xs" onClick={() => void open(project, "vscode")}>
-          <Code2 size={12} /> VS Code
-        </Button>
-        <Button size="xs" variant="secondary" onClick={() => navigate("terminal", project.id)} title="Terminal">
+          <Code2 size={12} />{" "}{tr("VS Code")}</Button>
+        <Button size="xs" variant="secondary" onClick={() => navigate("terminal", project.id)} title={tr("Terminal")}>
           <SquareTerminal size={12} />
         </Button>
-        <Button size="xs" variant="secondary" onClick={() => void open(project, "explorer")} title="Explorer">
+        <Button size="xs" variant="secondary" onClick={() => void open(project, "explorer")} title={tr("Explorer")}>
           <FolderOpen size={12} />
         </Button>
         {project.githubUrl && (
-          <Button size="xs" variant="secondary" onClick={() => void open(project, "github")} title="GitHub">
+          <Button size="xs" variant="secondary" onClick={() => void open(project, "github")} title={tr("GitHub")}>
             <Github size={12} />
           </Button>
         )}
-        <Button size="xs" variant="ghost" className="ml-auto" onClick={onOpen}>
-          Detalhes
-        </Button>
+        <Button size="xs" variant="ghost" className="ml-auto" onClick={onOpen}>{tr("Detalhes")}</Button>
       </div>
     </Card>
   );
@@ -612,7 +595,7 @@ export function Projects() {
 
   useEffect(() => {
     if (detailId && loaded && !projects.some((p) => p.id === detailId)) {
-      toast.error("Projeto não encontrado.");
+      toast.error(tr("Projeto não encontrado."));
       setDetailId(null);
     }
   }, [detailId, loaded, projects]);
@@ -634,17 +617,16 @@ export function Projects() {
   return (
     <div>
       <PageHeader
-        title="Projetos"
-        description={`${projects.length} projeto(s) no Workspace`}
+        title={tr("Projetos")}
+        description={tr("{n} projeto(s) no QrzSpace", { n: projects.length })}
         actions={
           <>
-            <input className="input w-56 py-1 text-xs" placeholder="Filtrar projetos..." value={search} onChange={(e) => setSearch(e.target.value)} />
-            <Button size="sm" variant="ghost" onClick={() => void load()} title="Atualizar status git">
+            <input className="input w-56 py-1 text-xs" placeholder={tr("Filtrar projetos...")} value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Button size="sm" variant="ghost" onClick={() => void load()} title={tr("Atualizar status git")}>
               {loading ? <Spinner /> : <RefreshCw size={13} />}
             </Button>
             <Button size="sm" onClick={() => setFormOpen(true)}>
-              <Plus size={14} /> Novo projeto
-            </Button>
+              <Plus size={14} />{" "}{tr("Novo projeto")}</Button>
           </>
         }
       />
@@ -657,28 +639,27 @@ export function Projects() {
         <Card>
           <EmptyState
             icon={Code2}
-            title="Nenhum projeto ainda"
-            description="Adicione a pasta de um projeto para abrir no VS Code, no terminal e acompanhar o git em um clique."
+            title={tr("Nenhum projeto ainda")}
+            description={tr("Adicione a pasta de um projeto para abrir no VS Code, no terminal e acompanhar o git em um clique.")}
             action={
               <Button size="sm" onClick={() => setFormOpen(true)}>
-                <Plus size={14} /> Adicionar projeto
-              </Button>
+                <Plus size={14} />{" "}{tr("Adicionar projeto")}</Button>
             }
           />
         </Card>
       ) : sorted.length === 0 ? (
-        <EmptyState icon={Code2} title="Nenhum projeto encontrado" />
+        <EmptyState icon={Code2} title={tr("Nenhum projeto encontrado")} />
       ) : (
         <div className="space-y-6">
           {favorites.length > 0 && (
             <section>
-              <p className="section-title mb-2">Favoritos</p>
+              <p className="section-title mb-2">{tr("Favoritos")}</p>
               {grid(favorites)}
             </section>
           )}
           {others.length > 0 && (
             <section>
-              {favorites.length > 0 && <p className="section-title mb-2">Todos</p>}
+              {favorites.length > 0 && <p className="section-title mb-2">{tr("Todos")}</p>}
               {grid(others)}
             </section>
           )}

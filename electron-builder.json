@@ -21,7 +21,14 @@
       "to": "build/icon.png"
     }
   ],
-  "publish": null,
+  "publish": [
+    {
+      "provider": "github",
+      "owner": "PQueirozDev",
+      "repo": "QrzSpace-releases",
+      "releaseType": "release"
+    }
+  ],
   "npmRebuild": false,
   "win": {
     "target": [
@@ -47,17 +54,5 @@
     "uninstallerIcon": "build/icon.ico",
     "deleteAppDataOnUninstall": false,
     "runAfterFinish": true
-  },
-  "mac": {
-    "target": [
-      "dmg"
-    ],
-    "icon": "build/icon.png"
-  },
-  "linux": {
-    "target": [
-      "AppImage"
-    ],
-    "icon": "build/icon.png"
   }
 }

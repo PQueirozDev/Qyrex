@@ -96,7 +96,7 @@ export function registerIpcHandlers(): void {
   });
   handle("settings:addAllowedDir", async (e, dir) => {
     let target = dir === undefined || dir === null ? null : v.parse(v.filePath, dir);
-    if (!target) target = await systemService.pickDirectory(windowOf(e), "Autorizar pasta no Workspace");
+    if (!target) target = await systemService.pickDirectory(windowOf(e), "Autorizar pasta no QrzSpace");
     if (!target) return getSettings();
     const resolved = assertAuthorizableDir(target);
     if (!fs.existsSync(resolved) || !fs.statSync(resolved).isDirectory()) throw new Error("A pasta não existe.");

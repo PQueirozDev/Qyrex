@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { AIConversation, AIMessage, AIProviderId, AIProviderStatus, AIStreamChunk, AttachedFileRef } from "@shared/types";
 import { attempt, errorMessage, unwrap } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 /**
  * Um único listener de `ai:stream` para o app inteiro, que despacha cada chunk
@@ -53,7 +54,7 @@ export const useAIStore = create<AIState>((set, get) => {
       set({
         isStreaming: false,
         activeRequestId: null,
-        error: chunk.type === "error" ? chunk.error ?? "Erro na IA." : null,
+        error: chunk.type === "error" ? chunk.error ?? tr("Erro na IA.") : null,
       });
       if (get().activeConversationId === conversationId) {
         void window.workspace.ai.messages.list(conversationId).then((res) => {
@@ -88,7 +89,7 @@ export const useAIStore = create<AIState>((set, get) => {
       if (data) set({ conversations: data });
     },
     createConversation: async (input) => {
-      const conv = await attempt(window.workspace.ai.conversations.create({ title: "Nova conversa", ...input }));
+      const conv = await attempt(window.workspace.ai.conversations.create({ title: tr("Nova conversa"), ...input }));
       if (!conv) return null;
       await get().loadConversations();
       await get().selectConversation(conv.id);

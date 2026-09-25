@@ -12,6 +12,7 @@ import { attempt } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { toast } from "@/stores/useUIStore";
 
+import { tr } from "@/lib/i18n";
 /** Linguagens de bloco de código que podem ser executadas (sempre via PowerShell, com confirmação). */
 const RUNNABLE = new Set(["powershell", "ps", "ps1", "pwsh", "bash", "sh", "shell", "cmd", "bat", "console"]);
 
@@ -49,28 +50,18 @@ function RunCommandDialog({
       danger={dangerous}
       onClose={onCancel}
       title={`${assistantLabel} deseja executar:`}
-      description={dangerous ? "Este comando pode apagar, sobrescrever ou alterar algo de forma irreversível. Revise com atenção." : undefined}
+      description={dangerous ? tr("Este comando pode apagar, sobrescrever ou alterar algo de forma irreversível. Revise com atenção.") : undefined}
       footer={
         dangerous ? (
           <>
-            <Button size="sm" variant="ghost" onClick={onCancel} data-autofocus>
-              Cancelar
-            </Button>
-            <Button size="sm" variant="danger" onClick={() => onDecide("once")}>
-              Confirmar
-            </Button>
+            <Button size="sm" variant="ghost" onClick={onCancel} data-autofocus>{tr("Cancelar")}</Button>
+            <Button size="sm" variant="danger" onClick={() => onDecide("once")}>{tr("Confirmar")}</Button>
           </>
         ) : (
           <>
-            <Button size="sm" variant="ghost" onClick={onCancel}>
-              Cancelar
-            </Button>
-            <Button size="sm" variant="secondary" onClick={() => onDecide("once")} data-autofocus>
-              Permitir uma vez
-            </Button>
-            <Button size="sm" onClick={() => onDecide("always")} title="Não perguntar de novo para este comando exato">
-              Permitir sempre
-            </Button>
+            <Button size="sm" variant="ghost" onClick={onCancel}>{tr("Cancelar")}</Button>
+            <Button size="sm" variant="secondary" onClick={() => onDecide("once")} data-autofocus>{tr("Permitir uma vez")}</Button>
+            <Button size="sm" onClick={() => onDecide("always")} title={tr("Não perguntar de novo para este comando exato")}>{tr("Permitir sempre")}</Button>
           </>
         )
       }
@@ -80,10 +71,8 @@ function RunCommandDialog({
           {command}
         </pre>
         <div className="flex flex-wrap items-center gap-2 text-[11px] text-text-muted">
-          <Badge tone={RISK_TONE[assessment.risk]}>Risco: {RISK_LABEL[assessment.risk]}</Badge>
-          <span>
-            em <span className="font-mono text-text">{cwd}</span> (PowerShell)
-          </span>
+          <Badge tone={RISK_TONE[assessment.risk]}>{tr("Risco:")}{" "}{RISK_LABEL[assessment.risk]}</Badge>
+          <span>{tr("em")}{" "}<span className="font-mono text-text">{cwd}</span>{" "}{tr("(PowerShell)")}</span>
         </div>
         {assessment.reasons.length > 0 && (
           <ul className="list-disc space-y-0.5 pl-4 text-xs text-text-muted">
@@ -103,11 +92,11 @@ function RunOutput({ result }: { result: CommandRunResult }) {
     <div className="mt-1.5 overflow-hidden rounded-lg border border-border-subtle">
       <div className="flex items-center gap-2 border-b border-border-subtle bg-bg-elevated px-3 py-1 text-[11px]">
         <span className={ok ? "text-success" : "text-danger"}>
-          {result.timedOut ? "Tempo esgotado" : `Código de saída ${result.exitCode ?? "?"}`}
+          {result.timedOut ? tr("Tempo esgotado") : tr("Código de saída {code}", { code: result.exitCode ?? "?" })}
         </span>
       </div>
       <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-all bg-bg px-3 py-2 font-mono text-[11px] text-text">
-        {result.stdout || (!result.stderr && <span className="text-text-faint">(sem saída)</span>)}
+        {result.stdout || (!result.stderr && <span className="text-text-faint">{tr("(sem saída)")}</span>)}
         {result.stderr && <span className="text-danger">{result.stderr}</span>}
       </pre>
     </div>
@@ -132,7 +121,7 @@ function CodeBlock({ children, className, run }: ComponentProps<"code"> & { node
 
   async function requestRun() {
     if (!run?.cwd) {
-      toast.error("Vincule um projeto à conversa para executar comandos na pasta dele.");
+      toast.error(tr("Vincule um projeto à conversa para executar comandos na pasta dele."));
       return;
     }
     const a = await attempt(window.workspace.commands.assess(text));
@@ -157,8 +146,7 @@ function CodeBlock({ children, className, run }: ComponentProps<"code"> & { node
         <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
           {runnable && (
             <Button size="xs" variant="secondary" onClick={() => void requestRun()} loading={running}>
-              {!running && <Play size={11} />} Executar
-            </Button>
+              {!running && <Play size={11} />}{" "}{tr("Executar")}</Button>
           )}
           <button
             onClick={() => {
@@ -167,7 +155,7 @@ function CodeBlock({ children, className, run }: ComponentProps<"code"> & { node
               setTimeout(() => setCopied(false), 1500);
             }}
             className="rounded-md border border-border bg-bg-elevated p-1 text-text-faint hover:text-text"
-            aria-label="Copiar código"
+            aria-label={tr("Copiar código")}
           >
             {copied ? <Check size={13} /> : <Copy size={13} />}
           </button>

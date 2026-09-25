@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { Client } from "@shared/types";
 import { attempt, errorMessage, unwrap } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 type CreateInput = Parameters<typeof window.workspace.clients.create>[0];
 type UpdatePatch = Parameters<typeof window.workspace.clients.update>[1];
@@ -33,7 +34,7 @@ export const useClientsStore = create<ClientsState>((set, get) => ({
     }
   },
   create: async (input) => {
-    const client = await attempt(window.workspace.clients.create(input), "Cliente criado");
+    const client = await attempt(window.workspace.clients.create(input), tr("Cliente criado"));
     if (client) await get().load();
     return client;
   },
@@ -43,7 +44,7 @@ export const useClientsStore = create<ClientsState>((set, get) => ({
     return Boolean(ok);
   },
   remove: async (id) => {
-    await attempt(window.workspace.clients.delete(id), "Cliente excluído");
+    await attempt(window.workspace.clients.delete(id), tr("Cliente excluído"));
     await get().load();
   },
 }));

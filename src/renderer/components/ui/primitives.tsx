@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Loader2, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { tr } from "@/lib/i18n";
 
 export function Badge({
   children,
@@ -66,9 +67,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
     <div className="flex items-center justify-between gap-3 rounded-lg border border-danger/30 bg-danger/5 px-3 py-2 text-sm text-danger">
       <span className="min-w-0 break-words">{message}</span>
       {onRetry && (
-        <button onClick={onRetry} className="shrink-0 text-xs font-medium underline-offset-2 hover:underline">
-          Tentar de novo
-        </button>
+        <button onClick={onRetry} className="shrink-0 text-xs font-medium underline-offset-2 hover:underline">{tr("Tentar de novo")}</button>
       )}
     </div>
   );
@@ -88,7 +87,7 @@ export function PageHeader({ title, description, actions }: { title: string; des
   return (
     <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 className="text-lg font-semibold tracking-tight text-text">{title}</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-text">{title}</h1>
         {description && <p className="mt-0.5 text-sm text-text-muted">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}

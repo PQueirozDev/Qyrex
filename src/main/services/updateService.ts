@@ -3,6 +3,7 @@ import { autoUpdater } from "electron-updater";
 import { getSettings } from "../database/db.js";
 import { createLogger } from "../logger.js";
 import type { UpdateStatus } from "../../shared/types.js";
+import { tm } from "../../shared/i18n.js";
 
 const log = createLogger("updater");
 
@@ -40,10 +41,10 @@ export function attachUpdateListener(target: WebContents): void {
 
 function isSupported(): { ok: true } | { ok: false; reason: string } {
   if (!app.isPackaged && !process.env.QRZ_UPDATE_TEST_URL) {
-    return { ok: false, reason: "Atualizações só funcionam no app instalado." };
+    return { ok: false, reason: tm("Atualizações só funcionam no app instalado.") };
   }
   if (process.platform !== "win32" && !process.env.APPIMAGE) {
-    return { ok: false, reason: "Atualização automática disponível apenas no Windows." };
+    return { ok: false, reason: tm("Atualização automática disponível apenas no Windows.") };
   }
   return { ok: true };
 }
@@ -89,10 +90,10 @@ function init(): void {
 
 function friendlyError(err: unknown): string {
   const msg = err instanceof Error ? err.message : String(err);
-  if (/ENOTFOUND|ETIMEDOUT|ECONNREFUSED|net::ERR/i.test(msg)) return "Sem conexão para verificar atualizações.";
-  if (/404/.test(msg)) return "Nenhuma versão publicada ainda.";
-  if (/sha512|checksum/i.test(msg)) return "O download não passou na verificação de integridade e foi descartado.";
-  return "Não foi possível atualizar agora.";
+  if (/ENOTFOUND|ETIMEDOUT|ECONNREFUSED|net::ERR/i.test(msg)) return tm("Sem conexão para verificar atualizações.");
+  if (/404/.test(msg)) return tm("Nenhuma versão publicada ainda.");
+  if (/sha512|checksum/i.test(msg)) return tm("O download não passou na verificação de integridade e foi descartado.");
+  return tm("Não foi possível atualizar agora.");
 }
 
 /**

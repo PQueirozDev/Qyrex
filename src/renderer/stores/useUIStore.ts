@@ -12,6 +12,7 @@ export type Page =
   | "marketing"
   | "whatsapp"
   | "integracoes"
+  | "novidades"
   | "configuracoes";
 
 export const PAGES: Page[] = [
@@ -26,6 +27,7 @@ export const PAGES: Page[] = [
   "marketing",
   "whatsapp",
   "integracoes",
+  "novidades",
   "configuracoes",
 ];
 

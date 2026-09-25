@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { ProjectWithGit } from "@shared/types";
 import { attempt, errorMessage, unwrap } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 type CreateInput = Parameters<typeof window.workspace.projects.create>[0];
 type UpdatePatch = Parameters<typeof window.workspace.projects.update>[1];
@@ -35,17 +36,17 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
     }
   },
   create: async (input) => {
-    const ok = await attempt(window.workspace.projects.create(input), "Projeto adicionado");
+    const ok = await attempt(window.workspace.projects.create(input), tr("Projeto adicionado"));
     if (ok) await get().load();
     return Boolean(ok);
   },
   update: async (id, patch) => {
-    const ok = await attempt(window.workspace.projects.update(id, patch), "Projeto atualizado");
+    const ok = await attempt(window.workspace.projects.update(id, patch), tr("Projeto atualizado"));
     if (ok) await get().load();
     return Boolean(ok);
   },
   remove: async (id) => {
-    await attempt(window.workspace.projects.delete(id), "Projeto removido do Workspace");
+    await attempt(window.workspace.projects.delete(id), tr("Projeto removido do QrzSpace"));
     await get().load();
   },
   toggleFavorite: async (id) => {

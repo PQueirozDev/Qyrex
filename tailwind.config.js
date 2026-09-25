@@ -37,11 +37,11 @@ export default {
         warning: color("warning"),
       },
       fontFamily: {
-        sans: ["Inter", "Segoe UI Variable Text", "Segoe UI", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["Inter Variable", "Inter", "Segoe UI Variable Text", "Segoe UI", "ui-sans-serif", "system-ui", "sans-serif"],
         mono: ["JetBrains Mono", "Cascadia Code", "Consolas", "ui-monospace", "monospace"],
       },
       borderRadius: {
-        card: "10px",
+        card: "12px",
       },
       boxShadow: {
         card: "var(--shadow-card)",

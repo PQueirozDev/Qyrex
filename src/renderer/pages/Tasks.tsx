@@ -12,6 +12,7 @@ import { useTasksStore } from "@/stores/useTasksStore";
 import { useProjectsStore } from "@/stores/useProjectsStore";
 import { useClientsStore } from "@/stores/useClientsStore";
 import { confirmAction, useUIStore } from "@/stores/useUIStore";
+import { tr } from "@/lib/i18n";
 
 type View = "hoje" | "proximas" | "todas" | "concluidas";
 
@@ -33,12 +34,12 @@ function TaskRow({ task, onEdit }: { task: Task; onEdit: (t: Task) => void }) {
         checked={done}
         onChange={() => void toggleDone(task)}
         className="h-4 w-4 shrink-0 cursor-pointer accent-accent"
-        aria-label={done ? "Reabrir" : "Concluir"}
+        aria-label={done ? tr("Reabrir") : tr("Concluir")}
       />
       <button className="min-w-0 flex-1 text-left" onClick={() => onEdit(task)}>
         <div className="flex items-center gap-2">
           <span className={cn("truncate text-sm", done ? "text-text-faint line-through" : "text-text")}>{task.title}</span>
-          {task.status === "em_andamento" && <Badge tone="accent">Em andamento</Badge>}
+          {task.status === "em_andamento" && <Badge tone="accent">{tr("Em andamento")}</Badge>}
         </div>
         {(task.description || project || client || task.tags.length > 0) && (
           <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-text-faint">
@@ -62,17 +63,17 @@ function TaskRow({ task, onEdit }: { task: Task; onEdit: (t: Task) => void }) {
         <Menu
           trigger={<MoreHorizontal size={15} />}
           items={[
-            { label: "Editar", icon: Pencil, onSelect: () => onEdit(task) },
+            { label: tr("Editar"), icon: Pencil, onSelect: () => onEdit(task) },
             ...(["pendente", "em_andamento", "concluido"] as TaskStatus[])
               .filter((s) => s !== task.status)
               .map((s) => ({ label: `Marcar: ${STATUS_LABEL[s]}`, icon: CheckSquare, onSelect: () => void update(task.id, { status: s }) })),
             "separator",
             {
-              label: "Excluir",
+              label: tr("Excluir"),
               icon: Trash2,
               danger: true,
               onSelect: async () => {
-                if (await confirmAction({ title: `Excluir "${task.title}"?`, description: "Essa ação não pode ser desfeita.", danger: true, confirmLabel: "Excluir" }))
+                if (await confirmAction({ title: tr("Excluir \"{name}\"?", { name: task.title }), description: tr("Essa ação não pode ser desfeita."), danger: true, confirmLabel: tr("Excluir") }))
                   void remove(task.id);
               },
             },
@@ -200,8 +201,8 @@ export function Tasks() {
   return (
     <div>
       <PageHeader
-        title="Tarefas"
-        description={`${counts.todas} pendente(s) · ${counts.hoje} para hoje ou atrasada(s)`}
+        title={tr("Tarefas")}
+        description={tr("{pending} pendente(s) · {today} para hoje ou atrasada(s)", { pending: counts.todas, today: counts.hoje })}
         actions={
           <>
             <Segmented
@@ -213,8 +214,7 @@ export function Tasks() {
               ]}
             />
             <Button size="sm" onClick={() => setCreating(true)}>
-              <Plus size={14} /> Nova tarefa
-            </Button>
+              <Plus size={14} />{" "}{tr("Nova tarefa")}</Button>
           </>
         }
       />
@@ -225,22 +225,22 @@ export function Tasks() {
             value={view}
             onChange={setView}
             options={[
-              { value: "hoje", label: "Hoje", count: counts.hoje },
-              { value: "proximas", label: "Próximas", count: counts.proximas },
-              { value: "todas", label: "Todas", count: counts.todas },
-              { value: "concluidas", label: "Concluídas" },
+              { value: "hoje", label: tr("Hoje"), count: counts.hoje },
+              { value: "proximas", label: tr("Próximas"), count: counts.proximas },
+              { value: "todas", label: tr("Todas"), count: counts.todas },
+              { value: "concluidas", label: tr("Concluídas") },
             ]}
           />
         )}
         <select className="input w-44 py-1 text-xs" value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)}>
-          <option value="">Todos os projetos</option>
+          <option value="">{tr("Todos os projetos")}</option>
           {projects.map((p) => (
             <option key={p.id} value={p.id}>
               {p.name}
             </option>
           ))}
         </select>
-        <input className="input ml-auto w-56 py-1 text-xs" placeholder="Filtrar tarefas..." value={search} onChange={(e) => setSearch(e.target.value)} />
+        <input className="input ml-auto w-56 py-1 text-xs" placeholder={tr("Filtrar tarefas...")} value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
 
       {error && <ErrorState message={error} onRetry={() => void load()} />}
@@ -255,7 +255,7 @@ export function Tasks() {
               value={quickTitle}
               onChange={(e) => setQuickTitle(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && void quickAdd()}
-              placeholder={view === "hoje" ? "Adicionar tarefa para hoje e pressionar Enter..." : "Adicionar tarefa e pressionar Enter..."}
+              placeholder={view === "hoje" ? tr("Adicionar tarefa para hoje e pressionar Enter...") : tr("Adicionar tarefa e pressionar Enter...")}
               className="flex-1 bg-transparent py-1 text-sm text-text placeholder:text-text-faint focus:outline-none"
             />
           </div>
@@ -266,8 +266,8 @@ export function Tasks() {
           ) : filtered.length === 0 ? (
             <EmptyState
               icon={CheckSquare}
-              title={view === "concluidas" ? "Nenhuma tarefa concluída ainda" : search ? "Nenhuma tarefa encontrada" : "Tudo em dia por aqui"}
-              description={view === "hoje" ? "Tarefas com prazo para hoje ou atrasadas aparecem aqui." : undefined}
+              title={view === "concluidas" ? tr("Nenhuma tarefa concluída ainda") : search ? tr("Nenhuma tarefa encontrada") : tr("Tudo em dia por aqui")}
+              description={view === "hoje" ? tr("Tarefas com prazo para hoje ou atrasadas aparecem aqui.") : undefined}
             />
           ) : (
             <div className="divide-y divide-border-subtle">

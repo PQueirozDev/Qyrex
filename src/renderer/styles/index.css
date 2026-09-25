@@ -50,6 +50,77 @@
   color-scheme: dark;
 }
 
+/* --- Temas adicionais (ativados por data-theme no <html>) --------------------- */
+
+/* Meia-noite: azul profundo com destaque ciano. */
+:root[data-theme="midnight"] {
+  --bg: 7 11 22;
+  --bg-elevated: 11 17 32;
+  --bg-card: 15 23 42;
+  --bg-hover: 23 33 56;
+  --border: 34 46 68;
+  --border-subtle: 22 32 52;
+  --text: 226 232 240;
+  --text-muted: 148 163 184;
+  --text-faint: 100 116 139;
+  --accent: 34 211 238;
+  --accent-hover: 103 232 249;
+  --accent-muted: 12 52 68;
+  --accent-fg: 3 23 33;
+  --danger: 248 113 113;
+  --success: 52 211 153;
+  --warning: 251 191 36;
+  --shadow-card: 0 1px 0 0 rgba(148, 163, 184, 0.04) inset, 0 10px 30px -14px rgba(0, 0, 0, 0.7);
+  --shadow-pop: 0 24px 60px -16px rgba(0, 0, 0, 0.8);
+  color-scheme: dark;
+}
+
+/* Violeta: escuro aveludado com lilás (inspirado no Linear). */
+:root[data-theme="violet"] {
+  --bg: 13 11 20;
+  --bg-elevated: 19 16 28;
+  --bg-card: 24 20 35;
+  --bg-hover: 33 28 48;
+  --border: 45 38 62;
+  --border-subtle: 31 26 44;
+  --text: 235 231 245;
+  --text-muted: 167 159 189;
+  --text-faint: 122 113 144;
+  --accent: 167 139 250;
+  --accent-hover: 196 181 253;
+  --accent-muted: 48 38 86;
+  --accent-fg: 20 12 40;
+  --danger: 251 113 133;
+  --success: 74 222 128;
+  --warning: 250 204 21;
+  --shadow-card: 0 1px 0 0 rgba(196, 181, 253, 0.04) inset, 0 10px 30px -14px rgba(0, 0, 0, 0.7);
+  --shadow-pop: 0 24px 60px -16px rgba(0, 0, 0, 0.8);
+  color-scheme: dark;
+}
+
+/* Areia: claro e quente, com terracota. */
+:root[data-theme="sand"] {
+  --bg: 247 243 236;
+  --bg-elevated: 251 248 243;
+  --bg-card: 255 253 249;
+  --bg-hover: 241 235 225;
+  --border: 228 219 205;
+  --border-subtle: 237 230 219;
+  --text: 43 36 28;
+  --text-muted: 110 98 84;
+  --text-faint: 151 138 120;
+  --accent: 201 90 38;
+  --accent-hover: 180 77 30;
+  --accent-muted: 250 229 214;
+  --accent-fg: 255 255 255;
+  --danger: 200 50 50;
+  --success: 22 140 80;
+  --warning: 190 110 10;
+  --shadow-card: 0 1px 2px rgba(67, 49, 30, 0.06);
+  --shadow-pop: 0 16px 40px -12px rgba(67, 49, 30, 0.28);
+  color-scheme: light;
+}
+
 * {
   scrollbar-width: thin;
   scrollbar-color: rgb(var(--border)) transparent;
@@ -76,6 +147,8 @@ body,
 body {
   margin: 0;
   font-size: 14px;
+  font-feature-settings: "cv11", "ss01", "ss03";
+  letter-spacing: -0.005em;
   -webkit-font-smoothing: antialiased;
   background: rgb(var(--bg));
   color: rgb(var(--text));
@@ -91,7 +164,20 @@ body {
   color: rgb(var(--text));
 }
 
+/* Brilho ambiente bem sutil no topo da área principal, na cor do tema. */
+.app-ambient {
+  background:
+    radial-gradient(900px 320px at 70% -120px, rgb(var(--accent) / 0.07), transparent 70%),
+    rgb(var(--bg));
+}
+
 @layer components {
+  .card-interactive {
+    @apply transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-px hover:border-border hover:shadow-pop;
+  }
+  .nav-label {
+    @apply px-2.5 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-text-faint;
+  }
   .input {
     @apply w-full rounded-md border border-border bg-bg px-2.5 py-1.5 text-sm text-text placeholder:text-text-faint
       transition-colors focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:opacity-50;

@@ -9,6 +9,9 @@ import { Dashboard } from "@/pages/Dashboard";
 import { Onboarding } from "@/pages/Onboarding";
 import { PAGES, useUIStore, type Page } from "@/stores/useUIStore";
 import { applyTheme, useSettingsStore } from "@/stores/useSettingsStore";
+import { useProjectsStore } from "@/stores/useProjectsStore";
+import { UpdateBanner, WhatsNewDialog } from "@/components/UpdateBanner";
+import { syncLanguage } from "@/lib/i18n";
 
 // Páginas carregadas sob demanda: o app abre rápido e só paga o custo de
 // markdown/highlight (IA) ou xterm (Terminal) quando a página é usada.
@@ -22,6 +25,7 @@ const Clients = lazy(() => import("@/pages/Clients").then((m) => ({ default: m.C
 const Marketing = lazy(() => import("@/pages/Marketing").then((m) => ({ default: m.Marketing })));
 const Agenda = lazy(() => import("@/pages/Agenda").then((m) => ({ default: m.Agenda })));
 const WhatsApp = lazy(() => import("@/pages/WhatsApp").then((m) => ({ default: m.WhatsApp })));
+const PatchNotes = lazy(() => import("@/pages/PatchNotes").then((m) => ({ default: m.PatchNotes })));
 const TerminalPage = lazy(() => import("@/pages/TerminalPage").then((m) => ({ default: m.TerminalPage })));
 
 function PageView({ page }: { page: Page }) {
@@ -50,6 +54,8 @@ function PageView({ page }: { page: Page }) {
       return <WhatsApp />;
     case "integracoes":
       return <Integrations />;
+    case "novidades":
+      return <PatchNotes />;
   }
 }
 
@@ -71,6 +77,21 @@ export function App() {
   }, [load, loadSystem]);
 
   useEffect(() => (settings ? applyTheme(settings.theme) : undefined), [settings?.theme, settings]);
+
+  // Idioma salvo no banco manda: se diferente do atual, recarrega a janela.
+  useEffect(() => {
+    if (settings) syncLanguage(settings.language);
+  }, [settings?.language, settings]);
+
+  // Discord Rich Presence: informa a área atual (e o projeto, se aberto).
+  const pageParam = useUIStore((s) => s.pageParam);
+  const projects = useProjectsStore((s) => s.projects);
+  const discordOn = settings?.discord.enabled ?? false;
+  useEffect(() => {
+    if (!discordOn) return;
+    const project = pageParam ? projects.find((p) => p.id === pageParam)?.name ?? null : null;
+    void window.workspace.discord.setActivity(page, project);
+  }, [page, pageParam, projects, discordOn]);
 
   // Atalhos globais (dentro da janela). Customização futura: mapa em um só lugar.
   useEffect(() => {
@@ -148,7 +169,8 @@ export function App() {
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Header />
-        <main className={fullBleed ? "min-h-0 flex-1 overflow-hidden" : "flex-1 overflow-y-auto"}>
+        <UpdateBanner />
+        <main className={fullBleed ? "min-h-0 flex-1 overflow-hidden" : "app-ambient flex-1 overflow-y-auto"}>
           <div key={page} className={fullBleed ? "h-full animate-fade-in" : "mx-auto max-w-[1400px] animate-fade-in px-7 py-6"}>
             <Suspense
               fallback={
@@ -167,6 +189,7 @@ export function App() {
       <TaskFormDialog open={quickTaskOpen} onClose={() => setQuickTaskOpen(false)} />
       <ConfirmHost />
       <PromptHost />
+      <WhatsNewDialog />
       <Toaster />
     </div>
   );

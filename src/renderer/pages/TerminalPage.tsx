@@ -12,6 +12,7 @@ import { useProjectsStore } from "@/stores/useProjectsStore";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useUIStore } from "@/stores/useUIStore";
 
+import { tr } from "@/lib/i18n";
 type Shell = "powershell" | "cmd";
 
 /**
@@ -106,7 +107,7 @@ function TerminalView({ tab, active, onExit }: { tab: Tab; active: boolean; onEx
         exitHandlers.set(session.id, (code) => {
           setExited(code);
           sessionId = null;
-          term.write(`\r\n\x1b[90m[processo encerrado com código ${code}]\x1b[0m\r\n`);
+          term.write(`\r\n\x1b[90m[${tr("processo encerrado com código {code}", { code })}]\x1b[0m\r\n`);
         });
         const buffered = pendingData.get(session.id);
         if (buffered) {
@@ -159,17 +160,13 @@ function TerminalView({ tab, active, onExit }: { tab: Tab; active: boolean; onEx
       {error && (
         <div className="flex items-center justify-between gap-2 border-b border-danger/30 bg-danger/5 px-4 py-2 text-sm text-danger">
           <span>{error}</span>
-          <Button size="xs" variant="ghost" onClick={() => onExitRef.current()}>
-            Fechar aba
-          </Button>
+          <Button size="xs" variant="ghost" onClick={() => onExitRef.current()}>{tr("Fechar aba")}</Button>
         </div>
       )}
       {exited !== null && !error && (
         <div className="flex items-center justify-between gap-2 border-b border-border-subtle px-4 py-1.5 text-xs text-text-muted">
-          <span>Sessão encerrada (código {exited}).</span>
-          <Button size="xs" variant="ghost" onClick={() => onExitRef.current()}>
-            Fechar aba
-          </Button>
+          <span>{tr("Sessão encerrada (código {code}).", { code: String(exited) })}</span>
+          <Button size="xs" variant="ghost" onClick={() => onExitRef.current()}>{tr("Fechar aba")}</Button>
         </div>
       )}
       <div ref={containerRef} className="min-h-0 flex-1 px-3 py-2" />
@@ -247,7 +244,7 @@ export function TerminalPage() {
   const toolbar = (
     <div className="flex flex-wrap items-center gap-2">
       <select className="input w-56 py-1 text-xs" value={target} onChange={(e) => setTarget(e.target.value)}>
-        {locations.length === 0 && <option value="">Nenhuma pasta autorizada</option>}
+        {locations.length === 0 && <option value="">{tr("Nenhuma pasta autorizada")}</option>}
         {["Projetos", "Pastas autorizadas"].map((group) => {
           const items = locations.filter((l) => l.group === group);
           return items.length ? (
@@ -262,12 +259,12 @@ export function TerminalPage() {
         })}
       </select>
       <select className="input w-32 py-1 text-xs" value={shell} onChange={(e) => setShell(e.target.value as Shell)}>
-        <option value="powershell">PowerShell</option>
-        <option value="cmd">CMD</option>
+        <option value="powershell">{tr("PowerShell")}</option>
+        <option value="cmd">{tr("CMD")}</option>
       </select>
       <Button size="sm" onClick={() => target && openTab(target, targetLabel)} disabled={!target}>
         {available === false ? <ExternalLink size={13} /> : <Plus size={13} />}
-        {available === false ? "Abrir terminal externo" : "Novo terminal"}
+        {available === false ? tr("Abrir terminal externo") : tr("Novo terminal")}
       </Button>
     </div>
   );
@@ -283,20 +280,16 @@ export function TerminalPage() {
   if (available === false) {
     return (
       <div className="mx-auto max-w-[900px] px-7 py-6">
-        <h1 className="text-lg font-semibold tracking-tight text-text">Terminal</h1>
-        <p className="mb-5 mt-0.5 text-sm text-text-muted">
-          O terminal integrado não está disponível neste sistema. Os terminais serão abertos numa janela externa.
-        </p>
+        <h1 className="text-lg font-semibold tracking-tight text-text">{tr("Terminal")}</h1>
+        <p className="mb-5 mt-0.5 text-sm text-text-muted">{tr("O terminal integrado não está disponível neste sistema. Os terminais serão abertos numa janela externa.")}</p>
         <Card className="p-4">{toolbar}</Card>
         {locations.length === 0 && (
           <EmptyState
             icon={SquareTerminal}
-            title="Nenhuma pasta autorizada"
-            description="Autorize uma pasta em Configurações para abrir terminais nela."
+            title={tr("Nenhuma pasta autorizada")}
+            description={tr("Autorize uma pasta em Configurações para abrir terminais nela.")}
             action={
-              <Button size="sm" variant="secondary" onClick={() => navigate("configuracoes")}>
-                Abrir Configurações
-              </Button>
+              <Button size="sm" variant="secondary" onClick={() => navigate("configuracoes")}>{tr("Abrir Configurações")}</Button>
             }
           />
         )}
@@ -319,9 +312,9 @@ export function TerminalPage() {
               <button onClick={() => setActiveKey(t.key)} className="flex items-center gap-1.5" title={t.cwd}>
                 <SquareTerminal size={12} className="text-text-faint" />
                 {t.title}
-                <span className="text-[10px] text-text-faint">{t.shell === "cmd" ? "CMD" : "PS"}</span>
+                <span className="text-[10px] text-text-faint">{t.shell === "cmd" ? tr("CMD") : tr("PS")}</span>
               </button>
-              <button onClick={() => closeTab(t.key)} className="rounded p-0.5 text-text-faint hover:text-text" aria-label="Fechar terminal">
+              <button onClick={() => closeTab(t.key)} className="rounded p-0.5 text-text-faint hover:text-text" aria-label={tr("Fechar terminal")}>
                 <X size={11} />
               </button>
             </div>
@@ -338,17 +331,15 @@ export function TerminalPage() {
           <EmptyState
             className="h-full"
             icon={SquareTerminal}
-            title="Nenhum terminal aberto"
+            title={tr("Nenhum terminal aberto")}
             description={
               locations.length === 0
-                ? "Autorize uma pasta em Configurações para abrir terminais nela."
-                : "Escolha um projeto ou pasta autorizada e o shell, e clique em Novo terminal."
+                ? tr("Autorize uma pasta em Configurações para abrir terminais nela.")
+                : tr("Escolha um projeto ou pasta autorizada e o shell, e clique em Novo terminal.")
             }
             action={
               locations.length === 0 ? (
-                <Button size="sm" variant="secondary" onClick={() => navigate("configuracoes")}>
-                  Abrir Configurações
-                </Button>
+                <Button size="sm" variant="secondary" onClick={() => navigate("configuracoes")}>{tr("Abrir Configurações")}</Button>
               ) : undefined
             }
           />
