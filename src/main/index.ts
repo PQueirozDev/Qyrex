@@ -49,7 +49,12 @@ if (!app.requestSingleInstanceLock()) {
   app.quit();
 }
 
-app.setAppUserModelId("com.pedroqueiroz.qrzspace");
+// ID do app no Windows (barra de tarefas, busca do Iniciar, notificações). Tem que
+// ser o mesmo `appId` do electron-builder no app instalado. Em desenvolvimento usa
+// outro: o Electron cria sozinho um atalho "Electron" no menu Iniciar para mostrar
+// notificações, e com o mesmo ID ele tomava o lugar do QrzSpace instalado
+// (a busca por "qrz" sumia e o app fixado virava "Electron").
+app.setAppUserModelId(app.isPackaged ? "com.pedroqueiroz.qrzspace" : "com.pedroqueiroz.qrzspace.dev");
 
 function resourcePath(...segments: string[]): string {
   // Em dev, direto da pasta build/ do repo. Empacotado, o electron-builder
