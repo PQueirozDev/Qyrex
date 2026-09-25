@@ -8,6 +8,7 @@ import {
   isWithin,
 } from "../security/paths.js";
 import type { DirEntry, FilePreview } from "../../shared/types.js";
+import { tt } from "../i18n.js";
 
 function toEntry(full: string, stat: fs.Stats): DirEntry {
   return {
@@ -65,7 +66,7 @@ function uniqueDestination(destDir: string, name: string): string {
   const ext = path.extname(name);
   const base = path.basename(name, ext);
   for (let i = 1; i < 1000; i++) {
-    candidate = path.join(destDir, `${base} (cópia${i > 1 ? ` ${i}` : ""})${ext}`);
+    candidate = path.join(destDir, `${base} (${i > 1 ? tt("cópia {n}", { n: i }) : tt("cópia")})${ext}`);
     if (!fs.existsSync(candidate)) return candidate;
   }
   throw new Error("Não foi possível gerar um nome de destino livre.");

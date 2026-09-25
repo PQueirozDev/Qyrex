@@ -2,6 +2,7 @@ import { deleteSecret, getSecret, maskKey, saveSecret } from "../security/secret
 import { setIntegrationState } from "../services/integrationsService.js";
 import { createLogger } from "../logger.js";
 import type { GitHubItem, GitHubOverview } from "../../shared/types.js";
+import { endpoints } from "./endpoints.js";
 
 const log = createLogger("github");
 
@@ -11,7 +12,6 @@ const log = createLogger("github");
  * repositório (commit/pull/push) são feitas pelo git local, sempre com
  * confirmação — nunca pela API e nunca automaticamente.
  */
-const API = "https://api.github.com";
 
 function headers(token: string | null): Record<string, string> {
   return {
@@ -23,7 +23,7 @@ function headers(token: string | null): Record<string, string> {
 }
 
 async function gh<T>(path: string, token = getSecret("github")): Promise<T> {
-  const res = await fetch(`${API}${path}`, { headers: headers(token) });
+  const res = await fetch(`${endpoints.github()}${path}`, { headers: headers(token) });
   if (!res.ok) {
     const body = (await res.json().catch(() => ({}))) as { message?: string };
     if (res.status === 401) throw new Error("GitHub: token inválido ou expirado.");

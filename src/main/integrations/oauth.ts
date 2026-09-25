@@ -4,6 +4,8 @@ import type { AddressInfo } from "node:net";
 import { shell } from "electron";
 import { getSettings } from "../database/db.js";
 import { translate } from "../../shared/i18n.js";
+import { tt } from "../i18n.js";
+import { testApiBase } from "./endpoints.js";
 
 /**
  * Fluxo OAuth 2.0 para apps desktop (RFC 8252):
@@ -95,14 +97,22 @@ export function runLoopbackFlow(options: {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
-      reject(err.code === "EADDRINUSE" ? new Error(`A porta ${options.port} está em uso. Feche o outro programa e tente de novo.`) : err);
+      reject(err.code === "EADDRINUSE" ? new Error(tt("A porta {port} está em uso. Feche o outro programa e tente de novo.", { port: options.port })) : err);
     });
 
     // Somente na interface de loopback: nada da rede local alcança este servidor.
     server.listen(options.port, "127.0.0.1", () => {
       const { port } = server.address() as AddressInfo;
       redirectUri = `http://127.0.0.1:${port}${callbackPath}`;
-      void shell.openExternal(options.buildAuthUrl(redirectUri, state, challenge));
+      const authUrl = options.buildAuthUrl(redirectUri, state, challenge);
+      const testBase = testApiBase();
+      if (testBase && authUrl.startsWith(`${testBase}/`)) {
+        // Testes E2E: o servidor de simulação autoriza na hora e redireciona
+        // para o loopback; nada é aberto no navegador de quem roda os testes.
+        void fetch(authUrl).catch(() => undefined);
+      } else {
+        void shell.openExternal(authUrl);
+      }
     });
   });
 }
@@ -133,7 +143,7 @@ export async function requestToken(
     error_description?: string;
   };
   if (!res.ok || !body.access_token) {
-    throw new Error(body.error_description || body.error || `Falha ao obter token (HTTP ${res.status}).`);
+    throw new Error(body.error_description || body.error || tt("Falha ao obter token (HTTP {status}).", { status: res.status }));
   }
   return {
     accessToken: body.access_token,

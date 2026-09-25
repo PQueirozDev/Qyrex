@@ -6,6 +6,7 @@ import { assertPathAllowed, assertPathAllowedAndExists } from "../security/paths
 import { getGitStatus, getRemoteGithubUrl, isGitRepo } from "./gitService.js";
 import { recordActivity } from "./recentService.js";
 import type { Project, ProjectDetection, ProjectWithGit } from "../../shared/types.js";
+import { tt } from "../i18n.js";
 
 interface ProjectRow {
   id: string;
@@ -152,7 +153,7 @@ export function createProject(input: {
   const duplicate = getDb().prepare("SELECT name FROM projects WHERE local_path = ? COLLATE NOCASE").get(resolvedPath) as
     | { name: string }
     | undefined;
-  if (duplicate) throw new Error(`Esta pasta já está cadastrada como "${duplicate.name}".`);
+  if (duplicate) throw new Error(tt("Esta pasta já está cadastrada como \"{name}\".", { name: duplicate.name }));
 
   const id = randomUUID();
   getDb()

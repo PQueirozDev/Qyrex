@@ -3,6 +3,7 @@ import { getIntegrationMetadata, setIntegrationState } from "../services/integra
 import { removeAllGoogleEvents, replaceGoogleEvents } from "../services/calendarService.js";
 import { requestToken, runLoopbackFlow, type OAuthTokens } from "./oauth.js";
 import { createLogger } from "../logger.js";
+import { endpoints } from "./endpoints.js";
 
 const log = createLogger("google-calendar");
 
@@ -13,7 +14,6 @@ const log = createLogger("google-calendar");
  * mas mesmo assim fica no cofre cifrado, junto dos tokens.
  */
 const SCOPE = "https://www.googleapis.com/auth/calendar.readonly";
-const TOKEN_URL = "https://oauth2.googleapis.com/token";
 
 function credentials(): { clientId: string; clientSecret: string } {
   const clientId = getIntegrationMetadata("google_calendar").clientId;
@@ -30,7 +30,7 @@ export async function connect(clientId: string, clientSecret: string): Promise<v
     port: 0,
     path: "/",
     buildAuthUrl: (redirect, state, challenge) =>
-      `https://accounts.google.com/o/oauth2/v2/auth?${new URLSearchParams({
+      `${endpoints.googleAuthorize()}?${new URLSearchParams({
         client_id: clientId,
         redirect_uri: redirect,
         response_type: "code",
@@ -43,7 +43,7 @@ export async function connect(clientId: string, clientSecret: string): Promise<v
       }).toString()}`,
   });
 
-  const tokens = await requestToken(TOKEN_URL, {
+  const tokens = await requestToken(endpoints.googleToken(), {
     grant_type: "authorization_code",
     code,
     redirect_uri: redirectUri,
@@ -61,7 +61,7 @@ export async function disconnect(): Promise<void> {
   const tokens = getJsonSecret<OAuthTokens>("google_calendar_tokens");
   if (tokens) {
     // Revoga no Google também, não só apaga localmente.
-    await fetch("https://oauth2.googleapis.com/revoke", {
+    await fetch(endpoints.googleRevoke(), {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({ token: tokens.refreshToken ?? tokens.accessToken }).toString(),
@@ -81,7 +81,7 @@ async function accessToken(): Promise<string> {
   const { clientId, clientSecret } = credentials();
   try {
     const refreshed = await requestToken(
-      TOKEN_URL,
+      endpoints.googleToken(),
       { grant_type: "refresh_token", refresh_token: tokens.refreshToken, client_id: clientId, client_secret: clientSecret },
       tokens.refreshToken
     );
@@ -161,7 +161,7 @@ export function sync(): Promise<number> {
         maxResults: "250",
         ...(pageToken ? { pageToken } : {}),
       });
-      const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?${params.toString()}`, {
+      const res = await fetch(`${endpoints.googleCalendar()}/calendars/primary/events?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {

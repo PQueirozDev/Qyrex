@@ -1,3 +1,5 @@
+import { getSettings } from "../../database/db.js";
+import { translate } from "../../../shared/i18n.js";
 import type { AIModelInfo } from "../../../shared/types.js";
 
 export interface ProviderMessage {
@@ -90,4 +92,15 @@ export async function readSse(body: ReadableStream<Uint8Array>, onData: (payload
   }
   const rest = buffer.trim();
   if (rest.startsWith("data:")) onData(rest.slice(5).trim());
+}
+
+/** Nota anexada ao fim de uma resposta (ex.: limite de tokens), no idioma do app. */
+export function providerNote(text: string): string {
+  let language: "pt" | "en" = "pt";
+  try {
+    language = getSettings().language;
+  } catch {
+    // banco indisponível (testes): português
+  }
+  return `\n\n_[${translate(language, text)}]_`;
 }

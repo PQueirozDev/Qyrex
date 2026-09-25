@@ -1,4 +1,6 @@
-import { readApiError, readSse, type AIProvider, type ProviderUsage } from "./types.js";
+import { readApiError, readSse, type AIProvider, type ProviderUsage, providerNote } from "./types.js";
+import { tm } from "../../../shared/i18n.js";
+import { endpoints } from "../endpoints.js";
 
 /** Converte o `usageMetadata` do Gemini (pensamento é cobrado como saída; prompt inclui o cache). */
 export function parseGeminiUsage(u: {
@@ -16,7 +18,6 @@ export function parseGeminiUsage(u: {
   };
 }
 
-const BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 
 // A key vai no cabeçalho `x-goog-api-key` — nunca na query string, onde
 // poderia acabar em logs de proxy/histórico.
@@ -43,7 +44,7 @@ export const googleProvider: AIProvider = {
       parts: [{ text: m.content }],
     }));
 
-    const res = await fetch(`${BASE_URL}/models/${assertModelId(model)}:streamGenerateContent?alt=sse`, {
+    const res = await fetch(`${endpoints.gemini()}/models/${assertModelId(model)}:streamGenerateContent?alt=sse`, {
       method: "POST",
       signal,
       headers: headers(apiKey),
@@ -73,13 +74,13 @@ export const googleProvider: AIProvider = {
       for (const part of candidate?.content?.parts ?? []) {
         if (typeof part.text === "string" && !part.thought) onDelta(part.text);
       }
-      if (candidate?.finishReason === "MAX_TOKENS") onDelta("\n\n_[Resposta interrompida: limite de tokens atingido.]_");
-      if (candidate?.finishReason === "SAFETY") onDelta("\n\n_[Resposta bloqueada pelos filtros de segurança do Gemini.]_");
+      if (candidate?.finishReason === "MAX_TOKENS") onDelta(providerNote(tm("Resposta interrompida: limite de tokens atingido.")));
+      if (candidate?.finishReason === "SAFETY") onDelta(providerNote(tm("Resposta bloqueada pelos filtros de segurança do Gemini.")));
     });
   },
 
   async listModels(apiKey) {
-    const res = await fetch(`${BASE_URL}/models?pageSize=200`, { headers: headers(apiKey) });
+    const res = await fetch(`${endpoints.gemini()}/models?pageSize=200`, { headers: headers(apiKey) });
     if (!res.ok) throw new Error(await readApiError(res, "Gemini"));
     const body = (await res.json()) as {
       models?: { name: string; displayName?: string; supportedGenerationMethods?: string[]; outputTokenLimit?: number }[];
@@ -96,7 +97,7 @@ export const googleProvider: AIProvider = {
 
   async testConnection(apiKey) {
     try {
-      const res = await fetch(`${BASE_URL}/models?pageSize=1`, { headers: headers(apiKey) });
+      const res = await fetch(`${endpoints.gemini()}/models?pageSize=1`, { headers: headers(apiKey) });
       if (res.ok) return { ok: true };
       return { ok: false, error: await readApiError(res, "Gemini") };
     } catch (err) {

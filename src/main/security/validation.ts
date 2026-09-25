@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { tt } from "../i18n.js";
+import { tm } from "../../shared/i18n.js";
 
 /**
  * Schemas de validação de TODO input que chega do renderer via IPC.
@@ -271,7 +273,7 @@ export function parse<T extends z.ZodType>(schema: T, value: unknown): z.infer<T
   if (!result.success) {
     const issue = result.error.issues[0];
     const field = issue?.path.join(".") || "entrada";
-    throw new Error(`Dados inválidos (${field}): ${issue?.message ?? "formato inesperado"}`);
+    throw new Error(tt("Dados inválidos ({field}): {message}", { field, message: tt(issue?.message ?? tm("formato inesperado")) }));
   }
   return result.data;
 }

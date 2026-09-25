@@ -4,6 +4,7 @@ import { runCapture } from "../security/exec.js";
 import { assertPathAllowedAndExists } from "../security/paths.js";
 import { EXTERNAL_COMMANDS } from "../security/commands.js";
 import type { GitChangedFile, GitCommit, GitStatusInfo } from "../../shared/types.js";
+import { tt } from "../i18n.js";
 
 /**
  * Operações Git sempre via `git` com argumentos em array (sem shell).
@@ -28,7 +29,7 @@ async function git(cwd: string, args: string[], timeoutMs = 20_000) {
 async function gitOk(cwd: string, args: string[], timeoutMs?: number): Promise<string> {
   const res = await git(cwd, args, timeoutMs);
   if (res.code !== 0) {
-    throw new Error((res.stderr || res.stdout).trim() || `git ${args[0]} falhou (código ${res.code}).`);
+    throw new Error((res.stderr || res.stdout).trim() || tt("git {cmd} falhou (código {code}).", { cmd: args[0], code: String(res.code) }));
   }
   return res.stdout;
 }

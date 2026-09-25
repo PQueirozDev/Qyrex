@@ -127,7 +127,7 @@ function AIProviderCard({ id, status, reload }: { id: "anthropic" | "openai" | "
     const res = await attempt(window.workspace.ai.connect(id, key.trim()));
     setBusy(null);
     if (res?.ok) {
-      toast.success(`${META[id].label} conectado`);
+      toast.success(tr("{name} conectado", { name: META[id].label }));
       setKey("");
     } else if (res) toast.error(res.error ?? tr("Não foi possível validar a chave."));
     reload();
@@ -185,7 +185,7 @@ function GitHubCard({ status, reload }: { status: IntegrationStatus | undefined;
     const res = await attempt(window.workspace.github.connect(token.trim()));
     setBusy(null);
     if (res) {
-      toast.success(`GitHub conectado como ${res.login}`);
+      toast.success(tr("GitHub conectado como {login}", { login: res.login }));
       setToken("");
     }
     reload();

@@ -31,7 +31,7 @@ function extractKeys(root) {
         const callee = node.expression.getText(sf);
         const args = node.arguments;
         const literal = (n) => n && (ts.isStringLiteral(n) || ts.isNoSubstitutionTemplateLiteral(n)) ? n.text : null;
-        if ((callee === "tr" || callee === "tm") && literal(args[0]) !== null) add(literal(args[0]), file);
+        if ((callee === "tr" || callee === "tm" || callee === "tt") && literal(args[0]) !== null) add(literal(args[0]), file);
         if (callee === "translate" && literal(args[1]) !== null) add(literal(args[1]), file);
         // Mensagens de erro exibidas pelo main (traduzidas no handler IPC)
         if (isMain && /\.(regex|refine|min|max)$/.test(callee)) {

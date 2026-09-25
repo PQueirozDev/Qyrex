@@ -3,6 +3,7 @@ import { getIntegrationMetadata, setIntegrationState } from "../services/integra
 import { requestToken, runLoopbackFlow, type OAuthTokens } from "./oauth.js";
 import { createLogger } from "../logger.js";
 import type { SpotifyPlayback } from "../../shared/types.js";
+import { endpoints } from "./endpoints.js";
 
 const log = createLogger("spotify");
 
@@ -14,8 +15,6 @@ const log = createLogger("spotify");
 export const SPOTIFY_REDIRECT_PORT = 43821;
 export const SPOTIFY_REDIRECT_URI = `http://127.0.0.1:${SPOTIFY_REDIRECT_PORT}/callback`;
 const SCOPES = ["user-read-playback-state", "user-modify-playback-state", "user-read-currently-playing"];
-const API = "https://api.spotify.com/v1";
-const TOKEN_URL = "https://accounts.spotify.com/api/token";
 
 function clientId(): string {
   const id = getIntegrationMetadata("spotify").clientId;
@@ -28,7 +27,7 @@ export async function connect(newClientId: string): Promise<void> {
   const { code, redirectUri, verifier } = await runLoopbackFlow({
     port: SPOTIFY_REDIRECT_PORT,
     buildAuthUrl: (redirect, state, challenge) =>
-      `https://accounts.spotify.com/authorize?${new URLSearchParams({
+      `${endpoints.spotifyAuthorize()}?${new URLSearchParams({
         client_id: newClientId,
         response_type: "code",
         redirect_uri: redirect,
@@ -38,7 +37,7 @@ export async function connect(newClientId: string): Promise<void> {
         scope: SCOPES.join(" "),
       }).toString()}`,
   });
-  const tokens = await requestToken(TOKEN_URL, {
+  const tokens = await requestToken(endpoints.spotifyToken(), {
     grant_type: "authorization_code",
     code,
     redirect_uri: redirectUri,
@@ -70,7 +69,7 @@ async function accessToken(): Promise<string> {
   if (!tokens.refreshToken) throw new Error("Sessão do Spotify expirada. Conecte novamente.");
   try {
     const refreshed = await requestToken(
-      TOKEN_URL,
+      endpoints.spotifyToken(),
       { grant_type: "refresh_token", refresh_token: tokens.refreshToken, client_id: clientId() },
       tokens.refreshToken
     );
@@ -84,7 +83,7 @@ async function accessToken(): Promise<string> {
 
 async function api<T>(path: string, init: RequestInit = {}): Promise<T | null> {
   const token = await accessToken();
-  const res = await fetch(`${API}${path}`, {
+  const res = await fetch(`${endpoints.spotifyApi()}${path}`, {
     ...init,
     headers: { Authorization: `Bearer ${token}`, ...(init.body ? { "Content-Type": "application/json" } : {}) },
   });

@@ -1,5 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
-import type { AIProvider, ModelListing } from "./types.js";
+import { providerNote, type AIProvider, type ModelListing } from "./types.js";
+import { tm } from "../../../shared/i18n.js";
+import { endpoints } from "../endpoints.js";
 
 /**
  * Provider do Claude usando o SDK oficial `@anthropic-ai/sdk`.
@@ -10,7 +12,7 @@ const DEFAULT_MAX_OUTPUT = 64_000;
 const SERVER_FALLBACK_MODELS = /^claude-(opus-5|fable-5-1)$/;
 
 function client(apiKey: string): Anthropic {
-  return new Anthropic({ apiKey, maxRetries: 2 });
+  return new Anthropic({ apiKey, maxRetries: 2, baseURL: endpoints.anthropic() });
 }
 
 function describeError(err: unknown): Error {
@@ -68,9 +70,9 @@ export const anthropicProvider: AIProvider = {
 
       const final = await stream.finalMessage();
       if (final.stop_reason === "refusal") {
-        onDelta("\n\n_[O modelo recusou continuar esta resposta.]_");
+        onDelta(providerNote(tm("O modelo recusou continuar esta resposta.")));
       } else if (final.stop_reason === "max_tokens") {
-        onDelta("\n\n_[Resposta interrompida: limite de tokens de saída atingido.]_");
+        onDelta(providerNote(tm("Resposta interrompida: limite de tokens de saída atingido.")));
       }
     } catch (err) {
       if (signal.aborted) throw err;

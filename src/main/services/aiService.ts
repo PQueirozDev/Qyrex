@@ -19,6 +19,7 @@ import type {
   AIStreamChunk,
   AIUsageSource,
 } from "../../shared/types.js";
+import { tt } from "../i18n.js";
 
 const log = createLogger("ai");
 
@@ -263,7 +264,7 @@ async function runStream(
   meta: { source: AIUsageSource; conversationId?: string | null }
 ): Promise<{ text: string; aborted: boolean }> {
   const apiKey = getSecret(provider);
-  if (!apiKey) throw new Error(`Nenhuma API key configurada para ${PROVIDER_LABELS[provider]}. Conecte em Integrações.`);
+  if (!apiKey) throw new Error(tt("Nenhuma API key configurada para {name}. Conecte em Integrações.", { name: PROVIDER_LABELS[provider] }));
 
   const controller = new AbortController();
   activeRequests.set(requestId, controller);
@@ -357,7 +358,7 @@ export interface SendMessageInput {
 export function sendMessage(sender: WebContents, requestId: string, input: SendMessageInput): void {
   const conversation = getConversation(input.conversationId);
   if (!hasSecret(conversation.provider)) {
-    throw new Error(`Nenhuma API key configurada para ${PROVIDER_LABELS[conversation.provider]}. Conecte em Integrações.`);
+    throw new Error(tt("Nenhuma API key configurada para {name}. Conecte em Integrações.", { name: PROVIDER_LABELS[conversation.provider] }));
   }
   const attachedFiles = input.attachedFiles ?? [];
   const fileContext = buildFileContext(attachedFiles);
@@ -409,7 +410,7 @@ export function runCouncil(
   const providers = new Set(input.targets.map((t) => t.provider));
   if (providers.size !== input.targets.length) throw new Error("Cada provider só pode aparecer uma vez no Council.");
   for (const t of input.targets) {
-    if (!hasSecret(t.provider)) throw new Error(`${PROVIDER_LABELS[t.provider]} não está conectado.`);
+    if (!hasSecret(t.provider)) throw new Error(tt("{name} não está conectado.", { name: PROVIDER_LABELS[t.provider] }));
   }
   const content = input.prompt + buildFileContext(input.attachedFiles ?? []);
   const system = systemPrompt(null);
@@ -434,7 +435,7 @@ export function synthesizeCouncil(
     answers: { label: string; content: string }[];
   }
 ): void {
-  if (!hasSecret(input.provider)) throw new Error(`${PROVIDER_LABELS[input.provider]} não está conectado.`);
+  if (!hasSecret(input.provider)) throw new Error(tt("{name} não está conectado.", { name: PROVIDER_LABELS[input.provider] }));
   const answers = input.answers.map((a) => `### Resposta de ${a.label}\n\n${a.content}`).join("\n\n");
   const content = [
     `Pergunta original do usuário:\n\n${input.prompt}`,

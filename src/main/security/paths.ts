@@ -1,6 +1,7 @@
 import path from "node:path";
 import fs from "node:fs";
 import { getSettings } from "../database/db.js";
+import { tt } from "../i18n.js";
 
 /**
  * Todo acesso a arquivos do sistema passa por aqui.
@@ -10,7 +11,7 @@ import { getSettings } from "../database/db.js";
 
 export class PathNotAllowedError extends Error {
   constructor(target: string) {
-    super(`Acesso negado: "${target}" está fora dos diretórios autorizados.`);
+    super(tt("Acesso negado: \"{path}\" está fora dos diretórios autorizados.", { path: target }));
     this.name = "PathNotAllowedError";
   }
 }
@@ -86,7 +87,7 @@ export function assertPathAllowed(target: string): string {
 export function assertPathAllowedAndExists(target: string): string {
   const resolved = assertPathAllowed(target);
   if (!fs.existsSync(resolved)) {
-    throw new Error(`Caminho não encontrado: ${resolved}`);
+    throw new Error(tt("Caminho não encontrado: {path}", { path: resolved }));
   }
   return resolved;
 }

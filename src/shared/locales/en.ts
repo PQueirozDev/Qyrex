@@ -806,6 +806,12 @@ export const EN: Record<string, string> = {
   "WhatsApp Cloud API": "WhatsApp Cloud API",
   "oficial da Meta — nunca por bibliotecas não oficiais, que colocam o número em risco de banimento.": "— never unofficial libraries, which put your number at risk of being banned.",
 
+  // --- Notas dos providers no fim das respostas --------------------------------------------------------------------------
+  "O modelo recusou continuar esta resposta.": "The model declined to continue this answer.",
+  "Resposta interrompida: limite de tokens de saída atingido.": "Answer cut off: output token limit reached.",
+  "Resposta interrompida: limite de tokens atingido.": "Answer cut off: token limit reached.",
+  "Resposta bloqueada pelos filtros de segurança do Gemini.": "Answer blocked by Gemini's safety filters.",
+
   // --- Uso da IA --------------------------------------------------------------------------------------------------------
   "Tokens por dia": "Tokens per day",
   "Entrada": "Input",
@@ -860,4 +866,18 @@ export const EN: Record<string, string> = {
   "Projeto removido do QrzSpace": "Project removed from QrzSpace",
   "Tarefa criada": "Task created",
   "Tarefa excluída": "Task deleted",
+  "A porta {port} está em uso. Feche o outro programa e tente de novo.": "Port {port} is in use. Close the other program and try again.",
+  "Falha ao obter token (HTTP {status}).": "Failed to get token (HTTP {status}).",
+  "Acesso negado: \"{path}\" está fora dos diretórios autorizados.": "Access denied: \"{path}\" is outside the authorized folders.",
+  "Caminho não encontrado: {path}": "Path not found: {path}",
+  "Dados inválidos ({field}): {message}": "Invalid data ({field}): {message}",
+  "formato inesperado": "unexpected format",
+  "Nenhuma API key configurada para {name}. Conecte em Integrações.": "No API key configured for {name}. Connect it in Integrations.",
+  "{name} não está conectado.": "{name} is not connected.",
+  "cópia {n}": "copy {n}",
+  "cópia": "copy",
+  "git {cmd} falhou (código {code}).": "git {cmd} failed (code {code}).",
+  "Esta pasta já está cadastrada como \"{name}\".": "This folder is already registered as \"{name}\".",
+  "{name} conectado": "{name} connected",
+  "GitHub conectado como {login}": "GitHub connected as {login}",
 };

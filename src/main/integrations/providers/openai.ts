@@ -1,4 +1,6 @@
-import { readApiError, readSse, type AIProvider, type ProviderUsage } from "./types.js";
+import { readApiError, readSse, type AIProvider, type ProviderUsage, providerNote } from "./types.js";
+import { tm } from "../../../shared/i18n.js";
+import { endpoints } from "../endpoints.js";
 
 /** Converte o bloco `usage` da OpenAI (prompt inclui os tokens em cache). */
 export function parseOpenAIUsage(u: {
@@ -15,7 +17,6 @@ export function parseOpenAIUsage(u: {
   };
 }
 
-const BASE_URL = "https://api.openai.com/v1";
 
 /** Modelos da listagem que NÃO são de chat (áudio, imagem, embeddings...). */
 const NON_CHAT = /(embedding|whisper|tts|dall-e|image|audio|realtime|transcribe|moderation|search|davinci|babbage|instruct|computer-use|codex-mini-latest|sora)/i;
@@ -30,7 +31,7 @@ export const openaiProvider: AIProvider = {
   async streamChat({ apiKey, model, system, messages, signal }, { onDelta, onUsage }) {
     const fullMessages = system ? [{ role: "system", content: system }, ...messages] : messages;
 
-    const res = await fetch(`${BASE_URL}/chat/completions`, {
+    const res = await fetch(`${endpoints.openai()}/chat/completions`, {
       method: "POST",
       signal,
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
@@ -57,13 +58,13 @@ export const openaiProvider: AIProvider = {
       const delta = event.choices?.[0]?.delta?.content;
       if (typeof delta === "string") onDelta(delta);
       if (event.choices?.[0]?.finish_reason === "length") {
-        onDelta("\n\n_[Resposta interrompida: limite de tokens atingido.]_");
+        onDelta(providerNote(tm("Resposta interrompida: limite de tokens atingido.")));
       }
     });
   },
 
   async listModels(apiKey) {
-    const res = await fetch(`${BASE_URL}/models`, { headers: { Authorization: `Bearer ${apiKey}` } });
+    const res = await fetch(`${endpoints.openai()}/models`, { headers: { Authorization: `Bearer ${apiKey}` } });
     if (!res.ok) throw new Error(await readApiError(res, "OpenAI"));
     const body = (await res.json()) as { data: { id: string; created: number }[] };
     return body.data
@@ -74,7 +75,7 @@ export const openaiProvider: AIProvider = {
 
   async testConnection(apiKey) {
     try {
-      const res = await fetch(`${BASE_URL}/models`, { headers: { Authorization: `Bearer ${apiKey}` } });
+      const res = await fetch(`${endpoints.openai()}/models`, { headers: { Authorization: `Bearer ${apiKey}` } });
       if (res.ok) return { ok: true };
       return { ok: false, error: await readApiError(res, "OpenAI") };
     } catch (err) {
