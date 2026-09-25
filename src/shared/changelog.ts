@@ -11,6 +11,22 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.0.1",
+    date: "2026-09-25",
+    title: { pt: "QrzSpace no seu Discord", en: "QrzSpace on your Discord" },
+    sections: [
+      {
+        kind: "new",
+        items: [
+          {
+            pt: "Discord Rich Presence pronto para usar: o app oficial QrzSpace já vem configurado e seu perfil mostra “Jogando QrzSpace” com o ícone do app. Dá para desligar em Configurações → Discord.",
+            en: "Discord Rich Presence ready to go: the official QrzSpace app comes preconfigured and your profile shows “Playing QrzSpace” with the app icon. You can turn it off in Settings → Discord.",
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: "1.0.0",
     date: "2026-09-25",
     title: { pt: "Nasce o QrzSpace", en: "Say hello to QrzSpace" },

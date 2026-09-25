@@ -60,7 +60,8 @@ describe("configurações novas (idioma, tema, Discord, atualização)", () => {
     const s = getSettings();
     expect(s.language).toBe("pt");
     expect(s.autoUpdate).toBe(true);
-    expect(s.discord).toEqual({ enabled: false, clientId: null, showProject: false });
+    // App oficial "QrzSpace" no Discord já vem configurado; nome do projeto fica oculto.
+    expect(s.discord).toEqual({ enabled: true, clientId: "1552906629085794356", showProject: false });
     expect(s.lastSeenVersion).toBeNull();
   });
 
