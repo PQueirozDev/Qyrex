@@ -4,7 +4,7 @@ Guia para o Claude Code continuar o **QrzSpace**: um app desktop (Electron + Rea
 
 Sempre responda e comente o código em **português do Brasil**, com acentuação correta.
 
-## Estado atual (v1.3.0)
+## Estado atual (v1.3.1)
 
 App completo e publicado. `npm run check` passa (typecheck, lint sem warnings e 190 testes; 3 testes de caminho do Windows são pulados fora do Windows). `npm run e2e` passa (23 etapas pela interface, com as APIs simuladas).
 
@@ -19,6 +19,7 @@ App completo e publicado. `npm run check` passa (typecheck, lint sem warnings e 
 - **GitHub pelo gh**: `github.connectWithGhCli()` lê `gh auth token` direto para o cofre.
 - **Mini player** (`components/MiniPlayer.tsx`): lê a mídia do Windows (GSMTC) por um PowerShell persistente com script fixo embutido (`integrations/media/mediaScript.ts`), comandos de lista fechada. Capa buscada por nome na Deezer/iTunes e entregue como data URL. A Web API do Spotify virou opcional.
 - **HUD**: biblioteca `motion` (layout/spring). Barra de título nativa escondida (`titleBarOverlay`, cores sincronizadas com o tema via `system:setTitleBarColors`); `.drag-region`/`.no-drag`/`.titlebar-safe`, `.press`, `.shine`, `AnimatedValue`, `Segmented` com pílula deslizante.
+- **Ícone**: fonte em `build/icon.svg` (cópia em `src/renderer/assets/logo.svg` para a barra lateral). `npm run icons` rasteriza pelo Electron e gera `build/icon.png` + `build/icon.ico` (PNG embutido). A atividade do Discord usa `icon.png` do repositório público QrzSpace-releases.
 - **Patch notes**: `src/shared/changelog.ts` (pt/en). O teste exige que a versão do `package.json` seja a primeira entrada.
 - **Atualizações**: publicadas em **PQueirozDev/QrzSpace-releases** (repositório público só com instaladores; este repositório de código é privado). `npm run release` gera o instalador e cria a release com o `gh` (patch notes do changelog em pt e en).
 

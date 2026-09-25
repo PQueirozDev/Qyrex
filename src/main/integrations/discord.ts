@@ -124,11 +124,11 @@ const PAGE_LABEL: Record<string, string> = {
 /** Aplicativo oficial "QrzSpace" no Discord Developer Portal (ID público). */
 export const OFFICIAL_DISCORD_APP_ID = "1552906629085794356";
 /**
- * Com o app oficial, a imagem vai como URL direta do CDN do Discord: assim ela
- * aparece mesmo quando o cliente do Discord ainda não carregou a lista de
- * recursos do app (cache). Com um Client ID próprio, usa a chave "qrzspace".
+ * Com o app oficial, a imagem vai como URL direta (o Discord aceita URLs https
+ * externas): aparece mesmo sem o cache de recursos do app e acompanha o ícone
+ * publicado no repositório público de releases. Com um Client ID próprio, usa a chave "qrzspace".
  */
-const OFFICIAL_LARGE_IMAGE = "https://cdn.discordapp.com/app-assets/1552906629085794356/1552907137817116772.png";
+const OFFICIAL_LARGE_IMAGE = "https://raw.githubusercontent.com/PQueirozDev/QrzSpace-releases/main/icon.png";
 
 export function largeImageFor(clientId: string | null): string {
   return clientId === OFFICIAL_DISCORD_APP_ID ? OFFICIAL_LARGE_IMAGE : "qrzspace";

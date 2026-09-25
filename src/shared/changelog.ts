@@ -11,6 +11,22 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.3.1",
+    date: "2026-09-25",
+    title: { pt: "Ícone novo", en: "New icon" },
+    sections: [
+      {
+        kind: "improved",
+        items: [
+          {
+            pt: "Ícone novo do QrzSpace: um “Q” luminoso em órbita, no app, na barra de tarefas, no instalador e na atividade do Discord.",
+            en: "New QrzSpace icon: a glowing orbiting “Q”, in the app, the taskbar, the installer and your Discord activity.",
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: "1.3.0",
     date: "2026-09-25",
     title: { pt: "Sua assinatura, sua música e uma HUD nova", en: "Your subscription, your music and a new HUD" },

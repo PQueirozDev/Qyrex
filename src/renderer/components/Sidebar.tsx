@@ -20,6 +20,7 @@ import { useUIStore, type Page } from "@/stores/useUIStore";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { MiniPlayer } from "@/components/MiniPlayer";
 import { CHANGELOG } from "@shared/changelog";
+import logoUrl from "@/assets/logo.svg";
 
 interface NavItem {
   id: Page;
@@ -108,9 +109,7 @@ export function Sidebar() {
   return (
     <aside className="flex h-full w-[224px] shrink-0 flex-col border-r border-border-subtle bg-bg-elevated">
       <div className="drag-region flex items-center gap-2.5 px-4 pb-2 pt-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-gradient-to-br from-accent to-accent-hover text-[15px] font-bold text-accent-fg shadow-sm ring-1 ring-inset ring-white/10">
-          Q
-        </div>
+        <img src={logoUrl} alt="" className="h-9 w-9 shrink-0 drop-shadow-[0_4px_10px_rgb(111_125_255/0.35)]" draggable={false} />
         <div className="min-w-0 leading-tight">
           <div className="text-[14px] font-semibold tracking-tight text-text">QrzSpace</div>
           <div className="text-[11px] text-text-faint">{system ? `v${system.appVersion}` : tr("Central de trabalho")}</div>

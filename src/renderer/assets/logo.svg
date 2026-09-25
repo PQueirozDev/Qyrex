@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1b2140"/>
+      <stop offset="0.55" stop-color="#0d1020"/>
+      <stop offset="1" stop-color="#06070d"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.3" cy="0.22" r="0.75">
+      <stop offset="0" stop-color="#6f7dff" stop-opacity="0.55"/>
+      <stop offset="0.5" stop-color="#6f7dff" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#6f7dff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ring" gradientUnits="userSpaceOnUse" x1="150" y1="130" x2="390" y2="390">
+      <stop offset="0" stop-color="#c3ccff"/>
+      <stop offset="0.35" stop-color="#8b93ff"/>
+      <stop offset="0.7" stop-color="#7a5cff"/>
+      <stop offset="1" stop-color="#2ed3ee"/>
+    </linearGradient>
+    <linearGradient id="edge" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="0.4" stop-color="#ffffff" stop-opacity="0.03"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="blur" filterUnits="userSpaceOnUse" x="0" y="0" width="512" height="512">
+      <feGaussianBlur stdDeviation="16"/>
+    </filter>
+    <clipPath id="squircle">
+      <rect x="24" y="24" width="464" height="464" rx="118"/>
+    </clipPath>
+  </defs>
+
+  <!-- Base: quadrado arredondado escuro com brilho no canto -->
+  <g clip-path="url(#squircle)">
+    <rect x="24" y="24" width="464" height="464" fill="url(#bg)"/>
+    <rect x="24" y="24" width="464" height="464" fill="url(#glow)"/>
+    <!-- Órbita sutil ao fundo -->
+    <ellipse cx="256" cy="262" rx="210" ry="86" fill="none" stroke="#8b93ff" stroke-opacity="0.13" stroke-width="3" transform="rotate(-24 256 262)"/>
+  </g>
+  <rect x="25.5" y="25.5" width="461" height="461" rx="116.5" fill="none" stroke="url(#edge)" stroke-width="3"/>
+
+  <!-- "Q": halo difuso + anel + cauda -->
+  <g filter="url(#blur)" opacity="0.75">
+    <circle cx="248" cy="244" r="104" fill="none" stroke="url(#ring)" stroke-width="46"/>
+    <path d="M306 306 L364 364" stroke="url(#ring)" stroke-width="46" stroke-linecap="round"/>
+  </g>
+  <circle cx="248" cy="244" r="104" fill="none" stroke="url(#ring)" stroke-width="44"/>
+  <path d="M306 306 L366 366" stroke="url(#ring)" stroke-width="44" stroke-linecap="round"/>
+  <!-- Reflexo no topo do anel -->
+  <path d="M170 196 A104 104 0 0 1 262 141" fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="10" stroke-linecap="round"/>
+
+  <!-- Faísca (o "Space") -->
+  <path d="M372 104 C376 128 382 134 406 138 C382 142 376 148 372 172 C368 148 362 142 338 138 C362 134 368 128 372 104 Z" fill="#ffffff"/>
+  <circle cx="372" cy="138" r="22" fill="#c3ccff" opacity="0.35" filter="url(#blur)"/>
+</svg>
