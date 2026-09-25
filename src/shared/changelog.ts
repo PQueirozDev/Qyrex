@@ -11,6 +11,47 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.2.0",
+    date: "2026-09-25",
+    title: { pt: "Tudo testado de ponta a ponta", en: "End-to-end tested" },
+    sections: [
+      {
+        kind: "fixed",
+        items: [
+          {
+            pt: "O mini player do Spotify aparece assim que você conecta, sem precisar trocar de janela.",
+            en: "The Spotify mini player shows up right after you connect, no need to switch windows.",
+          },
+          {
+            pt: "Colar uma API key errada não derruba mais a key que já estava funcionando.",
+            en: "Pasting a wrong API key no longer breaks the key that was already working.",
+          },
+          {
+            pt: "O status do git no painel do projeto atualiza junto com a lista de alterações (arquivos novos contam como alterados).",
+            en: "The git status in the project panel refreshes together with the changes list (new files count as changed).",
+          },
+          {
+            pt: "Mensagens de erro, avisos de validação e rótulos que ainda apareciam em português na interface em inglês.",
+            en: "Error messages, validation warnings and labels that still showed up in Portuguese in the English interface.",
+          },
+        ],
+      },
+      {
+        kind: "improved",
+        items: [
+          {
+            pt: "O card do Spotify em Integrações mostra a conta conectada.",
+            en: "The Spotify card in Integrations shows the connected account.",
+          },
+          {
+            pt: "Chat, AI Council, uso da IA, GitHub, Spotify, Google Agenda, git, terminal e cadastros agora passam por uma bateria de testes automáticos de ponta a ponta antes de cada versão.",
+            en: "Chat, AI Council, AI usage, GitHub, Spotify, Google Calendar, git, terminal and records now go through an automated end-to-end test suite before every release.",
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: "1.1.0",
     date: "2026-09-25",
     title: { pt: "Uso da IA", en: "AI usage" },

@@ -11,6 +11,7 @@ import { useAIStore } from "@/stores/useAIStore";
 import { confirmAction, toast, useUIStore } from "@/stores/useUIStore";
 
 import { tr } from "@/lib/i18n";
+import { INTEGRATIONS_CHANGED } from "@/lib/events";
 const SPOTIFY_REDIRECT = "http://127.0.0.1:43821/callback";
 
 interface Meta {
@@ -39,7 +40,7 @@ const KEY_LINKS: Partial<Record<IntegrationId, string>> = {
 };
 
 function StatusDot({ state }: { state: IntegrationStatus["state"] }) {
-  const label = state === "connected" ? "Conectado" : state === "error" ? "Erro" : "Desconectado";
+  const label = state === "connected" ? tr("Conectado") : state === "error" ? tr("Erro") : tr("Desconectado");
   return (
     <span className="flex items-center gap-1.5 text-[11px] text-text-muted">
       <span className={cn("h-2 w-2 rounded-full", state === "connected" ? "bg-success" : state === "error" ? "bg-danger" : "bg-border")} />
@@ -357,7 +358,10 @@ function SpotifyCard({ status, reload }: { status: IntegrationStatus | undefined
       }
     >
       {connected ? (
-        status?.info.clientId && <p className="truncate text-xs text-text-muted">{tr("Client ID:")}{" "}<span className="font-mono text-text">{status.info.clientId}</span></p>
+        <>
+          {status?.info.account && <p className="text-xs text-text-muted">{tr("Conta:")}{" "}<span className="text-text">{status.info.account}</span></p>}
+          {status?.info.clientId && <p className="truncate text-xs text-text-muted">{tr("Client ID:")}{" "}<span className="font-mono text-text">{status.info.clientId}</span></p>}
+        </>
       ) : (
         <>
           <Field label={tr("Client ID")}>
@@ -410,6 +414,7 @@ export function Integrations() {
       .then((list) => {
         setStatuses(list);
         setError(null);
+        window.dispatchEvent(new Event(INTEGRATIONS_CHANGED));
       })
       .catch((err) => setError(errorMessage(err)));
   }, []);

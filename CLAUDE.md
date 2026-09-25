@@ -4,9 +4,9 @@ Guia para o Claude Code continuar o **QrzSpace**: um app desktop (Electron + Rea
 
 Sempre responda e comente o código em **português do Brasil**, com acentuação correta.
 
-## Estado atual (v1.0.0)
+## Estado atual (v1.2.0)
 
-App completo e publicado. `npm run check` passa (typecheck, lint sem warnings e 173 testes; 3 testes de caminho do Windows são pulados fora do Windows).
+App completo e publicado. `npm run check` passa (typecheck, lint sem warnings e 185 testes; 3 testes de caminho do Windows são pulados fora do Windows). `npm run e2e` passa (22 etapas pela interface, com as APIs simuladas).
 
 ### Feito
 - `src/main/**`: ipc/handlers com validação zod e checagem de remetente, services, integrações (Claude via `@anthropic-ai/sdk`, OpenAI e Gemini via REST, GitHub com PAT, Spotify com PKCE, Google Calendar com OAuth loopback, Discord Rich Presence via named pipe), segurança (paths, commands, exec, secrets, validation), logger com redaction (inclusive cookies), notificações, terminal node-pty, tray, CSP e atualização automática (`services/updateService.ts`, electron-updater).
@@ -20,6 +20,8 @@ App completo e publicado. `npm run check` passa (typecheck, lint sem warnings e 
 
 ### Validado no Windows (2026-09-25)
 - Instalador NSIS com `npmRebuild: false` (módulos nativos N-API com prebuilds).
+- **E2E automatizado (`npm run e2e`, só Windows com display)**: `scripts/e2e/run.mjs` sobe `scripts/e2e/mock-server.mjs` (simula Anthropic, OpenAI, Gemini, GitHub, Spotify e Google OAuth/Calendar no formato real), o Vite e o Electron com perfil temporário e DevTools na porta 9223, e percorre pela UI: conectar as 6 integrações (OAuth com PKCE + loopback), chat com streaming, comando sugerido com diálogo de permissão e execução real, regenerar, interromper, anexo, Council com 3 providers + síntese, aba Uso, issues/PRs do GitHub, commit com confirmação, mini player do Spotify, eventos do Google na Agenda, CRUDs, terminal e a interface inteira em inglês. `E2E_SHOTS=<pasta>` salva screenshots; `E2E_KEEP=1` deixa o app aberto no fim. Precisa das portas 5173, 9223 e 43821 livres.
+  - Desvio das APIs: `src/main/integrations/endpoints.ts` centraliza todas as URLs externas; `QRZ_TEST_API` só é aceito com `app.isPackaged === false` e para `http://127.0.0.1:<porta>`. Nesse modo o OAuth não abre o navegador e o Discord fica desligado.
 - E2E via DevTools Protocol: 12+ páginas sem erros de console; os 5 temas; interface inteira em inglês sem texto em português; Discord com o app do Discord aberto (Client ID inválido → status "erro"); diálogo de novidades pós-atualização.
 - Atualização automática de ponta a ponta com feed local (`QRZ_UPDATE_TEST_URL=http://127.0.0.1:<porta>/`, aceito só em localhost): app instalado 1.0.0 baixou, verificou, instalou e reabriu como 1.0.1. Instalador adulterado foi recusado (`sha512 checksum mismatch`).
 
@@ -38,6 +40,7 @@ npm test             # vitest DENTRO do Electron (scripts/run-tests.mjs, ELECTRO
 npm run check        # typecheck + lint + test
 npm run build        # main (tsc + copy-migrations) + renderer (vite)
 npm run dist         # build + instalador Windows (sem publicar)
+npm run e2e          # E2E pela UI com APIs simuladas (Windows, abre uma janela do app)
 npm run release      # check + build + publica a versão em PQueirozDev/QrzSpace-releases
 ```
 
@@ -68,6 +71,7 @@ tests/             # vitest; tests/setup.ts mocka "electron"; helpers.ts cria ba
 
 - Navegação sem router: `useUIStore.navigate(page, param)`. As páginas leem `pageParam`.
 - Novo canal IPC: service → `handle()` em `handlers.ts` com schema em `security/validation.ts` → método em `preload/index.ts` → tipos em `shared/types.ts` → teste.
+- Erros do main com valores dinâmicos: `tt("Texto com {x}", { x })` de `src/main/i18n.ts` (traduz no idioma atual). Mensagens padrão do zod saem no idioma do app (`parse` em `security/validation.ts`).
 - Texto novo na UI: sempre `tr("texto em português")` e a tradução em `src/shared/locales/en.ts`. Frases com números/nomes usam placeholders: `tr("{n} tarefa(s)", { n })` — nunca concatenar pedaços.
 - Nova versão: bump no `package.json` + entrada em `src/shared/changelog.ts` + `npm run release`.
 - Novo provider de IA: arquivo em `integrations/providers/` implementando `AIProvider` + uma linha em `providers/index.ts`.

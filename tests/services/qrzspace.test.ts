@@ -141,3 +141,19 @@ describe("patch notes e versão", () => {
     expect(builder.publish).toEqual([expect.objectContaining({ provider: "github", owner: "PQueirozDev", repo: "QrzSpace-releases" })]);
   });
 });
+
+describe("mensagens de validação no idioma do app", () => {
+  beforeEach(() => {
+    freshDb();
+  });
+
+  it("usa pt-BR ou inglês nas mensagens padrão do zod", async () => {
+    const { z } = await import("zod");
+    const schema = z.object({ apiKey: z.string().min(10) });
+    updateSettings({ language: "pt" });
+    expect(() => parse(schema, { apiKey: "curta" })).toThrow(/^Dados inválidos \(apiKey\): .*10/);
+    updateSettings({ language: "en" });
+    expect(() => parse(schema, { apiKey: "curta" })).toThrow(/^Invalid data \(apiKey\): Too small.*10/);
+    expect(() => parse(z.string(), 1)).toThrow(/^Invalid data \(input\)/);
+  });
+});

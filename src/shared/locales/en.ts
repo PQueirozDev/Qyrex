@@ -879,5 +879,13 @@ export const EN: Record<string, string> = {
   "git {cmd} falhou (código {code}).": "git {cmd} failed (code {code}).",
   "Esta pasta já está cadastrada como \"{name}\".": "This folder is already registered as \"{name}\".",
   "{name} conectado": "{name} connected",
+  "Conectado": "Connected",
+  "entrada": "input",
+  "Fazer pull?": "Pull changes?",
+  "Fazer push?": "Push commits?",
+  "Aberto {time}": "Opened {time}",
+  "{name} deseja executar:": "{name} wants to run:",
+  "A IA": "The AI",
+  "Concluir {name}": "Complete {name}",
   "GitHub conectado como {login}": "GitHub connected as {login}",
 };

@@ -270,6 +270,8 @@ export function Drawer({
   return createPortal(
     <div className="fixed inset-0 z-40 flex justify-end bg-black/30 animate-fade-in" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <aside
+        data-drawer
+        aria-modal="true"
         className="flex h-full max-w-[92vw] animate-slide-in flex-col border-l border-border bg-bg-elevated shadow-pop"
         style={{ width }}
       >

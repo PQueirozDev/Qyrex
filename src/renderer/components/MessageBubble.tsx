@@ -49,7 +49,7 @@ function RunCommandDialog({
       open
       danger={dangerous}
       onClose={onCancel}
-      title={`${assistantLabel} deseja executar:`}
+      title={tr("{name} deseja executar:", { name: assistantLabel })}
       description={dangerous ? tr("Este comando pode apagar, sobrescrever ou alterar algo de forma irreversível. Revise com atenção.") : undefined}
       footer={
         dangerous ? (

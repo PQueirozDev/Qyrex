@@ -212,14 +212,14 @@ function GitSection({ project, onChanged }: { project: ProjectWithGit; onChanged
 
   async function remote(op: "pull" | "push") {
     const ok = await confirmAction({
-      title: op === "pull" ? "Fazer pull?" : "Fazer push?",
+      title: op === "pull" ? tr("Fazer pull?") : tr("Fazer push?"),
       description:
         op === "pull"
           ? tr("Baixa e integra as alterações do remoto na branch {branch}.", { branch: git?.branch ?? tr("atual") })
           : tr("Envia os commits locais da branch {branch} para o remoto (nunca com --force).", { branch: git?.branch ?? tr("atual") }),
       detail: project.localPath,
       danger: true,
-      confirmLabel: op === "pull" ? "Pull" : "Push",
+      confirmLabel: op === "pull" ? tr("Pull") : tr("Push"),
     });
     if (!ok) return;
     setBusy(op);
@@ -238,7 +238,12 @@ function GitSection({ project, onChanged }: { project: ProjectWithGit; onChanged
         <Badge tone="accent">
           <GitBranch size={11} /> {git.branch ?? tr("(sem branch)")}
         </Badge>
-        {git.modifiedCount > 0 ? <Badge tone="warning">{tr("{n} alterado(s)", { n: git.modifiedCount })}</Badge> : <Badge tone="success">{tr("Limpo")}</Badge>}
+        {/* A lista de alterações é mais recente que o status do card (recarrega no botão Atualizar). */}
+        {(changes?.length ?? git.modifiedCount) > 0 ? (
+          <Badge tone="warning">{tr("{n} alterado(s)", { n: changes?.length ?? git.modifiedCount })}</Badge>
+        ) : (
+          <Badge tone="success">{tr("Limpo")}</Badge>
+        )}
         {git.ahead > 0 && <Badge>↑ {git.ahead}</Badge>}
         {git.behind > 0 && <Badge>↓ {git.behind}</Badge>}
         <div className="ml-auto flex gap-1.5">
@@ -246,7 +251,15 @@ function GitSection({ project, onChanged }: { project: ProjectWithGit; onChanged
             <ArrowDownToLine size={12} />{" "}{tr("Pull")}</Button>
           <Button size="xs" variant="secondary" onClick={() => void remote("push")} loading={busy === "push"} disabled={!git.remoteUrl || busy !== null}>
             <ArrowUpFromLine size={12} />{" "}{tr("Push")}</Button>
-          <Button size="icon-sm" variant="ghost" onClick={() => void load()} title={tr("Atualizar")}>
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            onClick={() => {
+              void load();
+              onChanged();
+            }}
+            title={tr("Atualizar")}
+          >
             <RefreshCw size={12} />
           </Button>
         </div>
@@ -536,7 +549,7 @@ function ProjectCard({ project, onOpen }: { project: ProjectWithGit; onOpen: () 
         ) : (
           <span>{tr("Sem git")}</span>
         )}
-        <span className="ml-auto">{project.lastOpenedAt ? `Aberto ${timeAgo(project.lastOpenedAt)}` : tr("Nunca aberto")}</span>
+        <span className="ml-auto">{project.lastOpenedAt ? tr("Aberto {time}", { time: timeAgo(project.lastOpenedAt) }) : tr("Nunca aberto")}</span>
       </div>
 
       <div className="mt-3 flex gap-1.5 border-t border-border-subtle pt-3">

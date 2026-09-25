@@ -185,7 +185,7 @@ function AttachedChips({ files, onRemove }: { files: AttachedFileRef[]; onRemove
       {files.map((f) => (
         <span key={f.path} title={f.path} className="inline-flex items-center gap-1 rounded-md border border-accent/25 bg-accent/5 px-1.5 py-0.5 text-[11px] text-text">
           <Paperclip size={10} className="text-accent" /> {f.name}
-          <button onClick={() => onRemove(f.path)} className="text-text-faint hover:text-danger" aria-label={`Remover ${f.name}`}>
+          <button onClick={() => onRemove(f.path)} className="text-text-faint hover:text-danger" aria-label={tr("Remover {name}", { name: f.name })}>
             <X size={10} />
           </button>
         </span>
@@ -231,7 +231,7 @@ function ChatView({ onNew }: { onNew: () => void }) {
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages.length, streamingText, activeConversationId]);
 
-  const run = useMemo(() => ({ cwd: project?.localPath ?? null, assistantLabel: provider?.label ?? "A IA" }), [project?.localPath, provider?.label]);
+  const run = useMemo(() => ({ cwd: project?.localPath ?? null, assistantLabel: provider?.label ?? tr("A IA") }), [project?.localPath, provider?.label]);
 
   if (!conversation) {
     return (

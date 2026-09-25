@@ -5,6 +5,7 @@ import { formatDuration } from "@/lib/format";
 import { toast, useUIStore } from "@/stores/useUIStore";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/i18n";
+import { INTEGRATIONS_CHANGED } from "@/lib/events";
 
 /**
  * Mini player do Spotify (Web API oficial). Só aparece quando a integração está
@@ -36,7 +37,11 @@ export function SpotifyMiniPlayer() {
     void checkConnection();
     const onFocus = () => void checkConnection();
     window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
+    window.addEventListener(INTEGRATIONS_CHANGED, onFocus);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener(INTEGRATIONS_CHANGED, onFocus);
+    };
   }, [checkConnection]);
 
   useEffect(() => {

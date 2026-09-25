@@ -102,7 +102,8 @@ export async function connectProvider(provider: AIProviderId, apiKey: string): P
   const key = apiKey.trim();
   const result = await getProvider(provider).testConnection(key);
   if (!result.ok) {
-    setIntegrationState(provider, "error", { lastError: result.error });
+    // Se já existe uma key salva, ela continua valendo: só a nova foi recusada.
+    if (!hasSecret(provider)) setIntegrationState(provider, "error", { lastError: result.error });
     log.warn(`Falha ao conectar ${provider}`);
     return { ok: false, error: result.error };
   }

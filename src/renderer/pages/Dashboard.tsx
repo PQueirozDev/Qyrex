@@ -293,7 +293,7 @@ export function Dashboard() {
                       checked={task.status === "concluido"}
                       onChange={() => void toggleDone(task)}
                       className="h-3.5 w-3.5 cursor-pointer accent-accent"
-                      aria-label={`Concluir ${task.title}`}
+                      aria-label={tr("Concluir {name}", { name: task.title })}
                     />
                     <button className="min-w-0 flex-1 truncate text-left text-sm text-text" onClick={() => navigate("tarefas", task.id)}>
                       {task.title}

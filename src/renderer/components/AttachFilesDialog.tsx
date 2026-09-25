@@ -146,7 +146,7 @@ export function AttachFilesDialog({ open, rootPath, initiallySelected, onClose, 
                       })
                     }
                     className="text-text-faint hover:text-danger"
-                    aria-label={`Remover ${f.name}`}
+                    aria-label={tr("Remover {name}", { name: f.name })}
                   >
                     <X size={10} />
                   </button>

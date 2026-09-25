@@ -4,6 +4,7 @@ import { getSettings } from "../database/db.js";
 import { tm, translate } from "../../shared/i18n.js";
 import { createLogger } from "../logger.js";
 import type { DiscordStatus } from "../../shared/types.js";
+import { testApiBase } from "./endpoints.js";
 
 const log = createLogger("discord");
 
@@ -195,7 +196,8 @@ function teardown(): void {
 
 async function connect(): Promise<void> {
   const { discord } = getSettings();
-  if (!discord.enabled || !discord.clientId) {
+  // Nos testes E2E (servidor de simulação) nunca mexe no Discord real de quem roda.
+  if (!discord.enabled || !discord.clientId || testApiBase()) {
     setStatus("disabled");
     return;
   }

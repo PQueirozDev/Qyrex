@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { tt } from "../i18n.js";
+import { currentLanguage, tt } from "../i18n.js";
 import { tm } from "../../shared/i18n.js";
 
 /**
@@ -267,12 +267,15 @@ export const whatsappLink = z.object({
 
 export const spotifyAction = z.enum(["play", "pause", "next", "previous"]);
 
-/** Faz o parse e transforma erros do zod numa mensagem legível em pt-BR. */
+// Mensagens padrão do zod no idioma do app (as mensagens próprias dos schemas têm prioridade).
+const ZOD_ERRORS = { pt: z.locales.ptBR().localeError, en: z.locales.en().localeError };
+
+/** Faz o parse e transforma erros do zod numa mensagem legível no idioma do app. */
 export function parse<T extends z.ZodType>(schema: T, value: unknown): z.infer<T> {
-  const result = schema.safeParse(value);
+  const result = schema.safeParse(value, { error: ZOD_ERRORS[currentLanguage()] });
   if (!result.success) {
     const issue = result.error.issues[0];
-    const field = issue?.path.join(".") || "entrada";
+    const field = issue?.path.join(".") || tt(tm("entrada"));
     throw new Error(tt("Dados inválidos ({field}): {message}", { field, message: tt(issue?.message ?? tm("formato inesperado")) }));
   }
   return result.data;
