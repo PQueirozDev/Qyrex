@@ -30,6 +30,7 @@ import { useSettingsStore } from "@/stores/useSettingsStore";
 import { NAV_ITEMS } from "@/components/Sidebar";
 import { Kbd } from "@/components/ui/primitives";
 import { tr } from "@/lib/i18n";
+import { motion } from "motion/react";
 
 interface Command {
   id: string;
@@ -48,6 +49,20 @@ const GROUP_ORDER = ["Ações", "Projetos", "Clientes", "Tarefas", "Marketing", 
  * ações, navegação, projetos e clientes, mais busca global (tarefas, marketing
  * e arquivos permitidos) a partir de 2 caracteres.
  */
+/** Destaca em negrito o trecho que o usuário digitou. */
+function Highlight({ text, query }: { text: string; query: string }) {
+  const q = query.trim().toLowerCase();
+  const i = q ? text.toLowerCase().indexOf(q) : -1;
+  if (i < 0) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, i)}
+      <strong className="font-semibold text-text">{text.slice(i, i + q.length)}</strong>
+      {text.slice(i + q.length)}
+    </>
+  );
+}
+
 export function CommandPalette() {
   const open = useUIStore((s) => s.paletteOpen);
   const setOpen = useUIStore((s) => s.setPaletteOpen);
@@ -241,7 +256,7 @@ export function CommandPalette() {
   return createPortal(
     <div className="fixed inset-0 z-50 flex animate-fade-in items-start justify-center bg-black/40 pt-[14vh] backdrop-blur-[2px]" onMouseDown={() => setOpen(false)}>
       <div
-        className="w-full max-w-xl animate-pop-in overflow-hidden rounded-xl border border-border bg-bg-elevated shadow-pop"
+        className="w-full max-w-xl animate-pop-in overflow-hidden rounded-2xl border border-border bg-bg-elevated/95 shadow-pop backdrop-blur-xl"
         onMouseDown={(e) => e.stopPropagation()}
         onKeyDown={onKeyDown}
       >
@@ -264,20 +279,29 @@ export function CommandPalette() {
             lastGroup = cmd.group;
             const Icon = cmd.icon;
             return (
-              <div key={cmd.id}>
+              <div key={cmd.id} className="animate-blur-in" style={{ animationDelay: `${Math.min(index, 12) * 22}ms` }}>
                 {header && <div className="px-2.5 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-text-faint">{tr(header)}</div>}
                 <button
                   data-index={index}
                   onClick={cmd.run}
                   onMouseMove={() => setSelected(index)}
                   className={cn(
-                    "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px]",
-                    index === selected ? "bg-accent/10 text-text" : "text-text-muted"
+                    "relative flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] transition-colors",
+                    index === selected ? "text-text" : "text-text-muted"
                   )}
                 >
-                  <Icon size={15} className={index === selected ? "text-accent" : "text-text-faint"} />
-                  <span className="min-w-0 flex-1 truncate">{cmd.label}</span>
-                  {cmd.hint && <span className="max-w-[45%] truncate text-[11px] text-text-faint">{cmd.hint}</span>}
+                  {index === selected && (
+                    <motion.span
+                      layoutId="palette-selection"
+                      className="absolute inset-0 rounded-lg bg-accent/10 ring-1 ring-accent/20"
+                      transition={{ type: "spring", stiffness: 700, damping: 45 }}
+                    />
+                  )}
+                  <Icon size={15} className={cn("relative", index === selected ? "text-accent" : "text-text-faint")} />
+                  <span className="relative min-w-0 flex-1 truncate">
+                    <Highlight text={cmd.label} query={query} />
+                  </span>
+                  {cmd.hint && <span className="relative max-w-[45%] truncate text-[11px] text-text-faint">{cmd.hint}</span>}
                 </button>
               </div>
             );

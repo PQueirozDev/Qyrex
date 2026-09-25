@@ -17,6 +17,7 @@ import * as commandService from "../services/commandService.js";
 import * as terminalService from "../services/terminalService.js";
 import { listIntegrationStatus } from "../services/integrationsService.js";
 import * as github from "../integrations/github.js";
+import * as localMedia from "../integrations/media/localMedia.js";
 import * as spotify from "../integrations/spotify.js";
 import * as googleCalendar from "../integrations/googleCalendar.js";
 import { getSettings, updateSettings } from "../database/db.js";
@@ -133,6 +134,11 @@ export function registerIpcHandlers(): void {
     logsDir: getLogDir(),
     terminalAvailable: terminalService.isTerminalAvailable(),
   }));
+  handle("system:setTitleBarColors", (e, colors) => {
+    const c = v.parse(z.object({ color: z.string().regex(/^#[0-9a-f]{6}$/i), symbolColor: z.string().regex(/^#[0-9a-f]{6}$/i) }), colors);
+    const win = BrowserWindow.fromWebContents(e.sender);
+    if (win && process.platform === "win32") win.setTitleBarOverlay({ color: c.color, symbolColor: c.symbolColor, height: 48 });
+  });
   handle("system:openVSCode", (_e, p) => systemService.openInVSCode(v.parse(v.filePath, p)));
   handle("system:openExplorer", (_e, p) => systemService.openInExplorer(v.parse(v.filePath, p)));
   handle("system:openFile", (_e, p) => {
@@ -284,6 +290,8 @@ export function registerIpcHandlers(): void {
   );
   handle("ai:disconnect", (_e, provider) => aiService.disconnectProvider(v.parse(v.aiProvider, provider)));
   handle("ai:test", (_e, provider) => aiService.testProvider(v.parse(v.aiProvider, provider)));
+  handle("ai:subscriptions:list", () => aiService.listSubscriptionClis());
+  handle("ai:connectSubscription", (_e, provider) => aiService.connectSubscription(v.parse(z.enum(["anthropic", "openai"]), provider)));
   handle("ai:conversations:list", (_e, projectId) =>
     aiService.listConversations(projectId === undefined || projectId === null ? undefined : v.parse(v.id, projectId))
   );
@@ -348,6 +356,11 @@ export function registerIpcHandlers(): void {
   // --- Integrações ------------------------------------------------------------------------------------------
   handle("integrations:list", () => listIntegrationStatus());
   handle("github:connect", (_e, token) => github.connect(v.parse(z.string().trim().min(20).max(300), token)));
+  handle("github:ghCliAvailable", () => github.ghCliAvailable());
+  handle("github:connectGhCli", () => github.connectWithGhCli());
+  handle("media:state", () => localMedia.getLocalMedia());
+  handle("media:control", (_e, action) => localMedia.controlLocalMedia(v.parse(z.enum(["play", "pause", "toggle", "next", "previous"]), action)));
+  handle("media:seek", (_e, ms) => localMedia.seekLocalMedia(v.parse(z.number().int().min(0).max(24 * 3600 * 1000), ms)));
   handle("github:disconnect", () => github.disconnect());
   handle("github:test", () => github.test());
   handle("spotify:connect", (_e, input) => spotify.connect(v.parse(v.oauthClientConfig, input).clientId));

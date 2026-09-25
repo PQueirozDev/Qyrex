@@ -18,7 +18,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/i18n";
 import { useUIStore, type Page } from "@/stores/useUIStore";
 import { useSettingsStore } from "@/stores/useSettingsStore";
-import { SpotifyMiniPlayer } from "@/components/SpotifyMiniPlayer";
+import { MiniPlayer } from "@/components/MiniPlayer";
 import { CHANGELOG } from "@shared/changelog";
 
 interface NavItem {
@@ -107,7 +107,7 @@ export function Sidebar() {
 
   return (
     <aside className="flex h-full w-[224px] shrink-0 flex-col border-r border-border-subtle bg-bg-elevated">
-      <div className="flex items-center gap-2.5 px-4 pb-2 pt-4">
+      <div className="drag-region flex items-center gap-2.5 px-4 pb-2 pt-4">
         <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-gradient-to-br from-accent to-accent-hover text-[15px] font-bold text-accent-fg shadow-sm ring-1 ring-inset ring-white/10">
           Q
         </div>
@@ -157,7 +157,7 @@ export function Sidebar() {
         </span>
       </button>
 
-      <SpotifyMiniPlayer />
+      <MiniPlayer />
     </aside>
   );
 }

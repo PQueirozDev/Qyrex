@@ -50,14 +50,26 @@ export default {
       keyframes: {
         "fade-in": { from: { opacity: "0" }, to: { opacity: "1" } },
         "pop-in": {
-          from: { opacity: "0", transform: "translateY(4px) scale(0.985)" },
-          to: { opacity: "1", transform: "translateY(0) scale(1)" },
+          from: { opacity: "0", transform: "translateY(6px) scale(0.97)", filter: "blur(4px)" },
+          to: { opacity: "1", transform: "translateY(0) scale(1)", filter: "blur(0)" },
+        },
+        "blur-in": {
+          from: { opacity: "0", transform: "translateY(4px)", filter: "blur(6px)" },
+          to: { opacity: "1", transform: "translateY(0)", filter: "blur(0)" },
+        },
+        eq: { "0%, 100%": { height: "3px" }, "50%": { height: "12px" } },
+        "page-in": {
+          from: { opacity: "0", transform: "translateY(8px)", filter: "blur(3px)" },
+          to: { opacity: "1", transform: "translateY(0)", filter: "blur(0)" },
         },
         "slide-in": { from: { opacity: "0", transform: "translateX(12px)" }, to: { opacity: "1", transform: "translateX(0)" } },
       },
       animation: {
         "fade-in": "fade-in 120ms ease-out",
-        "pop-in": "pop-in 140ms cubic-bezier(0.2, 0.9, 0.3, 1)",
+        "pop-in": "pop-in 260ms cubic-bezier(0.34, 1.4, 0.64, 1)",
+        "blur-in": "blur-in 320ms cubic-bezier(0.2, 0.9, 0.3, 1) both",
+        eq: "eq 0.9s ease-in-out infinite",
+        "page-in": "page-in 280ms cubic-bezier(0.2, 0.9, 0.3, 1)",
         "slide-in": "slide-in 160ms cubic-bezier(0.2, 0.9, 0.3, 1)",
       },
     },

@@ -30,6 +30,7 @@ import { cn } from "@/lib/cn";
 import { PRIORITY_LABEL } from "@/components/TaskFormDialog";
 
 import { getLocale, tr } from "@/lib/i18n";
+import { AnimatedValue } from "@/components/ui/AnimatedValue";
 const ACTIVITY_ICON: Record<string, typeof Code2> = {
   project: Code2,
   file: FileText,
@@ -77,7 +78,9 @@ function StatTile({
           <Icon size={14} />
         </span>
       </div>
-      <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-text">{value}</p>
+      <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-text">
+        <AnimatedValue value={value} />
+      </p>
       <p className="mt-0.5 truncate text-[11px] text-text-faint">{sub}</p>
     </button>
   );

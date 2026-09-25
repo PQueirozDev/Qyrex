@@ -11,6 +11,57 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.3.0",
+    date: "2026-09-25",
+    title: { pt: "Sua assinatura, sua música e uma HUD nova", en: "Your subscription, your music and a new HUD" },
+    sections: [
+      {
+        kind: "new",
+        items: [
+          {
+            pt: "Claude e ChatGPT sem API key: em Integrações, “Usar minha assinatura” conversa pelo Claude Code e pelo Codex já logados no seu PC (Pro/Max e Plus/Pro). Funciona no chat, no AI Council e nas sínteses.",
+            en: "Claude and ChatGPT without API keys: in Integrations, “Use my subscription” talks through the Claude Code and Codex already signed in on your PC (Pro/Max and Plus/Pro). Works in chat, AI Council and syntheses.",
+          },
+          {
+            pt: "GitHub com um clique: “Usar login do GitHub CLI” conecta com a sessão do gh, sem copiar token.",
+            en: "GitHub in one click: “Use GitHub CLI sign-in” connects with your gh session, no token copying.",
+          },
+          {
+            pt: "Mini player novo: mostra a música que está tocando no Spotify do PC (capa, tempo, pausar, pular, voltar e arrastar a barra), sem precisar conectar conta nem ter Premium.",
+            en: "New mini player: shows what is playing in Spotify on your PC (cover, time, pause, skip, previous and drag to seek), no account or Premium needed.",
+          },
+        ],
+      },
+      {
+        kind: "improved",
+        items: [
+          {
+            pt: "HUD redesenhada: barra de título integrada ao app, botões em pílula com efeito ao pressionar e brilho, toggles e seletores com animação de mola, notificações em pílula, paleta de comandos com itens em cascata e números que rolam ao mudar.",
+            en: "Redesigned HUD: title bar blended into the app, pill buttons with press and shine effects, spring-animated toggles and selectors, pill notifications, cascading command palette and rolling numbers.",
+          },
+        ],
+      },
+      {
+        kind: "security",
+        items: [
+          {
+            pt: "Pela assinatura, a IA roda com todas as ferramentas desligadas (não lê arquivos, não executa comandos, sem MCP ou plugins), numa pasta vazia e sem salvar a sessão. O QrzSpace nunca lê nem guarda o seu login.",
+            en: "With a subscription, the AI runs with every tool turned off (no file reading, no commands, no MCP or plugins), in an empty folder and without saving the session. QrzSpace never reads or stores your sign-in.",
+          },
+        ],
+      },
+      {
+        kind: "fixed",
+        items: [
+          {
+            pt: "A bolinha dos botões liga/desliga saía para fora do botão.",
+            en: "The knob of on/off switches overflowed the switch.",
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: "1.2.0",
     date: "2026-09-25",
     title: { pt: "Tudo testado de ponta a ponta", en: "End-to-end tested" },

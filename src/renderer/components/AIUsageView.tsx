@@ -9,6 +9,7 @@ import { attempt, errorMessage, unwrap } from "@/lib/api";
 import { getLocale, tr } from "@/lib/i18n";
 import { formatDate, parseLocalDate, timeAgo } from "@/lib/format";
 import { confirmAction } from "@/stores/useUIStore";
+import { AnimatedValue } from "@/components/ui/AnimatedValue";
 
 type Period = "1" | "7" | "30" | "all";
 
@@ -33,7 +34,9 @@ function Tile({ icon: Icon, label, value, sub }: { icon: typeof Coins; label: st
           <Icon size={14} />
         </span>
       </div>
-      <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-text">{value}</p>
+      <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-text">
+        <AnimatedValue value={value} />
+      </p>
       {sub && <p className="mt-0.5 truncate text-[11px] text-text-faint">{sub}</p>}
     </div>
   );

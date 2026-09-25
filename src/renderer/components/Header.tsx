@@ -74,8 +74,8 @@ export function Header() {
   const showPanel = focused && query.trim().length >= 2;
 
   return (
-    <header className="flex h-12 shrink-0 items-center gap-3 border-b border-border-subtle px-5">
-      <div ref={boxRef} className="relative w-full max-w-md">
+    <header className="drag-region titlebar-safe flex h-12 shrink-0 items-center gap-3 border-b border-border-subtle pl-5">
+      <div ref={boxRef} className="no-drag relative w-full max-w-md">
         <div
           className={cn(
             "flex items-center gap-2 rounded-lg border bg-bg-elevated px-2.5 py-1.5 transition-colors",
@@ -140,7 +140,7 @@ export function Header() {
         )}
       </div>
 
-      <div className="ml-auto flex items-center gap-2">
+      <div className="no-drag ml-auto flex items-center gap-2">
         {!online && (
           <span className="flex items-center gap-1.5 rounded-md border border-warning/30 bg-warning/10 px-2 py-1 text-[11px] font-medium text-warning">
             <WifiOff size={12} />{" "}{tr("Offline")}</span>

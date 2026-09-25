@@ -85,7 +85,9 @@ export function listIntegrationStatus(): IntegrationStatus[] {
     const secret = SECRET_FOR[id];
     let state: IntegrationState = (row?.status as IntegrationState) ?? "disconnected";
     // Se o segredo sumiu (ex.: perfil copiado para outra máquina), não está conectado.
-    if (secret && state === "connected" && !hasSecret(secret)) state = "disconnected";
+    // Conexão pela assinatura (Claude Code / Codex) não tem segredo guardado no app.
+    const viaSubscription = info.authMode === "subscription";
+    if (secret && state === "connected" && !viaSubscription && !hasSecret(secret)) state = "disconnected";
     // WhatsApp não tem credencial: funciona via links oficiais (wa.me / app desktop).
     if (id === "whatsapp") state = "connected";
     return { id, state, detail: state === "error" ? lastError ?? "Erro desconhecido" : null, info: publicInfo };

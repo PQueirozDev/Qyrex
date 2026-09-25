@@ -39,6 +39,7 @@ let statusListener: ((s: DiscordStatus) => void) | null = null;
 function setStatus(next: DiscordStatus): void {
   if (status === next) return;
   status = next;
+  log.info(`Discord: ${next}`);
   statusListener?.(next);
 }
 

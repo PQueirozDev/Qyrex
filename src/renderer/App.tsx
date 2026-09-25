@@ -174,7 +174,7 @@ export function App() {
         <Header />
         <UpdateBanner />
         <main className={fullBleed ? "min-h-0 flex-1 overflow-hidden" : "app-ambient flex-1 overflow-y-auto"}>
-          <div key={page} className={fullBleed ? "h-full animate-fade-in" : "mx-auto max-w-[1400px] animate-fade-in px-7 py-6"}>
+          <div key={page} className={fullBleed ? "h-full animate-page-in" : "mx-auto max-w-[1400px] animate-page-in px-7 py-6"}>
             <Suspense
               fallback={
                 <div className="flex h-40 items-center justify-center">

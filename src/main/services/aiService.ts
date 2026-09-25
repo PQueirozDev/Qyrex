@@ -3,7 +3,7 @@ import type { WebContents } from "electron";
 import { getDb, getSettings } from "../database/db.js";
 import { deleteSecret, getSecret, hasSecret, maskKey, saveSecret } from "../security/secrets.js";
 import { getProvider, PROVIDERS, PROVIDER_LABELS } from "../integrations/providers/index.js";
-import type { ModelListing, ProviderMessage } from "../integrations/providers/types.js";
+import type { ModelListing, ProviderMessage, ProviderUsage } from "../integrations/providers/types.js";
 import { assertPathAllowedAndExists } from "../security/paths.js";
 import { readTextFile } from "./fileService.js";
 import { getProject } from "./projectService.js";
@@ -20,6 +20,8 @@ import type {
   AIUsageSource,
 } from "../../shared/types.js";
 import { tt } from "../i18n.js";
+import { CLI_MODELS, cliStatus, streamViaCli, type SubscriptionCli } from "../integrations/cli/subscriptions.js";
+import type { SubscriptionCliStatus } from "../../shared/types.js";
 
 const log = createLogger("ai");
 
@@ -70,15 +72,80 @@ function rowToMessage(row: MessageRow): AIMessage {
 
 // --- Providers / chaves ------------------------------------------------------------
 
+// --- Assinatura (Claude Code / Codex CLI) -------------------------------------------
+
+const SUBSCRIPTION_CLI: Partial<Record<AIProviderId, SubscriptionCli>> = { anthropic: "claude", openai: "codex" };
+
+/** CLI de assinatura em uso pelo provider, ou null se ele usa API key. */
+function subscriptionCli(provider: AIProviderId): SubscriptionCli | null {
+  const cli = SUBSCRIPTION_CLI[provider];
+  return cli && getIntegrationMetadata(provider).authMode === "subscription" ? cli : null;
+}
+
+/** Conectado por API key salva OU pela assinatura. */
+export function isProviderConnected(provider: AIProviderId): boolean {
+  return subscriptionCli(provider) !== null || hasSecret(provider);
+}
+
+function assertConnected(provider: AIProviderId): void {
+  if (!isProviderConnected(provider)) {
+    throw new Error(tt("{name} não está conectado. Conecte em Integrações.", { name: PROVIDER_LABELS[provider] }));
+  }
+}
+
+export async function listSubscriptionClis(): Promise<SubscriptionCliStatus[]> {
+  const entries = Object.entries(SUBSCRIPTION_CLI) as ["anthropic" | "openai", SubscriptionCli][];
+  return Promise.all(
+    entries.map(async ([provider, cli]) => {
+      const st = await cliStatus(cli);
+      return { provider, cli, installed: st.installed, loggedIn: st.loggedIn, account: st.account };
+    })
+  );
+}
+
+/** Conecta o provider pela assinatura: exige a CLI oficial instalada e logada. */
+export async function connectSubscription(provider: AIProviderId): Promise<{ ok: boolean; error?: string; account?: string | null }> {
+  const cli = SUBSCRIPTION_CLI[provider];
+  if (!cli) return { ok: false, error: tt("Este provider não tem conexão por assinatura.") };
+  const st = await cliStatus(cli);
+  const name = cli === "claude" ? "Claude Code" : "Codex CLI";
+  if (!st.installed) return { ok: false, error: tt("{name} não está instalado neste PC.", { name }) };
+  if (!st.loggedIn) {
+    return {
+      ok: false,
+      error: tt("{name} não está logado. Abra um terminal e rode: {command}", { name, command: cli === "claude" ? "claude" : "codex login" }),
+    };
+  }
+  setIntegrationState(provider, "connected", { authMode: "subscription", account: st.account ?? name, maskedKey: undefined, lastError: undefined });
+  log.info(`${provider} conectado pela assinatura (${name})`);
+  return { ok: true, account: st.account };
+}
+
 export function listProviderStatus(): AIProviderStatus[] {
   return (Object.keys(PROVIDERS) as AIProviderId[]).map((id) => {
     const provider = PROVIDERS[id];
+    const cli = subscriptionCli(id);
+    const meta = getIntegrationMetadata(id);
+    if (cli) {
+      return {
+        id,
+        label: PROVIDER_LABELS[id],
+        connected: true,
+        authMode: "subscription" as const,
+        account: meta.account ?? null,
+        maskedKey: null,
+        models: CLI_MODELS[cli].models.map((m) => ({ id: m.id, label: tt(m.label) })),
+        defaultModel: CLI_MODELS[cli].defaultModel,
+      };
+    }
     const cached = modelCache.get(id);
     return {
       id,
       label: PROVIDER_LABELS[id],
       connected: hasSecret(id),
-      maskedKey: getIntegrationMetadata(id).maskedKey ?? null,
+      authMode: "key" as const,
+      account: null,
+      maskedKey: meta.maskedKey ?? null,
       models: cached?.length ? cached.map(({ id: mid, label }) => ({ id: mid, label })) : provider.fallbackModels,
       defaultModel: provider.defaultModel,
     };
@@ -108,7 +175,7 @@ export async function connectProvider(provider: AIProviderId, apiKey: string): P
     return { ok: false, error: result.error };
   }
   saveSecret(provider, key);
-  setIntegrationState(provider, "connected", { maskedKey: maskKey(key), lastError: undefined });
+  setIntegrationState(provider, "connected", { authMode: "key", account: undefined, maskedKey: maskKey(key), lastError: undefined });
   log.info(`${provider} conectado`);
   await refreshModels(provider);
   return { ok: true };
@@ -122,6 +189,11 @@ export function disconnectProvider(provider: AIProviderId): void {
 }
 
 export async function testProvider(provider: AIProviderId): Promise<{ ok: boolean; error?: string }> {
+  if (subscriptionCli(provider)) {
+    const res = await connectSubscription(provider);
+    if (!res.ok) setIntegrationState(provider, "error", { lastError: res.error });
+    return { ok: res.ok, error: res.error };
+  }
   const apiKey = getSecret(provider);
   if (!apiKey) return { ok: false, error: "Nenhuma API key salva para este provider." };
   const result = await getProvider(provider).testConnection(apiKey);
@@ -264,8 +336,11 @@ async function runStream(
   messages: ProviderMessage[],
   meta: { source: AIUsageSource; conversationId?: string | null }
 ): Promise<{ text: string; aborted: boolean }> {
-  const apiKey = getSecret(provider);
-  if (!apiKey) throw new Error(tt("Nenhuma API key configurada para {name}. Conecte em Integrações.", { name: PROVIDER_LABELS[provider] }));
+  const cli = subscriptionCli(provider);
+  const apiKey = cli ? null : getSecret(provider);
+  if (!cli && !apiKey) throw new Error(tt("Nenhuma API key configurada para {name}. Conecte em Integrações.", { name: PROVIDER_LABELS[provider] }));
+  // Pela assinatura não há custo por token: o modelo é registrado com prefixo da CLI (sem preço de tabela).
+  let usageModel = cli ? `${cli === "claude" ? "claude-code" : "codex"}/${model}` : model;
 
   const controller = new AbortController();
   activeRequests.set(requestId, controller);
@@ -274,23 +349,30 @@ async function runStream(
   let reported = false;
   const usage = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 };
   try {
-    const maxOutputTokens = modelCache.get(provider)?.find((m) => m.id === model)?.maxOutputTokens;
-    await getProvider(provider).streamChat(
-      { apiKey, model, system, messages, signal: controller.signal, maxOutputTokens },
-      {
-        onDelta: (delta) => {
-          text += delta;
-          emit(sender, { requestId, type: "delta", text: delta });
+    const callbacks = {
+      onDelta: (delta: string) => {
+        text += delta;
+        emit(sender, { requestId, type: "delta", text: delta });
+      },
+      onUsage: (u: ProviderUsage) => {
+        reported = true;
+        if (u.inputTokens !== undefined) usage.inputTokens = u.inputTokens;
+        if (u.outputTokens !== undefined) usage.outputTokens = u.outputTokens;
+        if (u.cacheReadTokens !== undefined) usage.cacheReadTokens = u.cacheReadTokens;
+        if (u.cacheWriteTokens !== undefined) usage.cacheWriteTokens = u.cacheWriteTokens;
+      },
+    };
+    if (cli) {
+      await streamViaCli(cli, { model, system, messages, signal: controller.signal }, {
+        ...callbacks,
+        onModel: (m) => {
+          usageModel = `${cli === "claude" ? "claude-code" : "codex"}/${m}`;
         },
-        onUsage: (u) => {
-          reported = true;
-          if (u.inputTokens !== undefined) usage.inputTokens = u.inputTokens;
-          if (u.outputTokens !== undefined) usage.outputTokens = u.outputTokens;
-          if (u.cacheReadTokens !== undefined) usage.cacheReadTokens = u.cacheReadTokens;
-          if (u.cacheWriteTokens !== undefined) usage.cacheWriteTokens = u.cacheWriteTokens;
-        },
-      }
-    );
+      });
+    } else {
+      const maxOutputTokens = modelCache.get(provider)?.find((m) => m.id === model)?.maxOutputTokens;
+      await getProvider(provider).streamChat({ apiKey: apiKey!, model, system, messages, signal: controller.signal, maxOutputTokens }, callbacks);
+    }
     return { text, aborted: false };
   } catch (err) {
     if (controller.signal.aborted) {
@@ -306,7 +388,7 @@ async function runStream(
       if (!reported) usage.inputTokens = estimateTokens(system + messages.map((m) => m.content).join("\n"));
       if (usage.outputTokens === 0 && text.length > 0) usage.outputTokens = estimateTokens(text);
       if (text.length > 0 || reported) {
-        recordUsage({ provider, model, source: meta.source, conversationId: meta.conversationId, usage, estimated, aborted });
+        recordUsage({ provider, model: usageModel, source: meta.source, conversationId: meta.conversationId, usage, estimated, aborted });
       }
     } catch (err) {
       log.warn("Não foi possível registrar o uso da IA:", err);
@@ -358,9 +440,7 @@ export interface SendMessageInput {
  */
 export function sendMessage(sender: WebContents, requestId: string, input: SendMessageInput): void {
   const conversation = getConversation(input.conversationId);
-  if (!hasSecret(conversation.provider)) {
-    throw new Error(tt("Nenhuma API key configurada para {name}. Conecte em Integrações.", { name: PROVIDER_LABELS[conversation.provider] }));
-  }
+  assertConnected(conversation.provider);
   const attachedFiles = input.attachedFiles ?? [];
   const fileContext = buildFileContext(attachedFiles);
 
@@ -410,9 +490,7 @@ export function runCouncil(
 ): void {
   const providers = new Set(input.targets.map((t) => t.provider));
   if (providers.size !== input.targets.length) throw new Error("Cada provider só pode aparecer uma vez no Council.");
-  for (const t of input.targets) {
-    if (!hasSecret(t.provider)) throw new Error(tt("{name} não está conectado.", { name: PROVIDER_LABELS[t.provider] }));
-  }
+  for (const t of input.targets) assertConnected(t.provider);
   const content = input.prompt + buildFileContext(input.attachedFiles ?? []);
   const system = systemPrompt(null);
 
@@ -436,7 +514,7 @@ export function synthesizeCouncil(
     answers: { label: string; content: string }[];
   }
 ): void {
-  if (!hasSecret(input.provider)) throw new Error(tt("{name} não está conectado.", { name: PROVIDER_LABELS[input.provider] }));
+  assertConnected(input.provider);
   const answers = input.answers.map((a) => `### Resposta de ${a.label}\n\n${a.content}`).join("\n\n");
   const content = [
     `Pergunta original do usuário:\n\n${input.prompt}`,

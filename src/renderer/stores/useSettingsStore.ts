@@ -61,6 +61,7 @@ export function applyTheme(theme: AppSettings["theme"]): () => void {
     root.dataset.theme = def.id;
     root.classList.toggle("dark", def.dark);
     requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove("theme-switching")));
+    syncTitleBar();
   };
   apply();
   try {
@@ -74,6 +75,25 @@ export function applyTheme(theme: AppSettings["theme"]): () => void {
 }
 
 const THEME_KEY = "qrz.theme";
+
+function toHex(css: string): string | null {
+  const m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(css);
+  return m ? `#${[m[1], m[2], m[3]].map((n) => Number(n).toString(16).padStart(2, "0")).join("")}` : null;
+}
+
+/** Pinta os botões da janela (minimizar/maximizar/fechar) com as cores do tema. */
+function syncTitleBar(): void {
+  requestAnimationFrame(() => {
+    const styles = getComputedStyle(document.body);
+    const color = toHex(styles.backgroundColor);
+    const probe = document.createElement("span");
+    probe.className = "text-text-muted";
+    document.body.appendChild(probe);
+    const symbolColor = toHex(getComputedStyle(probe).color);
+    probe.remove();
+    if (color && symbolColor) void window.workspace?.system.setTitleBarColors({ color, symbolColor });
+  });
+}
 
 /** Chamado antes do React montar: aplica o último tema usado. */
 export function applyStoredTheme(): void {

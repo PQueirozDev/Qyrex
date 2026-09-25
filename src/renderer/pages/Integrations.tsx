@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { Bot, CalendarDays, Github, KeyRound, MessageCircle, Music, ExternalLink, ShieldCheck } from "lucide-react";
-import type { IntegrationId, IntegrationStatus } from "@shared/types";
+import { Bot, CalendarDays, Github, KeyRound, MessageCircle, Music, ExternalLink, ShieldCheck, Sparkles } from "lucide-react";
+import type { AIProviderStatus, IntegrationId, IntegrationStatus, SubscriptionCliStatus } from "@shared/types";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ErrorState, Field, LoadingRows, PageHeader } from "@/components/ui/primitives";
@@ -11,7 +11,6 @@ import { useAIStore } from "@/stores/useAIStore";
 import { confirmAction, toast, useUIStore } from "@/stores/useUIStore";
 
 import { tr } from "@/lib/i18n";
-import { INTEGRATIONS_CHANGED } from "@/lib/events";
 const SPOTIFY_REDIRECT = "http://127.0.0.1:43821/callback";
 
 interface Meta {
@@ -26,7 +25,7 @@ const META: Record<IntegrationId, Meta> = {
   google: { label: tr("Gemini (Google)"), icon: Bot, description: tr("Gemini no chat e no AI Council.") },
   github: { label: tr("GitHub"), icon: Github, description: tr("Issues, PRs e dados dos repositórios dos projetos.") },
   google_calendar: { label: tr("Google Agenda"), icon: CalendarDays, description: tr("Traz seus eventos para a Agenda (somente leitura).") },
-  spotify: { label: tr("Spotify"), icon: Music, description: tr("Mini player na barra lateral.") },
+  spotify: { label: tr("Spotify"), icon: Music, description: tr("Opcional: o mini player já mostra e controla o que toca no PC, sem conectar conta.") },
   whatsapp: { label: tr("WhatsApp"), icon: MessageCircle, description: tr("Conversas pelos links oficiais (wa.me / app desktop).") },
 };
 
@@ -116,11 +115,31 @@ function Masked({ value, label = "Chave" }: { value: string | undefined; label?:
 
 // --- Cards específicos -----------------------------------------------------------------
 
-function AIProviderCard({ id, status, reload }: { id: "anthropic" | "openai" | "google"; status: IntegrationStatus | undefined; reload: () => void }) {
+const SUBSCRIPTION: Partial<Record<"anthropic" | "openai" | "google", { cli: string; plan: string; login: string }>> = {
+  anthropic: { cli: "Claude Code", plan: tr("assinatura do Claude (Pro/Max)"), login: "claude" },
+  openai: { cli: "Codex CLI", plan: tr("conta do ChatGPT (Plus/Pro)"), login: "codex login" },
+};
+
+function AIProviderCard({
+  id,
+  status,
+  provider,
+  cli,
+  reload,
+}: {
+  id: "anthropic" | "openai" | "google";
+  status: IntegrationStatus | undefined;
+  provider: AIProviderStatus | undefined;
+  cli: SubscriptionCliStatus | undefined;
+  reload: () => void;
+}) {
   const loadProviders = useAIStore((s) => s.loadProviders);
   const [key, setKey] = useState("");
-  const [busy, setBusy] = useState<"connect" | "test" | null>(null);
+  const [busy, setBusy] = useState<"connect" | "test" | "subscription" | null>(null);
+  const [showKey, setShowKey] = useState(false);
   const connected = status?.state === "connected" || status?.state === "error";
+  const sub = SUBSCRIPTION[id];
+  const viaSubscription = provider?.authMode === "subscription";
 
   async function connect() {
     if (!key.trim()) return;
@@ -130,7 +149,19 @@ function AIProviderCard({ id, status, reload }: { id: "anthropic" | "openai" | "
     if (res?.ok) {
       toast.success(tr("{name} conectado", { name: META[id].label }));
       setKey("");
+      setShowKey(false);
     } else if (res) toast.error(res.error ?? tr("Não foi possível validar a chave."));
+    reload();
+    void loadProviders();
+  }
+
+  async function connectSubscription() {
+    if (id === "google") return;
+    setBusy("subscription");
+    const res = await attempt(window.workspace.ai.connectSubscription(id));
+    setBusy(null);
+    if (res?.ok) toast.success(tr("{name} conectado pela sua assinatura", { name: META[id].label }));
+    else if (res) toast.error(res.error ?? tr("Não foi possível conectar."));
     reload();
     void loadProviders();
   }
@@ -145,11 +176,20 @@ function AIProviderCard({ id, status, reload }: { id: "anthropic" | "openai" | "
   }
 
   async function disconnect() {
-    if (!(await confirmAction({ title: tr("Desconectar {name}?", { name: META[id].label }), description: tr("A chave é apagada do cofre do sistema."), confirmLabel: tr("Desconectar") }))) return;
+    if (
+      !(await confirmAction({
+        title: tr("Desconectar {name}?", { name: META[id].label }),
+        description: viaSubscription ? tr("O QrzSpace para de usar a sua assinatura. Seu login no {cli} continua.", { cli: sub?.cli ?? "" }) : tr("A chave é apagada do cofre do sistema."),
+        confirmLabel: tr("Desconectar"),
+      }))
+    )
+      return;
     await attempt(window.workspace.ai.disconnect(id), tr("Desconectado"));
     reload();
     void loadProviders();
   }
+
+  const cliReady = Boolean(cli?.installed && cli.loggedIn);
 
   return (
     <IntegrationCard
@@ -161,13 +201,40 @@ function AIProviderCard({ id, status, reload }: { id: "anthropic" | "openai" | "
             <Button size="xs" variant="secondary" onClick={() => void test()} loading={busy === "test"}>{tr("Testar")}</Button>
             <Button size="xs" variant="ghost" onClick={() => void disconnect()}>{tr("Desconectar")}</Button>
           </>
+        ) : sub && !showKey ? (
+          <>
+            <Button size="xs" onClick={() => void connectSubscription()} loading={busy === "subscription"} disabled={!cliReady}>
+              <Sparkles size={11} />{" "}{tr("Usar minha assinatura")}
+            </Button>
+            <Button size="xs" variant="ghost" onClick={() => setShowKey(true)}>{tr("Usar API key")}</Button>
+          </>
         ) : (
-          <Button size="xs" onClick={() => void connect()} loading={busy === "connect"} disabled={!key.trim()}>{tr("Conectar")}</Button>
+          <>
+            <Button size="xs" onClick={() => void connect()} loading={busy === "connect"} disabled={!key.trim()}>{tr("Conectar")}</Button>
+            {sub && <Button size="xs" variant="ghost" onClick={() => setShowKey(false)}>{tr("Voltar")}</Button>}
+          </>
         )
       }
     >
       {connected ? (
-        <Masked value={status?.info.maskedKey} label={tr("API key")} />
+        viaSubscription ? (
+          <p className="flex items-center gap-1.5 text-xs text-text-muted">
+            <Sparkles size={11} className="text-accent" /> {tr("Assinatura via {cli}", { cli: sub?.cli ?? "" })}
+            {provider?.account && <span className="truncate text-text">· {provider.account}</span>}
+          </p>
+        ) : (
+          <Masked value={status?.info.maskedKey} label={tr("API key")} />
+        )
+      ) : sub && !showKey ? (
+        <p className="text-[11px] leading-relaxed text-text-faint">
+          {cli === undefined
+            ? tr("Procurando {cli} neste PC...", { cli: sub.cli })
+            : !cli.installed
+              ? tr("Instale o {cli} para usar a sua {plan} sem API key.", { cli: sub.cli, plan: sub.plan })
+              : !cli.loggedIn
+                ? tr("{cli} encontrado, mas sem login. Abra um terminal e rode: {command}", { cli: sub.cli, command: sub.login })
+                : tr("{cli} logado ({account}). Conecte para usar a sua {plan}, sem API key.", { cli: sub.cli, account: cli.account ?? "", plan: sub.plan })}
+        </p>
       ) : (
         <SecretInput value={key} onChange={setKey} placeholder={tr("Cole a API key")} onEnter={() => void connect()} />
       )}
@@ -177,7 +244,11 @@ function AIProviderCard({ id, status, reload }: { id: "anthropic" | "openai" | "
 
 function GitHubCard({ status, reload }: { status: IntegrationStatus | undefined; reload: () => void }) {
   const [token, setToken] = useState("");
-  const [busy, setBusy] = useState<"connect" | "test" | null>(null);
+  const [busy, setBusy] = useState<"connect" | "test" | "gh" | null>(null);
+  const [ghAvailable, setGhAvailable] = useState(false);
+  useEffect(() => {
+    void window.workspace.github.ghCliAvailable().then((r) => r.ok && setGhAvailable(r.data));
+  }, []);
   const connected = status?.state === "connected" || status?.state === "error";
 
   async function connect() {
@@ -189,6 +260,14 @@ function GitHubCard({ status, reload }: { status: IntegrationStatus | undefined;
       toast.success(tr("GitHub conectado como {login}", { login: res.login }));
       setToken("");
     }
+    reload();
+  }
+
+  async function connectGh() {
+    setBusy("gh");
+    const res = await attempt(window.workspace.github.connectGhCli());
+    setBusy(null);
+    if (res) toast.success(tr("GitHub conectado como {login}", { login: res.login }));
     reload();
   }
 
@@ -218,7 +297,14 @@ function GitHubCard({ status, reload }: { status: IntegrationStatus | undefined;
             <Button size="xs" variant="ghost" onClick={() => void disconnect()}>{tr("Desconectar")}</Button>
           </>
         ) : (
-          <Button size="xs" onClick={() => void connect()} loading={busy === "connect"} disabled={!token.trim()}>{tr("Conectar")}</Button>
+          <>
+            {ghAvailable && (
+              <Button size="xs" onClick={() => void connectGh()} loading={busy === "gh"}>
+                <Github size={11} />{" "}{tr("Usar login do GitHub CLI")}
+              </Button>
+            )}
+            <Button size="xs" variant={ghAvailable ? "ghost" : "default"} onClick={() => void connect()} loading={busy === "connect"} disabled={!token.trim()}>{tr("Conectar com token")}</Button>
+          </>
         )
       }
     >
@@ -408,13 +494,20 @@ function WhatsAppCard({ status }: { status: IntegrationStatus | undefined }) {
 export function Integrations() {
   const [statuses, setStatuses] = useState<IntegrationStatus[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const providers = useAIStore((s) => s.providers);
+  const [clis, setClis] = useState<SubscriptionCliStatus[] | null>(null);
+
+  const loadProviders = useAIStore((s) => s.loadProviders);
+  useEffect(() => {
+    void loadProviders();
+    void window.workspace.ai.subscriptions().then((r) => r.ok && setClis(r.data));
+  }, [loadProviders]);
 
   const reload = useCallback(() => {
     unwrap(window.workspace.integrations.list())
       .then((list) => {
         setStatuses(list);
         setError(null);
-        window.dispatchEvent(new Event(INTEGRATIONS_CHANGED));
       })
       .catch((err) => setError(errorMessage(err)));
   }, []);
@@ -442,9 +535,9 @@ export function Integrations() {
           <section>
             <p className="section-title mb-2">{tr("Inteligência artificial")}</p>
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              <AIProviderCard id="anthropic" status={get("anthropic")} reload={reload} />
-              <AIProviderCard id="openai" status={get("openai")} reload={reload} />
-              <AIProviderCard id="google" status={get("google")} reload={reload} />
+              <AIProviderCard id="anthropic" status={get("anthropic")} provider={providers.find((p) => p.id === "anthropic")} cli={clis?.find((c) => c.provider === "anthropic")} reload={reload} />
+              <AIProviderCard id="openai" status={get("openai")} provider={providers.find((p) => p.id === "openai")} cli={clis?.find((c) => c.provider === "openai")} reload={reload} />
+              <AIProviderCard id="google" status={get("google")} provider={providers.find((p) => p.id === "google")} cli={undefined} reload={reload} />
             </div>
           </section>
           <section>

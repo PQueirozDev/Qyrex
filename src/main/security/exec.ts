@@ -47,6 +47,53 @@ export function spawnDetached(command: string, args: string[] = [], options: Exe
   });
 }
 
+/**
+ * Processo com entrada por stdin e saída lida linha a linha (ex.: CLIs que
+ * emitem JSONL). O `signal` encerra o processo (interromper geração).
+ */
+export function runLines(
+  command: string,
+  args: string[],
+  options: ExecOptions & { input: string; signal: AbortSignal; onLine: (line: string) => void }
+): Promise<{ code: number | null; stderr: string }> {
+  return new Promise((resolve, reject) => {
+    assertNoShellMetaInExecutable(command);
+    if (options.signal.aborted) {
+      reject(new Error("Interrompido."));
+      return;
+    }
+    const child = spawn(command, args, { cwd: options.cwd, shell: false, windowsHide: true, env: options.env });
+    let buffer = "";
+    let stderr = "";
+    const onAbort = () => child.kill();
+    options.signal.addEventListener("abort", onAbort, { once: true });
+    const timer = options.timeoutMs ? setTimeout(() => child.kill(), options.timeoutMs) : null;
+
+    child.stdout?.on("data", (chunk: Buffer) => {
+      buffer += chunk.toString("utf8");
+      const lines = buffer.split(/\r?\n/);
+      buffer = lines.pop() ?? "";
+      for (const line of lines) if (line.trim()) options.onLine(line);
+    });
+    child.stderr?.on("data", (chunk: Buffer) => {
+      if (stderr.length < 20_000) stderr += chunk.toString("utf8");
+    });
+    child.on("error", (err) => {
+      options.signal.removeEventListener("abort", onAbort);
+      if (timer) clearTimeout(timer);
+      reject(err);
+    });
+    child.on("close", (code) => {
+      options.signal.removeEventListener("abort", onAbort);
+      if (timer) clearTimeout(timer);
+      if (buffer.trim()) options.onLine(buffer);
+      resolve({ code, stderr });
+    });
+    child.stdin?.on("error", () => undefined);
+    child.stdin?.end(options.input, "utf8");
+  });
+}
+
 export function runCapture(
   command: string,
   args: string[] = [],

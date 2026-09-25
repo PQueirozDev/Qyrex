@@ -264,6 +264,9 @@ await step("integrações de IA conectadas pela UI (Claude, OpenAI, Gemini)", as
   await nav("Integrações");
   for (const [title, key] of [["Claude (Anthropic)", "sk-ant-e2e"], ["OpenAI", "sk-e2e-openai"], ["Gemini (Google)", "AIza-e2e-0123456789"]]) {
     await waitFor(`cardOf(${JSON.stringify(title)})`, { label: `card ${title}` });
+    // Claude e OpenAI mostram primeiro "Usar minha assinatura"; a API key fica atrás de "Usar API key".
+    await ev(`const b = findButton("Usar API key", cardOf(${JSON.stringify(title)})); if (b) b.click(); return 1;`);
+    await sleep(150);
     await type(`cardOf(${JSON.stringify(title)}).querySelector("input[type=password]")`, key);
     await click("Conectar", `cardOf(${JSON.stringify(title)})`);
     await waitFor(`textOf(cardOf(${JSON.stringify(title)})).includes("API key:")`, { label: `${title} conectado` });
@@ -292,20 +295,27 @@ await step("Google Agenda: OAuth (PKCE + loopback) e sincronização", async () 
   if (!token.length) throw new Error("não trocou o código pelo token");
 });
 
-await step("Spotify: OAuth (PKCE + loopback) e mini player", async () => {
+await step("Spotify (opcional): OAuth (PKCE + loopback) e controles pela Web API", async () => {
   await type(`cardOf("Spotify").querySelector("input")`, "spotify-client-e2e");
   await click("Conectar", `cardOf("Spotify")`);
   await waitFor(`textOf(cardOf("Spotify")).includes("Conta: Ouvinte E2E")`, { timeout: 15_000, label: "conta Spotify" });
-  await waitFor(`textOf(document.querySelector("aside")).includes("Faixa de Teste")`, { timeout: 15_000, label: "faixa no mini player" });
-  await click("Próxima", `document.querySelector("aside")`);
-  await waitFor(`textOf(document.querySelector("aside")).includes("Segunda Faixa")`, { label: "próxima faixa" });
-  await click("Pausar", `document.querySelector("aside")`);
-  await waitFor(`findButton("Tocar", document.querySelector("aside"))`, { label: "botão virar Tocar" });
+  const track = await ev(`return (await window.workspace.spotify.playback()).data?.track`);
+  if (track !== "Faixa de Teste") throw new Error(`faixa: ${track}`);
+  await ev(`await window.workspace.spotify.control("next"); await window.workspace.spotify.control("pause"); return 1;`);
   const player = await (await fetch(`${API}/__player`)).json();
-  if (player.isPlaying) throw new Error("mock ainda tocando após Pausar");
-  await click("Tocar", `document.querySelector("aside")`);
+  if (player.isPlaying || player.track !== 1) throw new Error(`mock: ${JSON.stringify(player)}`);
   await shot("integracoes");
-  return "próxima, pausar e tocar";
+  return "próxima e pausar";
+});
+
+await step("mini player lê a mídia do Windows (sem controlar a música de quem roda o teste)", async () => {
+  const res = await ev(`const r = await window.workspace.media.state(); return { ok: r.ok, title: r.data?.title ?? null }`);
+  if (!res.ok) throw new Error("media:state falhou");
+  const expected = res.title ?? "Nada tocando agora";
+  await waitFor(`textOf(document.querySelector("aside")).includes(${JSON.stringify(expected)})`, { timeout: 10_000, label: "mini player" });
+  const bad = await ev(`return (await window.workspace.media.control("rm -rf")).ok`);
+  if (bad !== false) throw new Error("ação de mídia fora da lista foi aceita");
+  return res.title ? "tocando: " + res.title : "nada tocando";
 });
 
 await step("projeto com repositório GitHub: issues e PRs no painel", async () => {
@@ -517,7 +527,8 @@ await step("interface em inglês: sem texto em português", async () => {
         for (const a of ["placeholder", "title", "aria-label"]) { const v = el.getAttribute(a); if (v) out.push(v); }
       });
       return out;`);
-    const bad = texts.filter((t) => PT.test(t) && !SEEDED.some((s) => t.includes(s)) && !t.includes(TMP_NAME) && !/^[\w.-]+\.(com|dev|io)(\/\S*)?$/.test(t));
+    const media = await ev(`const r = await window.workspace.media.state(); return r.data ? [r.data.title, r.data.artist, r.data.album] : []`);
+    const bad = texts.filter((t) => PT.test(t) && !SEEDED.some((s) => t.includes(s)) && !media.some((m) => m && t.includes(m)) && !t.includes(TMP_NAME) && !/^[\w.-]+\.(com|dev|io)(\/\S*)?$/.test(t));
     if (bad.length) leftovers[label] = [...new Set(bad)].slice(0, 12);
     await shot(`en-${label.replace(/\W/g, "")}`);
   }

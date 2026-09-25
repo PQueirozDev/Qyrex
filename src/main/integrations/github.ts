@@ -3,6 +3,9 @@ import { setIntegrationState } from "../services/integrationsService.js";
 import { createLogger } from "../logger.js";
 import type { GitHubItem, GitHubOverview } from "../../shared/types.js";
 import { endpoints } from "./endpoints.js";
+import fs from "node:fs";
+import path from "node:path";
+import { runCapture } from "../security/exec.js";
 
 const log = createLogger("github");
 
@@ -47,6 +50,43 @@ export async function connect(token: string): Promise<{ login: string }> {
   saveSecret("github", token.trim());
   setIntegrationState("github", "connected", { login: user.login, maskedKey: maskKey(token.trim()), lastError: undefined });
   log.info("GitHub conectado");
+  return { login: user.login };
+}
+
+/** gh.exe do GitHub CLI, se instalado. */
+function findGhCli(): string | null {
+  const candidates = [
+    path.join(process.env.ProgramFiles ?? "C:\\Program Files", "GitHub CLI", "gh.exe"),
+    path.join(process.env.LOCALAPPDATA ?? "", "Programs", "GitHub CLI", "gh.exe"),
+    ...(process.env.PATH ?? "").split(path.delimiter).filter(Boolean).map((d) => path.join(d, "gh.exe")),
+  ];
+  return candidates.find((c) => {
+    try {
+      return fs.statSync(c).isFile();
+    } catch {
+      return false;
+    }
+  }) ?? null;
+}
+
+export function ghCliAvailable(): boolean {
+  return findGhCli() !== null;
+}
+
+/**
+ * Conecta usando a sessão do GitHub CLI (`gh auth token`): o token vai direto
+ * do gh para o cofre do sistema, sem passar pela tela.
+ */
+export async function connectWithGhCli(): Promise<{ login: string }> {
+  const gh = findGhCli();
+  if (!gh) throw new Error("GitHub CLI (gh) não encontrado neste PC.");
+  const res = await runCapture(gh, ["auth", "token", "--hostname", "github.com"], { timeoutMs: 15_000 });
+  const token = res.stdout.trim();
+  if (res.code !== 0 || !/^[\w-]{20,300}$/.test(token)) {
+    throw new Error("O GitHub CLI não está logado. Abra um terminal e rode: gh auth login");
+  }
+  const user = await connect(token);
+  setIntegrationState("github", "connected", { source: "gh" });
   return user;
 }
 

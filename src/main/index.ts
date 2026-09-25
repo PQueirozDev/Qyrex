@@ -12,11 +12,15 @@ import { killAll as killAllTerminals } from "./services/terminalService.js";
 import { listIntegrationStatus } from "./services/integrationsService.js";
 import * as googleCalendar from "./integrations/googleCalendar.js";
 import { applyDiscordSettings, onDiscordStatus, stopDiscord } from "./integrations/discord.js";
+import { stopLocalMedia } from "./integrations/media/localMedia.js";
 import { attachUpdateListener, startAutoUpdate } from "./services/updateService.js";
 import { translate } from "../shared/i18n.js";
 import type { AppCommand, AppSettings } from "../shared/types.js";
 
 /** Cor de fundo da janela antes do React carregar (evita "flash" branco/preto). */
+/** Altura da barra superior do app (Header, h-12). */
+export const TITLE_BAR_HEIGHT = 48;
+
 const WINDOW_BG: Record<AppSettings["theme"], string> = {
   dark: "#0b0d10",
   light: "#f6f7f9",
@@ -85,6 +89,14 @@ function createWindow(): void {
     title: "QrzSpace",
     backgroundColor: WINDOW_BG[getSettings().theme] ?? "#0b0d10",
     autoHideMenuBar: true,
+    // Sem a barra de título do Windows: a HUD do app vai até o topo e os botões
+    // minimizar/maximizar/fechar ficam sobrepostos, na cor do tema (setTitleBarOverlay).
+    titleBarStyle: "hidden",
+    titleBarOverlay: {
+      color: WINDOW_BG[getSettings().theme] ?? "#0b0d10",
+      symbolColor: ["light", "sand"].includes(getSettings().theme) ? "#3b4250" : "#c9ced6",
+      height: TITLE_BAR_HEIGHT,
+    },
     icon: resourcePath("icon.png"),
     webPreferences: {
       // Configuração mínima de segurança exigida pela spec do projeto.
@@ -284,6 +296,7 @@ app.on("before-quit", () => {
   stopNotifications();
   killAllTerminals();
   stopDiscord();
+  stopLocalMedia();
 });
 
 app.on("will-quit", () => {

@@ -139,10 +139,16 @@ export interface AIModelInfo {
   label: string;
 }
 
+/** Como o provider está conectado: API key ou a assinatura (Claude Code / Codex CLI). */
+export type AIAuthMode = "key" | "subscription";
+
 export interface AIProviderStatus {
   id: AIProviderId;
   label: string;
   connected: boolean;
+  authMode: AIAuthMode;
+  /** Conta da assinatura (ex.: e-mail do Claude, "ChatGPT"). */
+  account: string | null;
   maskedKey: string | null;
   models: AIModelInfo[];
   defaultModel: string;
@@ -178,6 +184,35 @@ export interface AIStreamChunk {
   type: "delta" | "done" | "error";
   text?: string;
   error?: string;
+}
+
+/** Situação das CLIs de assinatura neste PC (Integrações). */
+export interface SubscriptionCliStatus {
+  provider: "anthropic" | "openai";
+  cli: "claude" | "codex";
+  installed: boolean;
+  loggedIn: boolean;
+  account: string | null;
+}
+
+// --- Música tocando no PC (sessões de mídia do Windows) --------------------------
+
+export type MediaAction = "play" | "pause" | "toggle" | "next" | "previous";
+
+export interface LocalMediaState {
+  /** App que está tocando (ex.: "Spotify.exe"). */
+  app: string;
+  isSpotify: boolean;
+  title: string;
+  artist: string;
+  album: string;
+  isPlaying: boolean;
+  positionMs: number;
+  durationMs: number;
+  canNext: boolean;
+  canPrevious: boolean;
+  canSeek: boolean;
+  coverUrl: string | null;
 }
 
 export interface CouncilTarget {

@@ -14,6 +14,9 @@ import type {
   CommandAssessment,
   CommandRunResult,
   DiscordStatus,
+  LocalMediaState,
+  MediaAction,
+  SubscriptionCliStatus,
   UpdateStatus,
   DirEntry,
   FilePreview,
@@ -76,6 +79,7 @@ const api = {
   },
   system: {
     info: () => invoke<SystemInfo>("system:info"),
+    setTitleBarColors: (colors: { color: string; symbolColor: string }) => invoke<void>("system:setTitleBarColors", colors),
     openVSCode: (p: string) => invoke<void>("system:openVSCode", p),
     openExplorer: (p: string) => invoke<void>("system:openExplorer", p),
     openFile: (p: string) => invoke<void>("system:openFile", p),
@@ -121,6 +125,8 @@ const api = {
   github: {
     overview: (url: string) => invoke<GitHubOverview>("github:overview", url),
     connect: (token: string) => invoke<{ login: string }>("github:connect", token),
+    ghCliAvailable: () => invoke<boolean>("github:ghCliAvailable"),
+    connectGhCli: () => invoke<{ login: string }>("github:connectGhCli"),
     disconnect: () => invoke<void>("github:disconnect"),
     test: () => invoke<{ ok: boolean; error?: string }>("github:test"),
   },
@@ -183,6 +189,9 @@ const api = {
     connect: (provider: AIProviderId, apiKey: string) => invoke<{ ok: boolean; error?: string }>("ai:connect", provider, apiKey),
     disconnect: (provider: AIProviderId) => invoke<void>("ai:disconnect", provider),
     test: (provider: AIProviderId) => invoke<{ ok: boolean; error?: string }>("ai:test", provider),
+    subscriptions: () => invoke<SubscriptionCliStatus[]>("ai:subscriptions:list"),
+    connectSubscription: (provider: "anthropic" | "openai") =>
+      invoke<{ ok: boolean; error?: string; account?: string | null }>("ai:connectSubscription", provider),
     conversations: {
       list: (projectId?: string) => invoke<AIConversation[]>("ai:conversations:list", projectId),
       create: (input: { title: string; provider: AIProviderId; model: string; projectId?: string }) =>
@@ -239,6 +248,11 @@ const api = {
   },
   integrations: {
     list: () => invoke<IntegrationStatus[]>("integrations:list"),
+  },
+  media: {
+    state: () => invoke<LocalMediaState | null>("media:state"),
+    control: (action: MediaAction) => invoke<void>("media:control", action),
+    seek: (ms: number) => invoke<void>("media:seek", ms),
   },
   spotify: {
     connect: (clientId: string) => invoke<void>("spotify:connect", { clientId }),

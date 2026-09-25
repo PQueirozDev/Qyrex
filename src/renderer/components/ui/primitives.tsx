@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { motion } from "motion/react";
 import { createPortal } from "react-dom";
 import { Loader2, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -106,21 +107,38 @@ export function Segmented<T extends string>({
   options: { value: T; label: ReactNode; count?: number }[];
   className?: string;
 }) {
+  // A pílula ativa desliza de uma opção para a outra (layoutId único por instância).
+  const pillId = useId();
   return (
-    <div className={cn("inline-flex rounded-lg border border-border-subtle bg-bg-elevated p-0.5", className)}>
-      {options.map((opt) => (
-        <button
-          key={opt.value}
-          onClick={() => onChange(opt.value)}
-          className={cn(
-            "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-            value === opt.value ? "bg-bg-card text-text shadow-sm ring-1 ring-border-subtle" : "text-text-muted hover:text-text"
-          )}
-        >
-          {opt.label}
-          {opt.count !== undefined && opt.count > 0 && <span className="text-[10px] text-text-faint">{opt.count}</span>}
-        </button>
-      ))}
+    <div className={cn("inline-flex rounded-full border border-border-subtle bg-bg-elevated p-0.5", className)}>
+      {options.map((opt) => {
+        const active = value === opt.value;
+        return (
+          <button
+            key={opt.value}
+            onClick={() => onChange(opt.value)}
+            aria-pressed={active}
+            className={cn(
+              "press relative flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors duration-200",
+              active ? "text-accent-fg" : "text-text-muted hover:text-text"
+            )}
+          >
+            {active && (
+              <motion.span
+                layoutId={pillId}
+                className="absolute inset-0 rounded-full bg-accent shadow-[0_4px_14px_-4px_rgb(var(--accent)/0.55)]"
+                transition={{ type: "spring", stiffness: 520, damping: 38, mass: 0.8 }}
+              />
+            )}
+            <span className="relative z-10 flex items-center gap-1.5">
+              {opt.label}
+              {opt.count !== undefined && opt.count > 0 && (
+                <span className={cn("text-[10px]", active ? "text-accent-fg/75" : "text-text-faint")}>{opt.count}</span>
+              )}
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -133,15 +151,16 @@ export function Switch({ checked, onChange, disabled }: { checked: boolean; onCh
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={cn(
-        "relative h-5 w-9 shrink-0 rounded-full transition-colors disabled:opacity-40",
-        checked ? "bg-accent" : "bg-border"
+        "group relative flex h-6 w-11 shrink-0 items-center rounded-full p-[3px] transition-colors duration-300 disabled:opacity-40",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40",
+        checked ? "justify-end bg-accent shadow-[inset_0_0_0_1px_rgb(255_255_255/0.08)]" : "justify-start bg-border"
       )}
     >
-      <span
-        className={cn(
-          "absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform",
-          checked ? "translate-x-[18px]" : "translate-x-0.5"
-        )}
+      {/* A bolinha "estica" ao pressionar e desliza com mola. */}
+      <motion.span
+        layout
+        transition={{ type: "spring", stiffness: 600, damping: 34 }}
+        className="block h-[18px] w-[18px] rounded-full bg-white shadow-[0_1px_3px_rgb(0_0_0/0.3)] transition-[width] duration-200 group-active:w-[22px]"
       />
     </button>
   );
