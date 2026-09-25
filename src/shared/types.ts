@@ -357,3 +357,43 @@ export type UpdateStatus =
 // --- Discord ----------------------------------------------------------------------
 
 export type DiscordStatus = "disabled" | "connecting" | "connected" | "discord-not-running" | "error";
+
+// --- Uso da IA ------------------------------------------------------------------
+
+export type AIUsageSource = "chat" | "council" | "synthesis";
+
+export interface AIUsageRecord {
+  id: string;
+  createdAt: string;
+  provider: AIProviderId;
+  model: string;
+  source: AIUsageSource;
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
+  cacheWriteTokens: number;
+  /** true quando o provider não informou o uso e os tokens foram estimados (~4 caracteres/token). */
+  estimated: boolean;
+  aborted: boolean;
+  /** Custo estimado em US$ (null quando o preço do modelo não é conhecido). */
+  costUsd: number | null;
+}
+
+export interface AIUsageTotals {
+  requests: number;
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
+  cacheWriteTokens: number;
+  costUsd: number;
+  /** Requisições cujo custo não pôde ser estimado (modelo sem preço conhecido). */
+  unpricedRequests: number;
+}
+
+export interface AIUsageSummary {
+  days: number | null;
+  totals: AIUsageTotals;
+  byModel: (AIUsageTotals & { provider: AIProviderId; model: string })[];
+  byDay: { date: string; inputTokens: number; outputTokens: number; costUsd: number; byProvider: Record<string, number> }[];
+  recent: AIUsageRecord[];
+}

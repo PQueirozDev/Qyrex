@@ -32,7 +32,7 @@ export const anthropicProvider: AIProvider = {
     { id: "claude-fable-5-1", label: "Claude Fable 5.1" },
   ],
 
-  async streamChat({ apiKey, model, system, messages, signal, maxOutputTokens }, { onDelta }) {
+  async streamChat({ apiKey, model, system, messages, signal, maxOutputTokens }, { onDelta, onUsage }) {
     try {
       const params = {
         model,
@@ -52,6 +52,17 @@ export const anthropicProvider: AIProvider = {
       for await (const event of stream) {
         if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
           onDelta(event.delta.text);
+        } else if (event.type === "message_start") {
+          // Entrada (e cache) chegam no início; a saída é atualizada nos message_delta.
+          const u = event.message.usage;
+          onUsage?.({
+            inputTokens: u.input_tokens,
+            outputTokens: u.output_tokens,
+            cacheReadTokens: u.cache_read_input_tokens ?? 0,
+            cacheWriteTokens: u.cache_creation_input_tokens ?? 0,
+          });
+        } else if (event.type === "message_delta") {
+          onUsage?.({ outputTokens: event.usage.output_tokens });
         }
       }
 

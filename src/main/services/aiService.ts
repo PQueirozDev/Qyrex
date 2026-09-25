@@ -9,6 +9,7 @@ import { readTextFile } from "./fileService.js";
 import { getProject } from "./projectService.js";
 import { getIntegrationMetadata, setIntegrationState } from "./integrationsService.js";
 import { createLogger } from "../logger.js";
+import { estimateTokens, recordUsage } from "./usageService.js";
 import type {
   AIConversation,
   AIMessage,
@@ -16,6 +17,7 @@ import type {
   AIProviderStatus,
   AttachedFileRef,
   AIStreamChunk,
+  AIUsageSource,
 } from "../../shared/types.js";
 
 const log = createLogger("ai");
@@ -257,7 +259,8 @@ async function runStream(
   provider: AIProviderId,
   model: string,
   system: string,
-  messages: ProviderMessage[]
+  messages: ProviderMessage[],
+  meta: { source: AIUsageSource; conversationId?: string | null }
 ): Promise<{ text: string; aborted: boolean }> {
   const apiKey = getSecret(provider);
   if (!apiKey) throw new Error(`Nenhuma API key configurada para ${PROVIDER_LABELS[provider]}. Conecte em Integrações.`);
@@ -265,6 +268,9 @@ async function runStream(
   const controller = new AbortController();
   activeRequests.set(requestId, controller);
   let text = "";
+  let aborted = false;
+  let reported = false;
+  const usage = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 };
   try {
     const maxOutputTokens = modelCache.get(provider)?.find((m) => m.id === model)?.maxOutputTokens;
     await getProvider(provider).streamChat(
@@ -274,14 +280,35 @@ async function runStream(
           text += delta;
           emit(sender, { requestId, type: "delta", text: delta });
         },
+        onUsage: (u) => {
+          reported = true;
+          if (u.inputTokens !== undefined) usage.inputTokens = u.inputTokens;
+          if (u.outputTokens !== undefined) usage.outputTokens = u.outputTokens;
+          if (u.cacheReadTokens !== undefined) usage.cacheReadTokens = u.cacheReadTokens;
+          if (u.cacheWriteTokens !== undefined) usage.cacheWriteTokens = u.cacheWriteTokens;
+        },
       }
     );
     return { text, aborted: false };
   } catch (err) {
-    if (controller.signal.aborted) return { text, aborted: true };
+    if (controller.signal.aborted) {
+      aborted = true;
+      return { text, aborted: true };
+    }
     throw err;
   } finally {
     activeRequests.delete(requestId);
+    // Registra o uso mesmo se a geração foi interrompida (o provider cobra o que gerou).
+    try {
+      const estimated = !reported || (usage.outputTokens === 0 && text.length > 0);
+      if (!reported) usage.inputTokens = estimateTokens(system + messages.map((m) => m.content).join("\n"));
+      if (usage.outputTokens === 0 && text.length > 0) usage.outputTokens = estimateTokens(text);
+      if (text.length > 0 || reported) {
+        recordUsage({ provider, model, source: meta.source, conversationId: meta.conversationId, usage, estimated, aborted });
+      }
+    } catch (err) {
+      log.warn("Não foi possível registrar o uso da IA:", err);
+    }
   }
 }
 
@@ -304,7 +331,8 @@ async function streamIntoConversation(
       conversation.provider,
       conversation.model,
       systemPrompt(conversation.projectId),
-      messages
+      messages,
+      { source: "chat", conversationId: conversation.id }
     );
     if (text.trim().length > 0) insertMessage(conversation.id, "assistant", text);
     emit(sender, { requestId, type: "done" });
@@ -387,7 +415,7 @@ export function runCouncil(
   const system = systemPrompt(null);
 
   for (const target of input.targets) {
-    void runStream(sender, target.requestId, target.provider, target.model, system, [{ role: "user", content }])
+    void runStream(sender, target.requestId, target.provider, target.model, system, [{ role: "user", content }], { source: "council" })
       .then(() => emit(sender, { requestId: target.requestId, type: "done" }))
       .catch((err: unknown) =>
         emit(sender, { requestId: target.requestId, type: "error", error: err instanceof Error ? err.message : String(err) })
@@ -414,7 +442,9 @@ export function synthesizeCouncil(
     "Sintetize essas respostas numa única resposta final: destaque onde concordam, aponte divergências e erros, e recomende o melhor caminho. Seja objetivo.",
   ].join("\n\n---\n\n");
 
-  void runStream(sender, input.requestId, input.provider, input.model, systemPrompt(null), [{ role: "user", content }])
+  void runStream(sender, input.requestId, input.provider, input.model, systemPrompt(null), [{ role: "user", content }], {
+    source: "synthesis",
+  })
     .then(() => emit(sender, { requestId: input.requestId, type: "done" }))
     .catch((err: unknown) =>
       emit(sender, { requestId: input.requestId, type: "error", error: err instanceof Error ? err.message : String(err) })

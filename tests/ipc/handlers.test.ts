@@ -104,6 +104,15 @@ describe("IPC", () => {
     expect(res.error).toMatch(/não confere/);
   });
 
+  it("uso da IA: resumo valida o período e apagar exige confirmação", async () => {
+    expect((await call("ai:usage:summary", 7)).ok).toBe(true);
+    expect((await call("ai:usage:summary", null)).ok).toBe(true);
+    expect((await call("ai:usage:summary", -5)).ok).toBe(false);
+    expect((await call("ai:usage:summary", "30")).ok).toBe(false);
+    expect((await call("ai:usage:clear")).ok).toBe(false);
+    expect((await call("ai:usage:clear", true)).ok).toBe(true);
+  });
+
   it("comandos da IA exigem confirmação literal true", async () => {
     const res = await call("commands:run", { command: "git status", cwd: dir, decision: "once", confirmed: "yes" });
     expect(res.ok).toBe(false);

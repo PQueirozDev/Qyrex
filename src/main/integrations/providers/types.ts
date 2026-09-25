@@ -5,8 +5,18 @@ export interface ProviderMessage {
   content: string;
 }
 
+/** Tokens informados pelo provider. Campos ausentes = não informados. */
+export interface ProviderUsage {
+  inputTokens?: number;
+  outputTokens?: number;
+  cacheReadTokens?: number;
+  cacheWriteTokens?: number;
+}
+
 export interface StreamCallbacks {
   onDelta: (text: string) => void;
+  /** Chamado sempre que o provider informa (ou atualiza) a contagem de tokens. */
+  onUsage?: (usage: ProviderUsage) => void;
 }
 
 export interface TestResult {

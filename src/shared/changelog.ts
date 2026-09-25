@@ -11,6 +11,27 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.1.0",
+    date: "2026-09-25",
+    title: { pt: "Uso da IA", en: "AI usage" },
+    sections: [
+      {
+        kind: "new",
+        items: [
+          {
+            pt: "Nova aba Uso na Central de IA: requisições, tokens de entrada e saída, custo estimado, gráfico por dia, tabela por modelo e últimas requisições (hoje, 7 dias, 30 dias ou tudo).",
+            en: "New Usage tab in the AI hub: requests, input and output tokens, estimated cost, daily chart, per-model table and recent requests (today, 7 days, 30 days or all).",
+          },
+          {
+            pt: "A contagem vem direto de cada provider (Claude, OpenAI e Gemini), inclusive em respostas interrompidas, no Council e nas sínteses. Nenhum texto das conversas é guardado nesse histórico.",
+            en: "Counts come straight from each provider (Claude, OpenAI and Gemini), including stopped answers, the Council and syntheses. No conversation text is stored in this history.",
+          },
+          { pt: "Atalho no Ctrl+K: “Ver uso da IA”.", en: "Ctrl+K shortcut: “View AI usage”." },
+        ],
+      },
+    ],
+  },
+  {
     version: "1.0.2",
     date: "2026-09-25",
     title: { pt: "Ícone no Discord", en: "Discord icon" },

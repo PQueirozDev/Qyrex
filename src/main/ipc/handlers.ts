@@ -25,6 +25,7 @@ import * as v from "../security/validation.js";
 import { createLogger, getLogDir } from "../logger.js";
 import { translate } from "../../shared/i18n.js";
 import * as updateService from "../services/updateService.js";
+import * as usageService from "../services/usageService.js";
 import { getDiscordStatus, setDiscordActivity } from "../integrations/discord.js";
 
 const log = createLogger("ipc");
@@ -310,6 +311,15 @@ export function registerIpcHandlers(): void {
     aiService.runCouncil(e.sender, parsed);
   });
   handle("ai:council:synthesize", (e, input) => aiService.synthesizeCouncil(e.sender, v.parse(v.councilSynthesize, input)));
+
+  // --- Uso da IA (tokens e custo estimado) ------------------------------------------
+  handle("ai:usage:summary", (_e, days) =>
+    usageService.getUsageSummary(days === null || days === undefined ? null : v.parse(z.number().int().min(1).max(366), days))
+  );
+  handle("ai:usage:clear", (_e, confirmed) => {
+    requireConfirmation(confirmed);
+    usageService.clearUsage();
+  });
 
   // --- Comandos sugeridos pela IA ------------------------------------------------------------------
   handle("commands:assess", (_e, command) => commandService.assess(v.parse(z.string().max(4000), command)));

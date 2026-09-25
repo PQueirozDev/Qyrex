@@ -14,6 +14,7 @@ App completo e publicado. `npm run check` passa (typecheck, lint sem warnings e 
 - Renderer: todas as páginas, incluindo **Novidades** (`pages/PatchNotes.tsx`) e **Configurações** com seletor visual de temas, idioma, Discord e atualizações.
 - **Temas**: `lib/themes.ts` (catálogo) + blocos `:root[data-theme="<id>"]` em `styles/index.css`. Temas: dark, light, midnight, violet, sand (+ system).
 - **Idioma (i18n)**: textos em português são a chave; `src/shared/locales/en.ts` traduz. Renderer usa `tr()` de `@/lib/i18n`; main usa `translate(lang, ...)` de `shared/i18n`; textos que só são traduzidos depois (enviados por variável) são marcados com `tm()`. O teste `tests/i18n.test.ts` falha se faltar tradução, se sobrar chave morta ou se placeholders `{x}` não baterem. `node scripts/i18n-keys.cjs --missing` lista o que falta.
+- **Uso da IA**: `services/usageService.ts` registra tokens (só contadores) em `ai_usage` a cada `runStream`; providers informam via `onUsage`. Custo estimado só para modelos com preço conhecido (tabela Anthropic em `PRICES`). Aba "Uso" em `components/AIUsageView.tsx`.
 - **Patch notes**: `src/shared/changelog.ts` (pt/en). O teste exige que a versão do `package.json` seja a primeira entrada.
 - **Atualizações**: publicadas em **PQueirozDev/QrzSpace-releases** (repositório público só com instaladores; este repositório de código é privado). `npm run release` gera o instalador e cria a release com o `gh` (patch notes do changelog em pt e en).
 

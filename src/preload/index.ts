@@ -5,6 +5,7 @@ import type {
   AIProviderId,
   AIProviderStatus,
   AIStreamChunk,
+  AIUsageSummary,
   AppCommand,
   AppSettings,
   AttachedFileRef,
@@ -213,6 +214,11 @@ const api = {
       }) => invoke<void>("ai:council:synthesize", input),
     },
     onStream: (callback: (chunk: AIStreamChunk) => void) => subscribe<AIStreamChunk>("ai:stream", callback),
+    usage: {
+      /** days: 1 = hoje, 7, 30...; null = todo o histórico. */
+      summary: (days: number | null) => invoke<AIUsageSummary>("ai:usage:summary", days),
+      clear: (confirmed: boolean) => invoke<void>("ai:usage:clear", confirmed),
+    },
   },
   commands: {
     assess: (command: string) => invoke<CommandAssessment & { alwaysAllowed: boolean }>("commands:assess", command),

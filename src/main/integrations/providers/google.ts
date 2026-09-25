@@ -1,4 +1,20 @@
-import { readApiError, readSse, type AIProvider } from "./types.js";
+import { readApiError, readSse, type AIProvider, type ProviderUsage } from "./types.js";
+
+/** Converte o `usageMetadata` do Gemini (pensamento é cobrado como saída; prompt inclui o cache). */
+export function parseGeminiUsage(u: {
+  promptTokenCount?: number;
+  candidatesTokenCount?: number;
+  thoughtsTokenCount?: number;
+  cachedContentTokenCount?: number;
+}): ProviderUsage {
+  const cached = u.cachedContentTokenCount ?? 0;
+  return {
+    inputTokens: Math.max(0, (u.promptTokenCount ?? 0) - cached),
+    outputTokens: (u.candidatesTokenCount ?? 0) + (u.thoughtsTokenCount ?? 0),
+    cacheReadTokens: cached,
+    cacheWriteTokens: 0,
+  };
+}
 
 const BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 
@@ -20,7 +36,7 @@ export const googleProvider: AIProvider = {
     { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
   ],
 
-  async streamChat({ apiKey, model, system, messages, signal }, { onDelta }) {
+  async streamChat({ apiKey, model, system, messages, signal }, { onDelta, onUsage }) {
     // A API do Gemini usa "model" em vez de "assistant" para o papel do modelo.
     const contents = messages.map((m) => ({
       role: m.role === "assistant" ? "model" : "user",
@@ -43,6 +59,7 @@ export const googleProvider: AIProvider = {
       let event: {
         candidates?: { content?: { parts?: { text?: string; thought?: boolean }[] }; finishReason?: string }[];
         error?: { message?: string };
+        usageMetadata?: Parameters<typeof parseGeminiUsage>[0];
       };
       try {
         event = JSON.parse(payload);
@@ -50,6 +67,8 @@ export const googleProvider: AIProvider = {
         return;
       }
       if (event.error) throw new Error(`Gemini: ${event.error.message ?? "erro no stream"}`);
+      // Cada chunk traz o acumulado; o último vale.
+      if (event.usageMetadata) onUsage?.(parseGeminiUsage(event.usageMetadata));
       const candidate = event.candidates?.[0];
       for (const part of candidate?.content?.parts ?? []) {
         if (typeof part.text === "string" && !part.thought) onDelta(part.text);

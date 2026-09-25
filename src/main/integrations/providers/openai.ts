@@ -1,4 +1,19 @@
-import { readApiError, readSse, type AIProvider } from "./types.js";
+import { readApiError, readSse, type AIProvider, type ProviderUsage } from "./types.js";
+
+/** Converte o bloco `usage` da OpenAI (prompt inclui os tokens em cache). */
+export function parseOpenAIUsage(u: {
+  prompt_tokens?: number;
+  completion_tokens?: number;
+  prompt_tokens_details?: { cached_tokens?: number };
+}): ProviderUsage {
+  const cached = u.prompt_tokens_details?.cached_tokens ?? 0;
+  return {
+    inputTokens: Math.max(0, (u.prompt_tokens ?? 0) - cached),
+    outputTokens: u.completion_tokens ?? 0,
+    cacheReadTokens: cached,
+    cacheWriteTokens: 0,
+  };
+}
 
 const BASE_URL = "https://api.openai.com/v1";
 
@@ -12,27 +27,33 @@ export const openaiProvider: AIProvider = {
     { id: "gpt-5-mini", label: "GPT-5 mini" },
   ],
 
-  async streamChat({ apiKey, model, system, messages, signal }, { onDelta }) {
+  async streamChat({ apiKey, model, system, messages, signal }, { onDelta, onUsage }) {
     const fullMessages = system ? [{ role: "system", content: system }, ...messages] : messages;
 
     const res = await fetch(`${BASE_URL}/chat/completions`, {
       method: "POST",
       signal,
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ model, stream: true, messages: fullMessages }),
+      // include_usage: o último chunk traz a contagem real de tokens.
+      body: JSON.stringify({ model, stream: true, stream_options: { include_usage: true }, messages: fullMessages }),
     });
 
     if (!res.ok || !res.body) throw new Error(await readApiError(res, "OpenAI"));
 
     await readSse(res.body, (payload) => {
       if (payload === "[DONE]") return;
-      let event: { choices?: { delta?: { content?: string }; finish_reason?: string }[]; error?: { message?: string } };
+      let event: {
+        choices?: { delta?: { content?: string }; finish_reason?: string }[];
+        error?: { message?: string };
+        usage?: Parameters<typeof parseOpenAIUsage>[0] | null;
+      };
       try {
         event = JSON.parse(payload);
       } catch {
         return;
       }
       if (event.error) throw new Error(`OpenAI: ${event.error.message ?? "erro no stream"}`);
+      if (event.usage) onUsage?.(parseOpenAIUsage(event.usage));
       const delta = event.choices?.[0]?.delta?.content;
       if (typeof delta === "string") onDelta(delta);
       if (event.choices?.[0]?.finish_reason === "length") {

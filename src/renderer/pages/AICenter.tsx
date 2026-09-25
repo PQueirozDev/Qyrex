@@ -33,6 +33,7 @@ import { useSettingsStore } from "@/stores/useSettingsStore";
 import { confirmAction, promptText, useUIStore } from "@/stores/useUIStore";
 
 import { tr } from "@/lib/i18n";
+import { AIUsageView } from "@/components/AIUsageView";
 const PROVIDER_IDS: AIProviderId[] = ["anthropic", "openai", "google"];
 
 function ModelSelect({
@@ -707,7 +708,7 @@ export function AICenter() {
   const pageParam = useUIStore((s) => s.pageParam);
   const navigate = useUIStore((s) => s.navigate);
 
-  const [tab, setTab] = useState<"chat" | "council">("chat");
+  const [tab, setTab] = useState<"chat" | "council" | "usage">("chat");
   const [newOpen, setNewOpen] = useState(false);
   const [newProvider, setNewProvider] = useState<AIProviderId | null>(null);
   const [filter, setFilter] = useState("");
@@ -722,6 +723,7 @@ export function AICenter() {
   useEffect(() => {
     if (!pageParam) return;
     if (pageParam === "council") setTab("council");
+    else if (pageParam === "usage") setTab("usage");
     else if ((PROVIDER_IDS as string[]).includes(pageParam)) {
       setTab("chat");
       setNewProvider(pageParam as AIProviderId);
@@ -746,12 +748,13 @@ export function AICenter() {
       <aside className="flex w-64 shrink-0 flex-col border-r border-border-subtle bg-bg-elevated/40">
         <div className="space-y-2 p-3">
           <Segmented
-            className="flex w-full [&>button]:flex-1 [&>button]:justify-center"
+            className="flex w-full [&>button]:flex-1 [&>button]:justify-center [&>button]:whitespace-nowrap [&>button]:px-1.5"
             value={tab}
             onChange={setTab}
             options={[
               { value: "chat", label: tr("Chat") },
               { value: "council", label: tr("AI Council") },
+              { value: "usage", label: tr("Uso") },
             ]}
           />
           {tab === "chat" && (
@@ -781,12 +784,18 @@ export function AICenter() {
               </button>
             ))}
           </div>
-        ) : (
+        ) : tab === "council" ? (
           <div className="px-4 text-xs leading-relaxed text-text-muted">{tr("O Council só dispara para os providers marcados, e você confirma a quantidade antes de enviar.")}</div>
+        ) : (
+          <div className="px-4 text-xs leading-relaxed text-text-muted">
+            {tr("Contagem de tokens informada por cada provider. O custo é uma estimativa pelos preços de tabela; a cobrança oficial está no painel de cada provider.")}
+          </div>
         )}
       </aside>
 
-      <section className="min-w-0 flex-1">{tab === "chat" ? <ChatView onNew={openNew} /> : <CouncilView />}</section>
+      <section className="min-w-0 flex-1">
+        {tab === "chat" ? <ChatView onNew={openNew} /> : tab === "council" ? <CouncilView /> : <AIUsageView />}
+      </section>
 
       <NewConversationDialog open={newOpen} initialProvider={newProvider} onClose={() => setNewOpen(false)} />
     </div>

@@ -107,6 +107,7 @@ export function CommandPalette() {
       { id: "ask-claude", group: "Ações", label: tr("Perguntar ao Claude"), keywords: "ia chat anthropic", icon: Bot, run: act(() => navigate("ia", "anthropic")) },
       { id: "ask-openai", group: "Ações", label: tr("Perguntar ao ChatGPT / OpenAI"), keywords: "ia chat gpt codex", icon: Bot, run: act(() => navigate("ia", "openai")) },
       { id: "ask-gemini", group: "Ações", label: tr("Perguntar ao Gemini"), keywords: "ia chat google", icon: Bot, run: act(() => navigate("ia", "google")) },
+      { id: "ai-usage", group: "Ações", label: tr("Ver uso da IA"), keywords: "tokens custo gasto consumo usage", icon: Bot, run: act(() => navigate("ia", "usage")) },
       { id: "ai-council", group: "Ações", label: tr("AI Council (vários modelos)"), keywords: "ia comparar", icon: Bot, run: act(() => navigate("ia", "council")) },
       { id: "search-file", group: "Ações", label: tr("Pesquisar arquivo"), icon: FolderSearch, run: act(() => navigate("arquivos", "search")) },
       { id: "search-client", group: "Ações", label: tr("Buscar cliente"), icon: Users, run: act(() => navigate("clientes", "search")) },
