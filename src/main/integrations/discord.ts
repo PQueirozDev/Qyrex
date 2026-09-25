@@ -119,14 +119,34 @@ const PAGE_LABEL: Record<string, string> = {
 };
 
 /** Monta a atividade exibida no perfil. Exportado para testes. */
-export function buildActivity(page: string, project: string | null, showProject: boolean, lang: "pt" | "en", start: number) {
+/** Aplicativo oficial "QrzSpace" no Discord Developer Portal (ID público). */
+export const OFFICIAL_DISCORD_APP_ID = "1552906629085794356";
+/**
+ * Com o app oficial, a imagem vai como URL direta do CDN do Discord: assim ela
+ * aparece mesmo quando o cliente do Discord ainda não carregou a lista de
+ * recursos do app (cache). Com um Client ID próprio, usa a chave "qrzspace".
+ */
+const OFFICIAL_LARGE_IMAGE = "https://cdn.discordapp.com/app-assets/1552906629085794356/1552907137817116772.png";
+
+export function largeImageFor(clientId: string | null): string {
+  return clientId === OFFICIAL_DISCORD_APP_ID ? OFFICIAL_LARGE_IMAGE : "qrzspace";
+}
+
+export function buildActivity(
+  page: string,
+  project: string | null,
+  showProject: boolean,
+  lang: "pt" | "en",
+  start: number,
+  clientId: string | null = OFFICIAL_DISCORD_APP_ID
+) {
   const details = translate(lang, PAGE_LABEL[page] ?? tm("Trabalhando"));
   const state = showProject && project ? translate(lang, "Projeto: {name}", { name: project.slice(0, 100) }) : undefined;
   return {
     details,
     ...(state ? { state } : {}),
     timestamps: { start: Math.floor(start / 1000) },
-    assets: { large_image: "qrzspace", large_text: "QrzSpace" },
+    assets: { large_image: largeImageFor(clientId), large_text: "QrzSpace" },
     instance: false,
   };
 }
@@ -142,7 +162,14 @@ function pushActivity(): void {
     cmd: "SET_ACTIVITY",
     args: {
       pid: process.pid,
-      activity: buildActivity(lastActivity.page, lastActivity.project, settings.discord.showProject, settings.language, startedAt),
+      activity: buildActivity(
+        lastActivity.page,
+        lastActivity.project,
+        settings.discord.showProject,
+        settings.language,
+        startedAt,
+        settings.discord.clientId
+      ),
     },
     nonce: randomUUID(),
   });

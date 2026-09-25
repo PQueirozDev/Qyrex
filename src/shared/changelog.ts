@@ -11,6 +11,22 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.0.2",
+    date: "2026-09-25",
+    title: { pt: "Ícone no Discord", en: "Discord icon" },
+    sections: [
+      {
+        kind: "fixed",
+        items: [
+          {
+            pt: "O ícone do QrzSpace agora aparece na atividade do Discord mesmo quando o Discord ainda não carregou as imagens do app.",
+            en: "The QrzSpace icon now shows in your Discord activity even before Discord has loaded the app's images.",
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: "1.0.1",
     date: "2026-09-25",
     title: { pt: "QrzSpace no seu Discord", en: "QrzSpace on your Discord" },

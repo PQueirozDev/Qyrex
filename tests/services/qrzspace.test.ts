@@ -42,6 +42,13 @@ describe("Discord Rich Presence (protocolo IPC)", () => {
     expect(shown.details).toBe("Managing projects");
     expect(shown.state).toBe("Project: Aquecedores");
   });
+
+  it("usa a URL do ícone com o app oficial e a chave com Client ID próprio", () => {
+    expect(buildActivity("inicio", null, false, "pt", 0, "1552906629085794356").assets.large_image).toMatch(
+      /^https:\/\/cdn\.discordapp\.com\/app-assets\/1552906629085794356\//
+    );
+    expect(buildActivity("inicio", null, false, "pt", 0, "123456789012345678").assets.large_image).toBe("qrzspace");
+  });
 });
 
 describe("atualizador: logs enxutos", () => {
