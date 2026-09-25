@@ -21,7 +21,8 @@
     "icons": "node scripts/generate-icons.mjs",
     "dist": "npm run build && electron-builder --win --x64 --publish never",
     "release": "npm run check && npm run build && node scripts/release.mjs",
-    "e2e": "node scripts/e2e/run.mjs"
+    "e2e": "node scripts/e2e/run.mjs",
+    "build:demo": "vite build --config vite.demo.config.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",

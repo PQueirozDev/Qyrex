@@ -8,7 +8,7 @@ module.exports = {
   ],
   parser: "@typescript-eslint/parser",
   parserOptions: { ecmaVersion: "latest", sourceType: "module" },
-  ignorePatterns: ["dist", "dist-electron", "release", "node_modules"],
+  ignorePatterns: ["dist", "dist-demo", "dist-electron", "release", "node_modules"],
   rules: {
     "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
     "@typescript-eslint/no-explicit-any": "warn",

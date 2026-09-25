@@ -25,7 +25,7 @@ import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useClientsStore } from "@/stores/useClientsStore";
 import { useUIStore } from "@/stores/useUIStore";
 import { attempt } from "@/lib/api";
-import { addDays, toLocalDateTime, formatCurrency, formatDate, formatTime, greeting, relativeDay, timeAgo, todayISO, toLocalDate } from "@/lib/format";
+import { addDays, toLocalDateTime, formatCurrency, formatDate, formatTime, greeting, shortDay, timeAgo, todayISO, toLocalDate } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { PRIORITY_LABEL } from "@/components/TaskFormDialog";
 
@@ -251,7 +251,7 @@ export function Dashboard() {
               <div className="mt-2 border-t border-border-subtle pt-2">
                 {nextEvents.map((e) => (
                   <div key={e.id} className="flex items-center gap-3 px-1 py-1 text-xs text-text-muted">
-                    <span className="w-11 capitalize text-text-faint">{relativeDay(e.startsAt).slice(0, 6)}</span>
+                    <span className="w-14 shrink-0 capitalize text-text-faint">{shortDay(e.startsAt)}</span>
                     <span className="truncate">
                       {formatTime(e.startsAt)} · {e.title}
                     </span>

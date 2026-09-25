@@ -7,3 +7,4 @@ release/
 .env
 *.sqlite
 *.sqlite-journal
+dist-demo

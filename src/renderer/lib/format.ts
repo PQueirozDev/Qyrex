@@ -57,6 +57,15 @@ export function relativeDay(iso: string): string {
   return formatDate(iso);
 }
 
+/** Rótulo curto de dia para listas estreitas: "Hoje", "Amanhã" ou "dom 28". */
+export function shortDay(iso: string): string {
+  const diff = Math.round((parseLocalDate(iso).getTime() - parseLocalDate(todayISO()).getTime()) / 86_400_000);
+  if (diff === 0) return tr("Hoje");
+  if (diff === 1) return tr("Amanhã");
+  const d = parseLocalDate(iso);
+  return `${d.toLocaleDateString(getLocale(), { weekday: "short" }).replace(".", "")} ${d.getDate()}`;
+}
+
 /** Tempo relativo para timestamps UTC (ISO com Z) vindos do banco. */
 export function timeAgo(isoUtc: string): string {
   const normalized = /Z|[+-]\d{2}:\d{2}$/.test(isoUtc) ? isoUtc : `${isoUtc.replace(" ", "T")}Z`;

@@ -20,6 +20,7 @@ App completo e publicado. `npm run check` passa (typecheck, lint sem warnings e 
 - **Mini player** (`components/MiniPlayer.tsx`): lê a mídia do Windows (GSMTC) por um PowerShell persistente com script fixo embutido (`integrations/media/mediaScript.ts`), comandos de lista fechada. Capa buscada por nome na Deezer/iTunes e entregue como data URL. A Web API do Spotify virou opcional.
 - **HUD**: biblioteca `motion` (layout/spring). Barra de título nativa escondida (`titleBarOverlay`, cores sincronizadas com o tema via `system:setTitleBarColors`); `.drag-region`/`.no-drag`/`.titlebar-safe`, `.press`, `.shine`, `AnimatedValue`, `Segmented` com pílula deslizante.
 - **Ícone**: fonte em `build/icon.svg` (cópia em `src/renderer/assets/logo.svg` para a barra lateral). `npm run icons` rasteriza pelo Electron e gera `build/icon.png` + `build/icon.ico` (PNG embutido). A atividade do Discord usa `icon.png` do repositório público QrzSpace-releases.
+- **Demo web (portfólio)**: `npm run build:demo` gera `dist-demo/` com a interface REAL do renderer e `window.workspace` simulado (`src/demo/workspaceMock.ts`, tipado como `WorkspaceApi`: se um canal novo entrar no preload, o typecheck obriga a simular). Dados fictícios em sessionStorage. Publicar = copiar `dist-demo/` para `pq-portfolio/qrzspace-demo/`.
 - **Patch notes**: `src/shared/changelog.ts` (pt/en). O teste exige que a versão do `package.json` seja a primeira entrada.
 - **Atualizações**: publicadas em **PQueirozDev/QrzSpace-releases** (repositório público só com instaladores; este repositório de código é privado). `npm run release` gera o instalador e cria a release com o `gh` (patch notes do changelog em pt e en).
 
@@ -45,6 +46,7 @@ npm test             # vitest DENTRO do Electron (scripts/run-tests.mjs, ELECTRO
 npm run check        # typecheck + lint + test
 npm run build        # main (tsc + copy-migrations) + renderer (vite)
 npm run dist         # build + instalador Windows (sem publicar)
+npm run build:demo   # demo web para o portfólio (dist-demo/)
 npm run e2e          # E2E pela UI com APIs simuladas (Windows, abre uma janela do app)
 npm run release      # check + build + publica a versão em PQueirozDev/QrzSpace-releases
 ```
