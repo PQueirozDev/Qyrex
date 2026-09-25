@@ -15,7 +15,7 @@ App completo e publicado. `npm run check` passa (typecheck, lint sem warnings e 
 - **Temas**: `lib/themes.ts` (catálogo) + blocos `:root[data-theme="<id>"]` em `styles/index.css`. Temas: dark, light, midnight, violet, sand (+ system).
 - **Idioma (i18n)**: textos em português são a chave; `src/shared/locales/en.ts` traduz. Renderer usa `tr()` de `@/lib/i18n`; main usa `translate(lang, ...)` de `shared/i18n`; textos que só são traduzidos depois (enviados por variável) são marcados com `tm()`. O teste `tests/i18n.test.ts` falha se faltar tradução, se sobrar chave morta ou se placeholders `{x}` não baterem. `node scripts/i18n-keys.cjs --missing` lista o que falta.
 - **Patch notes**: `src/shared/changelog.ts` (pt/en). O teste exige que a versão do `package.json` seja a primeira entrada.
-- **Atualizações**: publicadas em **PQueirozDev/QrzSpace-releases** (repositório público só com instaladores; este repositório de código é privado). `npm run release` publica usando o token do `gh` só durante o build.
+- **Atualizações**: publicadas em **PQueirozDev/QrzSpace-releases** (repositório público só com instaladores; este repositório de código é privado). `npm run release` gera o instalador e cria a release com o `gh` (patch notes do changelog em pt e en).
 
 ### Validado no Windows (2026-09-25)
 - Instalador NSIS com `npmRebuild: false` (módulos nativos N-API com prebuilds).

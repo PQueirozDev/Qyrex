@@ -116,7 +116,7 @@ precisa rodar **no Windows**.
    `src/shared/changelog.ts` (pt e en). O teste falha se o changelog não
    tiver a versão atual.
 2. `npm run release`: roda `check`, gera o instalador e publica a release
-   `v<versão>` em **PQueirozDev/QrzSpace-releases** (usa o token do `gh`).
+   `v<versão>` em **PQueirozDev/QrzSpace-releases** com o `gh`, usando as patch notes do changelog.
 
 Os apps instalados encontram a versão nova ao abrir, baixam, conferem o
 SHA-512 do `latest.yml` e instalam. Um download adulterado é descartado.
