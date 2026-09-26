@@ -536,6 +536,18 @@ await step("Terminal: executa comando no PowerShell", async () => {
   await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, text: "\r" });
   await send("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
   await waitFor(`(textOf(document.querySelector(".xterm-rows")).match(/qrz-terminal-ok/g) ?? []).length >= 2`, { timeout: 15_000, label: "saída do terminal" });
+
+  // Trocar de aba não pode fechar o shell: volta e a mesma sessão continua respondendo.
+  await nav("Projetos");
+  await sleep(800);
+  await nav("Terminal");
+  await waitFor(`/qrz-terminal-ok/.test(textOf(document.querySelector(".xterm-rows")))`, { timeout: 5_000, label: "terminal mantido após trocar de aba" });
+  await ev(`document.querySelector(".xterm-helper-textarea").focus(); return 1;`);
+  await send("Input.insertText", { text: "echo qrz-still-open" });
+  await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, text: "\r" });
+  await send("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+  await waitFor(`(textOf(document.querySelector(".xterm-rows")).match(/qrz-still-open/g) ?? []).length >= 2`, { timeout: 15_000, label: "sessão viva após trocar de aba" });
+  return "sessão mantida ao trocar de aba";
 });
 
 await step("interface em inglês: sem texto em português", async () => {

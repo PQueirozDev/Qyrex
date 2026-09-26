@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
 import { CommandPalette } from "@/components/CommandPalette";
@@ -36,7 +36,7 @@ function PageView({ page }: { page: Page }) {
     case "projetos":
       return <Projects />;
     case "terminal":
-      return <TerminalPage />;
+      return null; // fica sempre montado (ver PersistentTerminal) para as sessões não fecharem
     case "tarefas":
       return <Tasks />;
     case "arquivos":
@@ -60,6 +60,31 @@ function PageView({ page }: { page: Page }) {
     case "novidades":
       return <PatchNotes />;
   }
+}
+
+/**
+ * O Terminal é montado na primeira visita e depois só escondido: desmontar a
+ * página encerraria os shells abertos ao trocar de aba.
+ */
+function PersistentTerminal({ visible }: { visible: boolean }) {
+  const [mounted, setMounted] = useState(visible);
+  useEffect(() => {
+    if (visible) setMounted(true);
+  }, [visible]);
+  if (!mounted) return null;
+  return (
+    <div className={visible ? "h-full animate-page-in" : "hidden"}>
+      <Suspense
+        fallback={
+          <div className="flex h-40 items-center justify-center">
+            <Spinner />
+          </div>
+        }
+      >
+        <TerminalPage visible={visible} />
+      </Suspense>
+    </div>
+  );
 }
 
 /** Páginas que ocupam a altura toda (sem padding/scroll do layout). */
@@ -177,17 +202,20 @@ export function App() {
         <Header />
         <UpdateBanner />
         <main className={fullBleed ? "min-h-0 flex-1 overflow-hidden" : "app-ambient flex-1 overflow-y-auto"}>
-          <div key={page} className={fullBleed ? "h-full animate-page-in" : "mx-auto max-w-[1400px] animate-page-in px-7 py-6"}>
-            <Suspense
-              fallback={
-                <div className="flex h-40 items-center justify-center">
-                  <Spinner />
-                </div>
-              }
-            >
-              <PageView page={page} />
-            </Suspense>
-          </div>
+          {page !== "terminal" && (
+            <div key={page} className={fullBleed ? "h-full animate-page-in" : "mx-auto max-w-[1400px] animate-page-in px-7 py-6"}>
+              <Suspense
+                fallback={
+                  <div className="flex h-40 items-center justify-center">
+                    <Spinner />
+                  </div>
+                }
+              >
+                <PageView page={page} />
+              </Suspense>
+            </div>
+          )}
+          <PersistentTerminal visible={page === "terminal"} />
         </main>
       </div>
 

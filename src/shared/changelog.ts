@@ -11,6 +11,22 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.5.1",
+    date: "2026-09-26",
+    title: { pt: "Terminal que não fecha", en: "A terminal that stays open" },
+    sections: [
+      {
+        kind: "fixed",
+        items: [
+          {
+            pt: "Os terminais (PowerShell/CMD) continuam abertos quando você troca de aba: volte para o Terminal e a sessão está lá, com o histórico e o que estava rodando.",
+            en: "Terminals (PowerShell/CMD) stay open when you switch tabs: come back to Terminal and the session is still there, with its history and whatever was running.",
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: "1.5.0",
     date: "2026-09-26",
     title: { pt: "Uso da assinatura na barra de título", en: "Subscription usage in the title bar" },

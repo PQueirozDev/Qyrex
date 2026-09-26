@@ -174,7 +174,8 @@ function TerminalView({ tab, active, onExit }: { tab: Tab; active: boolean; onEx
   );
 }
 
-export function TerminalPage() {
+/** `visible`: a página fica montada escondida quando o usuário está em outra aba (ver App). */
+export function TerminalPage({ visible = true }: { visible?: boolean }) {
   const pageParam = useUIStore((s) => s.pageParam);
   const navigate = useUIStore((s) => s.navigate);
   const { projects, loaded, load } = useProjectsStore();
@@ -222,7 +223,9 @@ export function TerminalPage() {
   }
 
   // `pageParam` = id do projeto: abre um terminal nele assim que der.
+  // Escondida, a página ignora o parâmetro (ele pertence à aba que está aberta).
   useEffect(() => {
+    if (!visible) return;
     if (!pageParam) {
       handledParam.current = null;
       return;
@@ -237,7 +240,7 @@ export function TerminalPage() {
     }
     navigate("terminal");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageParam, available, loaded, projects]);
+  }, [pageParam, available, loaded, projects, visible]);
 
   const targetLabel = locations.find((l) => l.value === target)?.label ?? basename(target);
 
@@ -325,7 +328,7 @@ export function TerminalPage() {
 
       <div className="relative min-h-0 flex-1 bg-bg">
         {tabs.map((t) => (
-          <TerminalView key={t.key} tab={t} active={t.key === activeKey} onExit={() => closeTab(t.key)} />
+          <TerminalView key={t.key} tab={t} active={visible && t.key === activeKey} onExit={() => closeTab(t.key)} />
         ))}
         {tabs.length === 0 && (
           <EmptyState
