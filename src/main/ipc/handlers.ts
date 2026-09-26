@@ -19,6 +19,7 @@ import { listIntegrationStatus } from "../services/integrationsService.js";
 import * as github from "../integrations/github.js";
 import * as notion from "../integrations/notion.js";
 import * as localMedia from "../integrations/media/localMedia.js";
+import { getSubscriptionLimits } from "../integrations/cli/limits.js";
 import * as spotify from "../integrations/spotify.js";
 import * as googleCalendar from "../integrations/googleCalendar.js";
 import { getSettings, updateSettings } from "../database/db.js";
@@ -135,6 +136,11 @@ export function registerIpcHandlers(): void {
     logsDir: getLogDir(),
     terminalAvailable: terminalService.isTerminalAvailable(),
   }));
+  handle("system:memory", () => {
+    // Memória real (working set) de todos os processos do app, em MB.
+    const kb = app.getAppMetrics().reduce((sum, m) => sum + (m.memory?.workingSetSize ?? 0), 0);
+    return Math.round(kb / 1024);
+  });
   handle("system:setTitleBarColors", (e, colors) => {
     const c = v.parse(z.object({ color: z.string().regex(/^#[0-9a-f]{6}$/i), symbolColor: z.string().regex(/^#[0-9a-f]{6}$/i) }), colors);
     const win = BrowserWindow.fromWebContents(e.sender);
@@ -292,6 +298,7 @@ export function registerIpcHandlers(): void {
   handle("ai:disconnect", (_e, provider) => aiService.disconnectProvider(v.parse(v.aiProvider, provider)));
   handle("ai:test", (_e, provider) => aiService.testProvider(v.parse(v.aiProvider, provider)));
   handle("ai:subscriptions:list", () => aiService.listSubscriptionClis());
+  handle("ai:limits", (_e, force) => getSubscriptionLimits(force === undefined || force === null ? false : v.parse(z.boolean(), force)));
   handle("ai:connectSubscription", (_e, provider) => aiService.connectSubscription(v.parse(z.enum(["anthropic", "openai"]), provider)));
   handle("ai:conversations:list", (_e, projectId) =>
     aiService.listConversations(projectId === undefined || projectId === null ? undefined : v.parse(v.id, projectId))

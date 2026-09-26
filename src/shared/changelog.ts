@@ -11,6 +11,35 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.5.0",
+    date: "2026-09-26",
+    title: { pt: "Uso da assinatura na barra de título", en: "Subscription usage in the title bar" },
+    sections: [
+      {
+        kind: "new",
+        items: [
+          {
+            pt: "No topo do app: quanto você já usou do limite de 5h do Claude Code e do Codex, e a memória que o QrzSpace está usando.",
+            en: "At the top of the app: how much of the 5h limit you've used on Claude Code and Codex, plus the memory QrzSpace is using.",
+          },
+          {
+            pt: "Clique nos números para abrir “Detalhes de uso de IA”: barras da sessão de 5h e da semana, tempo até cada reset, pico, plano, status e resets grátis do Codex.",
+            en: "Click the numbers to open “AI usage details”: 5h session and weekly bars, time until each reset, peak, plan, status and Codex free resets.",
+          },
+        ],
+      },
+      {
+        kind: "security",
+        items: [
+          {
+            pt: "Os números vêm das próprias CLIs (o /usage do Claude Code e o app-server do Codex): o QrzSpace não lê seu login e a consulta não gasta uso.",
+            en: "The numbers come from the CLIs themselves (Claude Code's /usage and the Codex app-server): QrzSpace never reads your sign-in and checking doesn't use up your limits.",
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: "1.4.0",
     date: "2026-09-25",
     title: { pt: "Notion no QrzSpace", en: "Notion in QrzSpace" },

@@ -94,6 +94,61 @@ export function runLines(
   });
 }
 
+/**
+ * Conversa por linhas com um processo (ex.: servidores JSON-RPC por stdio,
+ * que só respondem enquanto a entrada continua aberta). `onLine` devolve o
+ * resultado quando a conversa termina; aí o processo é encerrado.
+ */
+export function runDialogue<T>(
+  command: string,
+  args: string[],
+  options: ExecOptions & {
+    start: (write: (line: string) => void) => void;
+    onLine: (line: string, write: (line: string) => void) => T | undefined;
+  }
+): Promise<T> {
+  return new Promise((resolve, reject) => {
+    assertNoShellMetaInExecutable(command);
+    const child = spawn(command, args, { cwd: options.cwd, shell: false, windowsHide: true, env: options.env });
+    let buffer = "";
+    let stderr = "";
+    let settled = false;
+    const finish = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      if (timer) clearTimeout(timer);
+      child.kill();
+      fn();
+    };
+    const timer = setTimeout(() => finish(() => reject(new Error("Tempo esgotado."))), options.timeoutMs ?? 20_000);
+    const write = (line: string) => {
+      if (!settled) child.stdin?.write(`${line}\n`, "utf8");
+    };
+
+    child.stdout?.on("data", (chunk: Buffer) => {
+      buffer += chunk.toString("utf8");
+      const lines = buffer.split(/\r?\n/);
+      buffer = lines.pop() ?? "";
+      for (const line of lines) {
+        if (settled || !line.trim()) continue;
+        try {
+          const result = options.onLine(line, write);
+          if (result !== undefined) finish(() => resolve(result));
+        } catch (err) {
+          finish(() => reject(err));
+        }
+      }
+    });
+    child.stderr?.on("data", (chunk: Buffer) => {
+      if (stderr.length < 20_000) stderr += chunk.toString("utf8");
+    });
+    child.on("error", (err) => finish(() => reject(err)));
+    child.on("close", (code) => finish(() => reject(new Error(stderr.trim().split(/\r?\n/).pop() || `código ${code}`))));
+    child.stdin?.on("error", () => undefined);
+    options.start(write);
+  });
+}
+
 export function runCapture(
   command: string,
   args: string[] = [],

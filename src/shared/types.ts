@@ -195,6 +195,33 @@ export interface SubscriptionCliStatus {
   account: string | null;
 }
 
+/** Uma janela de limite da assinatura (ex.: sessão de 5h, semana). */
+export interface SubscriptionLimitWindow {
+  /** "session" (5h), "week" (todos os modelos) ou "model" (semana de um modelo, ex.: Opus). */
+  kind: "session" | "week" | "model";
+  /** Nome do modelo quando kind = "model". */
+  label: string | null;
+  usedPercent: number;
+  /** ISO; null quando a janela ainda não começou. */
+  resetsAt: string | null;
+}
+
+/** Uso atual da assinatura de um agente de código logado no PC (Claude Code / Codex). */
+export interface SubscriptionLimits {
+  provider: "anthropic" | "openai";
+  cli: "claude" | "codex";
+  /** false = CLI não instalada ou não logada (a UI esconde). */
+  available: boolean;
+  plan: string | null;
+  windows: SubscriptionLimitWindow[];
+  /** Resets grátis de limite disponíveis (Codex). */
+  resetCredits: number | null;
+  /** O provedor avisou que o limite foi atingido. */
+  limited: boolean;
+  error: string | null;
+  fetchedAt: string;
+}
+
 // --- Música tocando no PC (sessões de mídia do Windows) --------------------------
 
 export type MediaAction = "play" | "pause" | "toggle" | "next" | "previous";

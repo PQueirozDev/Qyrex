@@ -36,6 +36,7 @@ import type {
   SearchResults,
   SpotifyPlayback,
   SystemInfo,
+  SubscriptionLimits,
   Task,
   TaskStatus,
 } from "../shared/types.js";
@@ -81,6 +82,8 @@ const api = {
   },
   system: {
     info: () => invoke<SystemInfo>("system:info"),
+    /** Memória usada pelo app (todos os processos), em MB. */
+    memory: () => invoke<number>("system:memory"),
     setTitleBarColors: (colors: { color: string; symbolColor: string }) => invoke<void>("system:setTitleBarColors", colors),
     openVSCode: (p: string) => invoke<void>("system:openVSCode", p),
     openExplorer: (p: string) => invoke<void>("system:openExplorer", p),
@@ -192,6 +195,8 @@ const api = {
     disconnect: (provider: AIProviderId) => invoke<void>("ai:disconnect", provider),
     test: (provider: AIProviderId) => invoke<{ ok: boolean; error?: string }>("ai:test", provider),
     subscriptions: () => invoke<SubscriptionCliStatus[]>("ai:subscriptions:list"),
+    /** Uso atual da assinatura (5h / semana) do Claude Code e do Codex. `force` ignora o cache de 1 min. */
+    limits: (force?: boolean) => invoke<SubscriptionLimits[]>("ai:limits", force),
     connectSubscription: (provider: "anthropic" | "openai") =>
       invoke<{ ok: boolean; error?: string; account?: string | null }>("ai:connectSubscription", provider),
     conversations: {

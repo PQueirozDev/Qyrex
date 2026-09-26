@@ -358,6 +358,7 @@ export const workspaceMock: WorkspaceApi = {
   },
   system: {
     info: () => ok({ platform: "win32", appVersion: "1.3.1", vscodePath: db.settings.vscodePath, logsDir: null, terminalAvailable: true }, 20),
+    memory: () => ok(412, 10),
     setTitleBarColors: () => ok(undefined, 0),
     openVSCode: () => fail(DEMO_ONLY),
     openExplorer: () => fail(DEMO_ONLY),
@@ -583,6 +584,14 @@ export const workspaceMock: WorkspaceApi = {
     disconnect: () => fail("Na demo não é possível desconectar as IAs de exemplo."),
     test: () => ok({ ok: true }, 400),
     subscriptions: () => ok([{ provider: "anthropic" as const, cli: "claude" as const, installed: true, loggedIn: true, account: "Assinatura Pro (demo)" }, { provider: "openai" as const, cli: "codex" as const, installed: true, loggedIn: true, account: "ChatGPT" }]),
+    limits: () => {
+      const at = (mins: number) => new Date(Date.now() + mins * 60_000).toISOString();
+      const fetchedAt = new Date().toISOString();
+      return ok([
+        { provider: "anthropic" as const, cli: "claude" as const, available: true, plan: "pro", resetCredits: null, limited: false, error: null, fetchedAt, windows: [{ kind: "session" as const, label: null, usedPercent: 31, resetsAt: at(268) }, { kind: "week" as const, label: null, usedPercent: 62, resetsAt: at(3 * 1440 + 128) }] },
+        { provider: "openai" as const, cli: "codex" as const, available: true, plan: "plus", resetCredits: 1, limited: false, error: null, fetchedAt, windows: [{ kind: "session" as const, label: null, usedPercent: 13, resetsAt: at(18) }, { kind: "week" as const, label: null, usedPercent: 49, resetsAt: at(4 * 1440 + 1080) }] },
+      ], 300);
+    },
     connectSubscription: () => ok({ ok: true, account: "demo" }, 500),
     conversations: {
       list: (projectId) => ok(db.conversations.filter((c) => !projectId || c.projectId === projectId)),

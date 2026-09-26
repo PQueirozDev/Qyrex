@@ -66,10 +66,10 @@ export function findCodex(): string | null {
   return firstExisting([vendor("x64", "x86_64-pc-windows-msvc"), vendor("arm64", "aarch64-pc-windows-msvc"), ...onPath("codex.exe")]);
 }
 
-const find = (cli: SubscriptionCli) => (cli === "claude" ? findClaudeCode() : findCodex());
+export const find = (cli: SubscriptionCli) => (cli === "claude" ? findClaudeCode() : findCodex());
 
 /** Ambiente do processo filho, sem variáveis do Electron que mudam o comportamento de binários Node. */
-function childEnv(): NodeJS.ProcessEnv {
+export function childEnv(): NodeJS.ProcessEnv {
   const env = { ...process.env };
   delete env.ELECTRON_RUN_AS_NODE;
   delete env.CLAUDECODE;
@@ -77,7 +77,7 @@ function childEnv(): NodeJS.ProcessEnv {
 }
 
 /** Pasta vazia onde a CLI roda (ela não tem ferramentas, mas nem o cwd tem nada). */
-function scratchDir(): string {
+export function scratchDir(): string {
   const dir = path.join(os.tmpdir(), "qrzspace-ai");
   fs.mkdirSync(dir, { recursive: true });
   return dir;
