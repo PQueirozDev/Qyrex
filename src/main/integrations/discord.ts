@@ -115,6 +115,7 @@ const PAGE_LABEL: Record<string, string> = {
   clientes: tm("Atendendo clientes"),
   marketing: tm("Criando conteúdo"),
   whatsapp: tm("No WhatsApp"),
+  notion: tm("Organizando notas no Notion"),
   integracoes: tm("Configurando integrações"),
   configuracoes: tm("Nas configurações"),
   novidades: tm("Lendo as novidades"),

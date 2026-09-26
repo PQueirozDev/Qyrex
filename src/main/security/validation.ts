@@ -39,7 +39,17 @@ export const clientStatus = z.enum(["ativo", "inativo", "prospecto"]);
 export const marketingType = z.enum(["post", "story", "reel"]);
 export const marketingStatus = z.enum(["ideia", "produzindo", "pronto", "publicado"]);
 export const aiProvider = z.enum(["anthropic", "openai", "google"]);
-export const integrationId = z.enum(["anthropic", "openai", "google", "github", "google_calendar", "spotify", "whatsapp"]);
+export const integrationId = z.enum(["anthropic", "openai", "google", "github", "google_calendar", "spotify", "notion", "whatsapp"]);
+
+/** ID de página/banco do Notion (UUID, com ou sem hífens). */
+export const notionId = z.string().regex(/^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i, "ID do Notion inválido");
+
+export const notionCreatePage = z.object({
+  parentId: notionId,
+  parentType: z.enum(["page", "database"]),
+  title: z.string().trim().min(1, "Dê um título à página").max(200),
+  content: z.string().max(40_000).optional(),
+});
 
 const tags = z.array(z.string().trim().min(1).max(40)).max(20);
 const url = z.string().url().max(2048);

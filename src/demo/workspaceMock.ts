@@ -23,6 +23,7 @@ import type {
   IpcResult,
   LocalMediaState,
   MarketingContent,
+  NotionItem,
   Project,
   ProjectWithGit,
   RecentItem,
@@ -319,6 +320,18 @@ for (const p of ["cafe-aurora", "nova-pilates", "bot-orcamentos"]) {
   FILES[`${dir}\\src\\app`] = [entry(`${dir}\\src\\app`, "page.tsx", false, 3100)];
 }
 const allFiles = () => Object.values(FILES).flat();
+
+// ---------------------------------------------------------------------------------
+// Notion simulado
+// ---------------------------------------------------------------------------------
+
+const notionPages: (NotionItem & { markdown: string })[] = [
+  { id: "11111111-1111-4111-8111-111111111111", type: "page", title: "Briefing — Loja Café Aurora", icon: "☕", url: "https://www.notion.so", lastEditedAt: ago(40), markdown: "# Objetivo\n\nVender assinaturas mensais de café especial.\n\n## Público\n\n- Quem trabalha em casa\n- Presentes corporativos\n\n## Entregas\n\n- [x] Home com vitrine\n- [ ] Página de assinaturas\n- [ ] Cupom de desconto\n\n> Prazo combinado: fim do mês." },
+  { id: "22222222-2222-4222-8222-222222222222", type: "page", title: "Ideias de conteúdo — outubro", icon: "💡", url: "https://www.notion.so", lastEditedAt: ago(60 * 20), markdown: "## Nova Pilates\n\n- Carrossel: 5 exercícios para a lombar\n- Reel: rotina de 10 minutos\n\n## Doce Lar\n\n- Bastidores do bolo de pistache\n- Enquete: sabor do mês" },
+  { id: "33333333-3333-4333-8333-333333333333", type: "database", title: "Clientes & Propostas", icon: "🗂️", url: "https://www.notion.so", lastEditedAt: ago(60 * 5), markdown: "" },
+  { id: "44444444-4444-4444-8444-444444444444", type: "page", title: "Checklist de publicação de site", icon: "✅", url: "https://www.notion.so", lastEditedAt: ago(60 * 72), markdown: "- [ ] Domínio apontado\n- [ ] HTTPS ativo\n- [ ] Favicon e prévia (og:image)\n- [ ] Google Analytics\n- [ ] Testar no celular" },
+];
+const notionItem = ({ markdown: _m, ...item }: (typeof notionPages)[number]): NotionItem => item;
 
 // ---------------------------------------------------------------------------------
 // API
@@ -711,8 +724,31 @@ export const workspaceMock: WorkspaceApi = {
         { id: "github", state: "connected", detail: null, info: { login: "visitante-demo", maskedKey: "gho_••••demo" } },
         { id: "google_calendar", state: "connected", detail: null, info: { clientId: "demo.apps.googleusercontent.com", lastSync: new Date().toISOString() } },
         { id: "spotify", state: "disconnected", detail: null, info: {} },
+        { id: "notion", state: "connected", detail: null, info: { workspace: "Workspace de exemplo", maskedKey: "ntn_••••demo" } },
         { id: "whatsapp", state: "connected", detail: null, info: {} },
       ]),
+  },
+  notion: {
+    connect: () => fail("Na demo o Notion já vem conectado."),
+    disconnect: () => fail("Na demo não é possível desconectar o Notion de exemplo."),
+    test: () => ok({ ok: true }, 300),
+    search: (query, kind) =>
+      ok(
+        notionPages
+          .filter((p) => (!kind || p.type === kind) && p.title.toLowerCase().includes(query.trim().toLowerCase()))
+          .sort((a, b) => b.lastEditedAt.localeCompare(a.lastEditedAt))
+          .map(notionItem),
+        250
+      ),
+    page: (id) => {
+      const p = notionPages.find((x) => x.id === id);
+      return p ? ok({ ...notionItem(p), markdown: p.markdown, truncated: false }, 350) : fail("Notion: página não encontrada.");
+    },
+    createPage: async (input) => {
+      const p = { id: crypto.randomUUID ? crypto.randomUUID() : uid(), type: "page" as const, title: input.title, icon: "📝", url: "https://www.notion.so", lastEditedAt: new Date().toISOString(), markdown: input.content ?? "" };
+      notionPages.unshift(p);
+      return ok(notionItem(p), 500);
+    },
   },
   media: {
     state: () => ok(media(), 30),

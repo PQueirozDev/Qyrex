@@ -11,6 +11,7 @@ export type Page =
   | "clientes"
   | "marketing"
   | "whatsapp"
+  | "notion"
   | "integracoes"
   | "novidades"
   | "configuracoes";
@@ -26,6 +27,7 @@ export const PAGES: Page[] = [
   "clientes",
   "marketing",
   "whatsapp",
+  "notion",
   "integracoes",
   "novidades",
   "configuracoes",

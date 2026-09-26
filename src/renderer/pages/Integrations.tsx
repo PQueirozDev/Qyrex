@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { Bot, CalendarDays, Github, KeyRound, MessageCircle, Music, ExternalLink, ShieldCheck, Sparkles } from "lucide-react";
+import { Bot, CalendarDays, Github, KeyRound, MessageCircle, Music, ExternalLink, NotebookPen, ShieldCheck, Sparkles } from "lucide-react";
 import type { AIProviderStatus, IntegrationId, IntegrationStatus, SubscriptionCliStatus } from "@shared/types";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -25,6 +25,7 @@ const META: Record<IntegrationId, Meta> = {
   google: { label: tr("Gemini (Google)"), icon: Bot, description: tr("Gemini no chat e no AI Council.") },
   github: { label: tr("GitHub"), icon: Github, description: tr("Issues, PRs e dados dos repositórios dos projetos.") },
   google_calendar: { label: tr("Google Agenda"), icon: CalendarDays, description: tr("Traz seus eventos para a Agenda (somente leitura).") },
+  notion: { label: tr("Notion"), icon: NotebookPen, description: tr("Busque, leia e crie páginas do Notion, e mande páginas para a IA.") },
   spotify: { label: tr("Spotify"), icon: Music, description: tr("Opcional: o mini player já mostra e controla o que toca no PC, sem conectar conta.") },
   whatsapp: { label: tr("WhatsApp"), icon: MessageCircle, description: tr("Conversas pelos links oficiais (wa.me / app desktop).") },
 };
@@ -36,6 +37,7 @@ const KEY_LINKS: Partial<Record<IntegrationId, string>> = {
   github: "https://github.com/settings/personal-access-tokens/new",
   google_calendar: "https://console.cloud.google.com/apis/credentials",
   spotify: "https://developer.spotify.com/dashboard",
+  notion: "https://www.notion.so/profile/integrations",
 };
 
 function StatusDot({ state }: { state: IntegrationStatus["state"] }) {
@@ -237,6 +239,70 @@ function AIProviderCard({
         </p>
       ) : (
         <SecretInput value={key} onChange={setKey} placeholder={tr("Cole a API key")} onEnter={() => void connect()} />
+      )}
+    </IntegrationCard>
+  );
+}
+
+function NotionCard({ status, reload }: { status: IntegrationStatus | undefined; reload: () => void }) {
+  const navigate = useUIStore((s) => s.navigate);
+  const [token, setToken] = useState("");
+  const [busy, setBusy] = useState<"connect" | "test" | null>(null);
+  const connected = status?.state === "connected" || status?.state === "error";
+
+  async function connect() {
+    if (!token.trim()) return;
+    setBusy("connect");
+    const res = await attempt(window.workspace.notion.connect(token.trim()));
+    setBusy(null);
+    if (res) {
+      toast.success(tr("Notion conectado: {workspace}", { workspace: res.workspace }));
+      setToken("");
+    }
+    reload();
+  }
+
+  async function test() {
+    setBusy("test");
+    const res = await attempt(window.workspace.notion.test());
+    setBusy(null);
+    if (res?.ok) toast.success(tr("Conexão funcionando"));
+    else if (res) toast.error(res.error ?? tr("Falha no teste."));
+    reload();
+  }
+
+  async function disconnect() {
+    if (!(await confirmAction({ title: tr("Desconectar o Notion?"), description: tr("O token é apagado do cofre do sistema."), confirmLabel: tr("Desconectar") }))) return;
+    await attempt(window.workspace.notion.disconnect(), tr("Notion desconectado"));
+    reload();
+  }
+
+  return (
+    <IntegrationCard
+      id="notion"
+      status={status}
+      actions={
+        connected ? (
+          <>
+            <Button size="xs" onClick={() => navigate("notion")}>{tr("Abrir Notion")}</Button>
+            <Button size="xs" variant="secondary" onClick={() => void test()} loading={busy === "test"}>{tr("Testar")}</Button>
+            <Button size="xs" variant="ghost" onClick={() => void disconnect()}>{tr("Desconectar")}</Button>
+          </>
+        ) : (
+          <Button size="xs" onClick={() => void connect()} loading={busy === "connect"} disabled={!token.trim()}>{tr("Conectar")}</Button>
+        )
+      }
+    >
+      {connected ? (
+        <>
+          {status?.info.workspace && <p className="text-xs text-text-muted">{tr("Workspace:")}{" "}<span className="text-text">{status.info.workspace}</span></p>}
+          <Masked value={status?.info.maskedKey} label={tr("Token")} />
+        </>
+      ) : (
+        <>
+          <SecretInput value={token} onChange={setToken} placeholder="ntn_..." onEnter={() => void connect()} />
+          <p className="text-[11px] leading-relaxed text-text-faint">{tr("Crie uma integração interna em notion.so/profile/integrations, copie o token e cole aqui. Depois, em cada página que o QrzSpace pode ver: ••• → Conexões → adicione a integração.")}</p>
+        </>
       )}
     </IntegrationCard>
   );
@@ -544,6 +610,7 @@ export function Integrations() {
             <p className="section-title mb-2">{tr("Serviços")}</p>
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               <GitHubCard status={get("github")} reload={reload} />
+              <NotionCard status={get("notion")} reload={reload} />
               <GoogleCalendarCard status={get("google_calendar")} reload={reload} />
               <SpotifyCard status={get("spotify")} reload={reload} />
               <WhatsAppCard status={get("whatsapp")} />

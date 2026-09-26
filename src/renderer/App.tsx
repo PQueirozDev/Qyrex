@@ -26,6 +26,7 @@ const Marketing = lazy(() => import("@/pages/Marketing").then((m) => ({ default:
 const Agenda = lazy(() => import("@/pages/Agenda").then((m) => ({ default: m.Agenda })));
 const WhatsApp = lazy(() => import("@/pages/WhatsApp").then((m) => ({ default: m.WhatsApp })));
 const PatchNotes = lazy(() => import("@/pages/PatchNotes").then((m) => ({ default: m.PatchNotes })));
+const Notion = lazy(() => import("@/pages/Notion").then((m) => ({ default: m.Notion })));
 const TerminalPage = lazy(() => import("@/pages/TerminalPage").then((m) => ({ default: m.TerminalPage })));
 
 function PageView({ page }: { page: Page }) {
@@ -52,6 +53,8 @@ function PageView({ page }: { page: Page }) {
       return <Marketing />;
     case "whatsapp":
       return <WhatsApp />;
+    case "notion":
+      return <Notion />;
     case "integracoes":
       return <Integrations />;
     case "novidades":
@@ -60,7 +63,7 @@ function PageView({ page }: { page: Page }) {
 }
 
 /** Páginas que ocupam a altura toda (sem padding/scroll do layout). */
-const FULL_BLEED: Page[] = ["ia", "terminal"];
+const FULL_BLEED: Page[] = ["ia", "terminal", "notion"];
 
 export function App() {
   const page = useUIStore((s) => s.page);

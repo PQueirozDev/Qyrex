@@ -221,7 +221,10 @@ function ChatView({ onNew }: { onNew: () => void }) {
   const provider = providers.find((p) => p.id === conversation?.provider);
 
   useEffect(() => {
-    setDraft("");
+    // Conteúdo mandado de outra tela (ex.: "Perguntar à IA" no Notion) entra como rascunho.
+    // Idempotente (o StrictMode roda efeitos duas vezes em dev): não apaga aqui.
+    const pending = useAIStore.getState().pendingDraft;
+    setDraft(pending && pending.conversationId === activeConversationId ? pending.text : "");
     setAttached([]);
   }, [activeConversationId]);
 
@@ -254,6 +257,7 @@ function ChatView({ onNew }: { onNew: () => void }) {
     const files = attached;
     setDraft("");
     setAttached([]);
+    if (useAIStore.getState().pendingDraft?.conversationId === conversation?.id) useAIStore.getState().setPendingDraft(null);
     await sendMessage(content, files);
   }
 

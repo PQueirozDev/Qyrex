@@ -245,6 +245,7 @@ export type IntegrationId =
   | "github"
   | "google_calendar"
   | "spotify"
+  | "notion"
   | "whatsapp";
 
 export type IntegrationState = "connected" | "disconnected" | "error";
@@ -282,6 +283,30 @@ export interface GitHubOverview {
   repo: GitHubRepoInfo;
   issues: GitHubItem[];
   pulls: GitHubItem[];
+}
+
+// --- Notion ------------------------------------------------------------------
+
+export interface NotionItem {
+  id: string;
+  type: "page" | "database";
+  title: string;
+  /** Emoji do ícone, quando houver. */
+  icon: string | null;
+  url: string;
+  lastEditedAt: string;
+}
+
+export interface NotionPageContent {
+  id: string;
+  title: string;
+  icon: string | null;
+  url: string;
+  lastEditedAt: string;
+  /** Conteúdo convertido para Markdown (somente leitura). */
+  markdown: string;
+  /** true quando a página era grande e só o começo foi carregado. */
+  truncated: boolean;
 }
 
 // --- Spotify ----------------------------------------------------------------

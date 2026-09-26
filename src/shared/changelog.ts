@@ -11,6 +11,39 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.4.0",
+    date: "2026-09-25",
+    title: { pt: "Notion no QrzSpace", en: "Notion in QrzSpace" },
+    sections: [
+      {
+        kind: "new",
+        items: [
+          {
+            pt: "Integração com o Notion: conecte com o token de uma integração interna e veja, na nova aba Notion, as páginas e bancos compartilhados com ela.",
+            en: "Notion integration: connect with an internal integration token and see the pages and databases shared with it in the new Notion tab.",
+          },
+          {
+            pt: "Busque, leia páginas dentro do app, crie páginas novas (inclusive como item de um banco de dados) e abra no Notion com um clique.",
+            en: "Search, read pages inside the app, create new pages (also as a database item) and open them in Notion in one click.",
+          },
+          {
+            pt: "“Perguntar à IA”: manda o conteúdo da página para uma conversa nova, pronto para você perguntar.",
+            en: "“Ask the AI”: sends the page content to a new conversation, ready for your question.",
+          },
+        ],
+      },
+      {
+        kind: "fixed",
+        items: [
+          {
+            pt: "Na agenda do início, os próximos dias aparecem como “Dom 27” em vez de nomes cortados.",
+            en: "On the home calendar, upcoming days show as “Sun 27” instead of cut-off names.",
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: "1.3.1",
     date: "2026-09-25",
     title: { pt: "Ícone novo", en: "New icon" },

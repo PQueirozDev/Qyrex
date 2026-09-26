@@ -12,6 +12,7 @@ import {
   Plug,
   Sparkles,
   Settings as SettingsIcon,
+  NotebookPen,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -45,6 +46,7 @@ const SECTIONS: { title: string | null; items: NavItem[] }[] = [
       { id: "arquivos", label: tr("Arquivos"), icon: FolderOpen },
       { id: "tarefas", label: tr("Tarefas"), icon: CheckSquare },
       { id: "agenda", label: tr("Agenda"), icon: CalendarDays },
+      { id: "notion", label: tr("Notion"), icon: NotebookPen },
     ],
   },
   {

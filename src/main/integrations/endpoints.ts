@@ -32,6 +32,7 @@ export const endpoints = {
   openai: () => pick("https://api.openai.com/v1", "/openai/v1"),
   gemini: () => pick("https://generativelanguage.googleapis.com/v1beta", "/gemini/v1beta"),
   github: () => pick("https://api.github.com", "/github"),
+  notion: () => pick("https://api.notion.com/v1", "/notion/v1"),
   spotifyAuthorize: () => pick("https://accounts.spotify.com/authorize", "/spotify/authorize"),
   spotifyToken: () => pick("https://accounts.spotify.com/api/token", "/spotify/api/token"),
   spotifyApi: () => pick("https://api.spotify.com/v1", "/spotify/v1"),

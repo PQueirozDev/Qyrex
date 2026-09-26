@@ -4,9 +4,9 @@ Guia para o Claude Code continuar o **QrzSpace**: um app desktop (Electron + Rea
 
 Sempre responda e comente o código em **português do Brasil**, com acentuação correta.
 
-## Estado atual (v1.3.1)
+## Estado atual (v1.4.0)
 
-App completo e publicado. `npm run check` passa (typecheck, lint sem warnings e 190 testes; 3 testes de caminho do Windows são pulados fora do Windows). `npm run e2e` passa (23 etapas pela interface, com as APIs simuladas).
+App completo e publicado. `npm run check` passa (typecheck, lint sem warnings e 195 testes; 3 testes de caminho do Windows são pulados fora do Windows). `npm run e2e` passa (24 etapas pela interface, com as APIs simuladas).
 
 ### Feito
 - `src/main/**`: ipc/handlers com validação zod e checagem de remetente, services, integrações (Claude via `@anthropic-ai/sdk`, OpenAI e Gemini via REST, GitHub com PAT, Spotify com PKCE, Google Calendar com OAuth loopback, Discord Rich Presence via named pipe), segurança (paths, commands, exec, secrets, validation), logger com redaction (inclusive cookies), notificações, terminal node-pty, tray, CSP e atualização automática (`services/updateService.ts`, electron-updater).
@@ -20,6 +20,7 @@ App completo e publicado. `npm run check` passa (typecheck, lint sem warnings e 
 - **Mini player** (`components/MiniPlayer.tsx`): lê a mídia do Windows (GSMTC) por um PowerShell persistente com script fixo embutido (`integrations/media/mediaScript.ts`), comandos de lista fechada. Capa buscada por nome na Deezer/iTunes e entregue como data URL. A Web API do Spotify virou opcional.
 - **HUD**: biblioteca `motion` (layout/spring). Barra de título nativa escondida (`titleBarOverlay`, cores sincronizadas com o tema via `system:setTitleBarColors`); `.drag-region`/`.no-drag`/`.titlebar-safe`, `.press`, `.shine`, `AnimatedValue`, `Segmented` com pílula deslizante.
 - **Ícone**: fonte em `build/icon.svg` (cópia em `src/renderer/assets/logo.svg` para a barra lateral). `npm run icons` rasteriza pelo Electron e gera `build/icon.png` + `build/icon.ico` (PNG embutido). A atividade do Discord usa `icon.png` do repositório público QrzSpace-releases.
+- **Notion**: `integrations/notion.ts` (token de integração interna no cofre, `Notion-Version: 2022-06-28`, URL em `endpoints.notion()`). Busca, leitura (blocos → Markdown, até ~400 blocos), criação de página em página ou banco (acha a propriedade de título). Aba `pages/Notion.tsx`; "Perguntar à IA" usa `useAIStore.pendingDraft` (amarrado à conversa, idempotente).
 - **Demo web (portfólio)**: `npm run build:demo` gera `dist-demo/` com a interface REAL do renderer e `window.workspace` simulado (`src/demo/workspaceMock.ts`, tipado como `WorkspaceApi`: se um canal novo entrar no preload, o typecheck obriga a simular). Dados fictícios em sessionStorage. Publicar = copiar `dist-demo/` para `pq-portfolio/qrzspace-demo/`.
 - **Patch notes**: `src/shared/changelog.ts` (pt/en). O teste exige que a versão do `package.json` seja a primeira entrada.
 - **Atualizações**: publicadas em **PQueirozDev/QrzSpace-releases** (repositório público só com instaladores; este repositório de código é privado). `npm run release` gera o instalador e cria a release com o `gh` (patch notes do changelog em pt e en).

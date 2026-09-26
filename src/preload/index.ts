@@ -16,6 +16,8 @@ import type {
   DiscordStatus,
   LocalMediaState,
   MediaAction,
+  NotionItem,
+  NotionPageContent,
   SubscriptionCliStatus,
   UpdateStatus,
   DirEntry,
@@ -248,6 +250,15 @@ const api = {
   },
   integrations: {
     list: () => invoke<IntegrationStatus[]>("integrations:list"),
+  },
+  notion: {
+    connect: (token: string) => invoke<{ workspace: string }>("notion:connect", token),
+    disconnect: () => invoke<void>("notion:disconnect"),
+    test: () => invoke<{ ok: boolean; error?: string }>("notion:test"),
+    search: (query: string, kind?: "page" | "database") => invoke<NotionItem[]>("notion:search", query, kind),
+    page: (id: string) => invoke<NotionPageContent>("notion:page", id),
+    createPage: (input: { parentId: string; parentType: "page" | "database"; title: string; content?: string }) =>
+      invoke<NotionItem>("notion:createPage", input),
   },
   media: {
     state: () => invoke<LocalMediaState | null>("media:state"),

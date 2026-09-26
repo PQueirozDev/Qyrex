@@ -16,7 +16,8 @@ export type SecretName =
   | "github"
   | "spotify_tokens"
   | "google_calendar_tokens"
-  | "google_calendar_client_secret";
+  | "google_calendar_client_secret"
+  | "notion";
 
 function secretsPath(): string {
   return path.join(app.getPath("userData"), "secrets.enc.json");

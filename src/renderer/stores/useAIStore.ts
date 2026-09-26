@@ -29,6 +29,12 @@ interface AIState {
   isStreaming: boolean;
   activeRequestId: string | null;
   error: string | null;
+  /**
+   * Texto a colocar na caixa de mensagem de uma conversa (ex.: página do Notion).
+   * Fica amarrado à conversa e só sai quando a mensagem é enviada.
+   */
+  pendingDraft: { conversationId: string; text: string } | null;
+  setPendingDraft: (draft: { conversationId: string; text: string } | null) => void;
 
   loadProviders: () => Promise<void>;
   refreshModels: (provider: AIProviderId) => Promise<void>;
@@ -75,6 +81,8 @@ export const useAIStore = create<AIState>((set, get) => {
     isStreaming: false,
     activeRequestId: null,
     error: null,
+    pendingDraft: null,
+    setPendingDraft: (draft) => set({ pendingDraft: draft }),
 
     loadProviders: async () => {
       const data = await attempt(window.workspace.ai.providers());

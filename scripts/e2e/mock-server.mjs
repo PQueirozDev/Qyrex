@@ -5,6 +5,7 @@
 import http from "node:http";
 
 const log = [];
+let lastNotionPage = null;
 const player = { isPlaying: true, progressMs: 42_000, volume: 60, track: 0 };
 const TRACKS = [
   { name: "Faixa de Teste", artist: "Banda E2E", album: "Álbum Simulado" },
@@ -165,6 +166,7 @@ async function route(req, res) {
 
   if (p === "/__log") return json(res, 200, log);
   if (p === "/__player") return json(res, 200, player);
+  if (p === "/__notion") return json(res, 200, lastNotionPage);
 
   // ---------- Anthropic ----------
   if (p.startsWith("/anthropic/")) {
@@ -247,6 +249,42 @@ async function route(req, res) {
     if (sp === "/me/player/previous") { player.track = (player.track + TRACKS.length - 1) % TRACKS.length; player.progressMs = 0; res.writeHead(204); return res.end(); }
     if (sp === "/me/player/volume") { player.volume = Number(url.searchParams.get("volume_percent")); res.writeHead(204); return res.end(); }
     if (sp === "/me/player/seek") { player.progressMs = Number(url.searchParams.get("position_ms")); res.writeHead(204); return res.end(); }
+  }
+
+  // ---------- Notion ----------
+  if (p.startsWith("/notion/v1/")) {
+    if (needAuth(req, res)) return;
+    if (req.headers["notion-version"] !== "2022-06-28") return json(res, 400, { message: "Notion-Version ausente" });
+    const np = p.slice("/notion/v1".length);
+    const PAGE = "11111111-1111-4111-8111-111111111111";
+    const DB = "22222222-2222-4222-8222-222222222222";
+    const txt = (t) => [{ plain_text: t, annotations: {}, href: null }];
+    const pageObj = { object: "page", id: PAGE, url: "https://www.notion.so/briefing", last_edited_time: now(), icon: { type: "emoji", emoji: "☕" }, properties: { title: { type: "title", title: txt("Briefing E2E") } } };
+    const dbObj = { object: "database", id: DB, url: "https://www.notion.so/db", last_edited_time: now(), icon: null, title: txt("Tarefas E2E") };
+    if (np === "/users/me") return json(res, 200, { object: "user", name: "QrzSpace", bot: { workspace_name: "Workspace E2E" } });
+    if (np === "/search") {
+      const q = (body.query ?? "").toLowerCase();
+      const kind = body.filter?.value;
+      const all = [pageObj, dbObj].filter((o) => (!kind || o.object === kind) && (!q || (o.object === "page" ? "briefing e2e" : "tarefas e2e").includes(q)));
+      return json(res, 200, { object: "list", results: all, has_more: false });
+    }
+    if (np === `/pages/${PAGE}`) return json(res, 200, pageObj);
+    if (np === `/blocks/${PAGE}/children`) {
+      return json(res, 200, {
+        results: [
+          { id: "b1", type: "heading_2", has_children: false, heading_2: { rich_text: txt("Objetivo do cliente") } },
+          { id: "b2", type: "paragraph", has_children: false, paragraph: { rich_text: txt("Vender assinaturas de café pelo site.") } },
+          { id: "b3", type: "to_do", has_children: false, to_do: { rich_text: txt("Página de planos"), checked: false } },
+        ],
+        has_more: false,
+        next_cursor: null,
+      });
+    }
+    if (np === `/databases/${DB}`) return json(res, 200, { object: "database", id: DB, properties: { Tarefa: { type: "title" }, Status: { type: "status" } } });
+    if (np === "/pages" && req.method === "POST") {
+      lastNotionPage = body;
+      return json(res, 200, { object: "page", id: "33333333-3333-4333-8333-333333333333", url: "https://www.notion.so/nova", last_edited_time: now(), icon: null, properties: { title: { type: "title", title: txt("criada") } } });
+    }
   }
 
   // ---------- Google ----------

@@ -456,6 +456,43 @@ await step("Agenda mostra eventos do Google (sem os cancelados) e cria evento", 
   await shot("agenda");
 });
 
+await step("Notion: conectar, buscar, ler, criar página e mandar para a IA", async () => {
+  await nav("Integrações");
+  await waitFor(`cardOf("Notion")`, { label: "card do Notion" });
+  const bad = await ev(`return (await window.workspace.notion.connect("token-qualquer")).ok`);
+  if (bad !== false) throw new Error("token fora do formato foi aceito");
+  await type(`cardOf("Notion").querySelector("input[type=password]")`, "ntn_e2e0123456789abcdefghijklmnop");
+  await click("Conectar", `cardOf("Notion")`);
+  await waitFor(`textOf(cardOf("Notion")).includes("Workspace E2E")`, { label: "workspace do Notion" });
+  const masked = await ev(`return textOf(cardOf("Notion"))`);
+  if (masked.includes("0123456789abcdef")) throw new Error("token aparece inteiro na tela");
+
+  await nav("Notion");
+  await waitFor(`textOf(document.querySelector("main")).includes("Briefing E2E")`, { label: "página na lista" });
+  await click("Briefing E2E");
+  await waitFor(`textOf(document.querySelector("main")).includes("Vender assinaturas de café pelo site.")`, { label: "conteúdo da página" });
+
+  await click("Subpágina");
+  await waitFor(`dialog() && textOf(dialog()).includes("Nova página no Notion")`, { label: "diálogo de nova página" });
+  await ev(`const sel = dialog().querySelector("select"); setSelect(sel, "22222222-2222-4222-8222-222222222222"); return 1;`);
+  await type(`dialog().querySelector("input.input")`, "Página criada pelo E2E");
+  await type(`dialog().querySelector("textarea")`, "# Resumo\n- [ ] Revisar layout");
+  await click("Criar página", `dialog()`);
+  await sleep(1200);
+  const created = await (await fetch(`${API}/__notion`)).json();
+  if (created?.parent?.database_id !== "22222222-2222-4222-8222-222222222222") throw new Error(`pai errado: ${JSON.stringify(created?.parent)}`);
+  if (!created.properties?.Tarefa) throw new Error("título não foi na propriedade de título do banco (Tarefa)");
+  if (created.children?.[0]?.type !== "heading_1" || created.children?.[1]?.type !== "to_do") throw new Error("conteúdo não virou blocos");
+
+  await nav("Notion");
+  await waitFor(`textOf(document.querySelector("main")).includes("Briefing E2E")`, { label: "lista de novo" });
+  await click("Briefing E2E");
+  await waitFor(`findButton("Perguntar à IA") && !findButton("Perguntar à IA").disabled`, { label: "botão Perguntar à IA" });
+  await click("Perguntar à IA");
+  await waitFor(`(document.querySelector("section textarea")?.value ?? "").includes("Vender assinaturas de café")`, { timeout: 10_000, label: "rascunho no chat com o conteúdo" });
+  return "conectado, lido, criado no banco e enviado para a IA";
+});
+
 await step("Tarefas: criar pelo campo rápido", async () => {
   await nav("Tarefas");
   await type(`$$("input").find((i) => i.placeholder.startsWith("Adicionar tarefa"))`, "Tarefa do E2E", { enter: true });
@@ -511,7 +548,7 @@ await step("interface em inglês: sem texto em português", async () => {
   // Inglês não tem acentos nem cedilha: qualquer um fora dos dados de teste é texto sem tradução.
   const PT = /[ãõçáéíóúâêôà]|\b(não|você|para|com|sem|mais|nenhum|nenhuma|tarefa|projeto|cliente|conectado|desconectado|erro)\b/i;
   const leftovers = {};
-  for (const label of ["Home", "AI", "Projects", "Terminal", "Files", "Tasks", "Calendar", "Clients", "Marketing", "WhatsApp", "What's New", "Integrations", "Settings"]) {
+  for (const label of ["Home", "AI", "Projects", "Terminal", "Files", "Tasks", "Calendar", "Clients", "Marketing", "WhatsApp", "Notion", "What's New", "Integrations", "Settings"]) {
     await nav(label);
     await sleep(900);
     const texts = await ev(`

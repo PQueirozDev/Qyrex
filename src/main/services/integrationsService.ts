@@ -21,6 +21,7 @@ export const ALL_INTEGRATIONS: IntegrationId[] = [
   "github",
   "google_calendar",
   "spotify",
+  "notion",
   "whatsapp",
 ];
 
@@ -67,6 +68,7 @@ const SECRET_FOR: Partial<Record<IntegrationId, Parameters<typeof hasSecret>[0]>
   github: "github",
   spotify: "spotify_tokens",
   google_calendar: "google_calendar_tokens",
+  notion: "notion",
 };
 
 export function listIntegrationStatus(): IntegrationStatus[] {
