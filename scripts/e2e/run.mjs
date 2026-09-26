@@ -590,6 +590,19 @@ if (process.env.E2E_KEEP) {
 }
 cleanup();
 await sleep(1500);
+// O Electron de desenvolvimento cria um atalho "Electron" no menu Iniciar ao mostrar
+// notificações; ele aparece na busca do Windows. Remove se apontar para este repositório.
+try {
+  const lnk = path.join(process.env.APPDATA ?? "", "Microsoft", "Windows", "Start Menu", "Programs", "Electron.lnk");
+  if (fs.existsSync(lnk)) {
+    // O .lnk guarda o caminho do alvo em ANSI e/ou UTF-16: procura nos dois.
+    const raw = fs.readFileSync(lnk);
+    const text = (raw.toString("latin1") + raw.toString("utf16le")).toLowerCase();
+    if (text.includes(path.join(ROOT, "node_modules", "electron", "dist", "electron.exe").toLowerCase())) fs.rmSync(lnk);
+  }
+} catch {
+  /* sem permissão ou atalho de outro programa: deixa como está */
+}
 try {
   fs.rmSync(TMP, { recursive: true, force: true });
 } catch {
