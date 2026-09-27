@@ -4,9 +4,9 @@ Guia para o Claude Code continuar o **QrzSpace**: um app desktop (Electron + Rea
 
 Sempre responda e comente o código em **português do Brasil**, com acentuação correta.
 
-## Estado atual (v1.4.0)
+## Estado atual (v1.6.0)
 
-App completo e publicado. `npm run check` passa (typecheck, lint sem warnings e 195 testes; 3 testes de caminho do Windows são pulados fora do Windows). `npm run e2e` passa (24 etapas pela interface, com as APIs simuladas).
+App completo e publicado. `npm run check` passa (typecheck, lint sem warnings e 205 testes; 3 testes de caminho do Windows são pulados fora do Windows). `npm run e2e` passa (24 etapas pela interface, com as APIs simuladas).
 
 ### Feito
 - `src/main/**`: ipc/handlers com validação zod e checagem de remetente, services, integrações (Claude via `@anthropic-ai/sdk`, OpenAI e Gemini via REST, GitHub com PAT, Spotify com PKCE, Google Calendar com OAuth loopback, Discord Rich Presence via named pipe), segurança (paths, commands, exec, secrets, validation), logger com redaction (inclusive cookies), notificações, terminal node-pty, tray, CSP e atualização automática (`services/updateService.ts`, electron-updater).
@@ -18,6 +18,7 @@ App completo e publicado. `npm run check` passa (typecheck, lint sem warnings e 
 - **IA pela assinatura**: `integrations/cli/subscriptions.ts` roda o Claude Code (`claude -p`, stream-json) e o Codex (`codex exec --json`) já logados no PC, com TODAS as ferramentas desligadas, cwd vazio e sessão efêmera. `aiService` usa isso quando `integrations.metadata.authMode === "subscription"` (Claude → claude, OpenAI → codex). Uso registrado como `claude-code/<modelo>` / `codex/<modelo>` (sem custo).
 - **GitHub pelo gh**: `github.connectWithGhCli()` lê `gh auth token` direto para o cofre.
 - **Mini player** (`components/MiniPlayer.tsx`): lê a mídia do Windows (GSMTC) por um PowerShell persistente com script fixo embutido (`integrations/media/mediaScript.ts`), comandos de lista fechada. Capa buscada por nome na Deezer/iTunes e entregue como data URL. A Web API do Spotify virou opcional.
+- **Visual (1.6.0)**: `lib/pageIcons.ts` (`PAGE_ICONS`, ícone único por área: sidebar e `PageHeader icon`), `Avatar` (cor estável por nome, classe `.avatar`), `.surface` (véu de luz nos cards escuros), `.skeleton` (carregamento com brilho), checkbox e `select.input` estilizados no CSS global (não use `accent-*` nem seta nativa), pílula ativa com `layoutId` na sidebar/Configurações, kanbans com destaque de coluna ao arrastar.
 - **HUD**: biblioteca `motion` (layout/spring). Barra de título nativa escondida (`titleBarOverlay`, cores sincronizadas com o tema via `system:setTitleBarColors`); `.drag-region`/`.no-drag`/`.titlebar-safe`, `.press`, `.shine`, `AnimatedValue`, `Segmented` com pílula deslizante.
 - **Ícone**: fonte em `build/icon.svg` (cópia em `src/renderer/assets/logo.svg` para a barra lateral). `npm run icons` rasteriza pelo Electron e gera `build/icon.png` + `build/icon.ico` (PNG embutido). A atividade do Discord usa `icon.png` do repositório público QrzSpace-releases.
 - **Notion**: `integrations/notion.ts` (token de integração interna no cofre, `Notion-Version: 2022-06-28`, URL em `endpoints.notion()`). Busca, leitura (blocos → Markdown, até ~400 blocos), criação de página em página ou banco (acha a propriedade de título). Aba `pages/Notion.tsx`; "Perguntar à IA" usa `useAIStore.pendingDraft` (amarrado à conversa, idempotente).

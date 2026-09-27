@@ -22,6 +22,63 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.6.0",
+    date: "2026-09-27",
+    title: { pt: "Visual renovado", en: "A refreshed look" },
+    sections: [
+      {
+        kind: "improved",
+        items: [
+          {
+            pt: "Barra lateral e Configurações com a pílula do item ativo deslizando em mola, e cada página com o ícone da sua área no cabeçalho.",
+            en: "Sidebar and Settings with the active item's pill sliding on a spring, and every page showing its area's icon in the header.",
+          },
+          {
+            pt: "Início: cards que acendem ao passar o mouse, agenda de hoje em linha do tempo (o próximo compromisso pulsa) e monogramas coloridos nos projetos.",
+            en: "Home: cards that light up on hover, today's agenda as a timeline (the next event pulses) and colored monograms on projects.",
+          },
+          {
+            pt: "Caixas de seleção e listas suspensas com o visual do app em todos os temas, foco de teclado visível e carregamento com brilho.",
+            en: "Checkboxes and dropdowns styled to match the app in every theme, visible keyboard focus and shimmering loading placeholders.",
+          },
+          {
+            pt: "Quadros de Tarefas e Marketing: a coluna acende ao arrastar um card por cima e colunas vazias mostram onde soltar.",
+            en: "Tasks and Marketing boards: the column lights up while you drag a card over it, and empty columns show where to drop.",
+          },
+          {
+            pt: "Chat da IA: blocos de código numa caixa só, com a linguagem e o botão Copiar sempre à mostra.",
+            en: "AI chat: code blocks in a single box, with the language and the Copy button always visible.",
+          },
+          {
+            pt: "Clientes e WhatsApp: avatares com cor própria para cada cliente, valores alinhados e telefones formatados.",
+            en: "Clients and WhatsApp: each client gets its own avatar color, amounts line up and phone numbers are formatted.",
+          },
+        ],
+      },
+      {
+        kind: "fixed",
+        items: [
+          {
+            pt: "Contagens com plural de verdade: “1 tarefa”, “3 tarefas” — nada mais de “tarefa(s)”.",
+            en: "Counts use real plurals: “1 task”, “3 tasks” — no more “task(s)”.",
+          },
+          {
+            pt: "Com o app em inglês, os grupos da paleta de comandos, o status dos clientes, as etapas do Marketing e a atividade do Início apareciam em português.",
+            en: "With the app in English, command palette groups, client statuses, Marketing stages and Home activity still showed up in Portuguese.",
+          },
+          {
+            pt: "O aviso de novidades podia reabrir sem parar depois de visitar a aba Novidades.",
+            en: "The what's-new dialog could keep reopening after visiting the What's New tab.",
+          },
+          {
+            pt: "Dias da semana como “Terça-Feira” agora aparecem como “Terça-feira”.",
+            en: "Weekday names in the Portuguese interface no longer get a stray capital letter after the hyphen.",
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: "1.5.1",
     date: "2026-09-26",
     title: { pt: "Terminal que não fecha", en: "A terminal that stays open" },

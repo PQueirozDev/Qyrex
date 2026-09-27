@@ -338,7 +338,7 @@ await step("projeto com repositório GitHub: issues e PRs no painel", async () =
 await step("commit pelo painel do projeto (com confirmação)", async () => {
   fs.writeFileSync(path.join(PROJECT, "novo.txt"), "alteração do E2E\n");
   await click("Atualizar", `document.querySelector("[data-drawer]")`);
-  await waitFor(`textOf(document.querySelector("[data-drawer]")).includes("1 alterado(s)")`, { label: "status git com alteração" });
+  await waitFor(`textOf(document.querySelector("[data-drawer]")).includes("1 alterado")`, { label: "status git com alteração" });
   await type(`document.querySelector("[data-drawer]").querySelector("[placeholder='Mensagem do commit']")`, "Commit pelo E2E");
   await click("Commit", `document.querySelector("[data-drawer]")`);
   await waitFor(`$$("[role=dialog]").some((d) => textOf(d).includes("Criar commit?"))`, { label: "confirmação do commit" });
