@@ -5,7 +5,7 @@ vi.stubGlobal("localStorage", { getItem: () => "pt", setItem: () => undefined })
 vi.stubGlobal("document", { documentElement: { lang: "" } });
 
 const { fuzzyFilter, fuzzyScore, normalizeText } = await import("../../src/renderer/lib/fuzzy");
-const { addDays, formatDuration, parseLocalDateTime, relativeDay, toLocalDate, basename } = await import("../../src/renderer/lib/format");
+const { addDays, formatDuration, formatPhone, initials, parseLocalDateTime, relativeDay, toLocalDate, basename } = await import("../../src/renderer/lib/format");
 const { getTheme, THEMES } = await import("../../src/renderer/lib/themes");
 
 describe("fuzzy search (Ctrl+K)", () => {
@@ -43,6 +43,23 @@ describe("datas no horário local", () => {
     expect([d.getHours(), d.getMinutes()]).toEqual([14, 5]);
     expect(formatDuration(103_000)).toBe("01:43");
     expect(basename("C:\\Projetos\\site\\index.html")).toBe("index.html");
+  });
+});
+
+describe("telefone e iniciais", () => {
+  it("formata telefones brasileiros e mantém o resto como veio", () => {
+    expect(formatPhone("11900000001")).toBe("(11) 90000-0001");
+    expect(formatPhone("1130000000")).toBe("(11) 3000-0000");
+    expect(formatPhone("+55 11 90000-0001")).toBe("+55 (11) 90000-0001");
+    expect(formatPhone("900000001")).toBe("90000-0001");
+    expect(formatPhone("+1 415 555 0100")).toBe("+1 415 555 0100");
+  });
+
+  it("iniciais da primeira e da última palavra", () => {
+    expect(initials("Studio Nova Pilates")).toBe("SP");
+    expect(initials("Café Aurora")).toBe("CA");
+    expect(initials("Pedro")).toBe("P");
+    expect(initials("   ", "Q")).toBe("Q");
   });
 });
 

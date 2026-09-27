@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { Loader2, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/i18n";
+import { initials } from "@/lib/format";
 
 export function Badge({
   children,
@@ -24,6 +25,26 @@ export function Badge({
   return (
     <span className={cn("inline-flex items-center gap-1 rounded-md border px-1.5 py-px text-[11px] font-medium", tones[tone], className)}>
       {children}
+    </span>
+  );
+}
+
+/** Matiz estável por nome: o mesmo cliente tem sempre a mesma cor. */
+function hueOf(name: string): number {
+  let h = 0;
+  for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) % 360;
+  return h;
+}
+
+/** Avatar com iniciais e cor própria por nome (legível nos temas claros e escuros, ver `.avatar`). */
+export function Avatar({ name, size = 32, className }: { name: string; size?: number; className?: string }) {
+  return (
+    <span
+      aria-hidden
+      className={cn("avatar flex shrink-0 items-center justify-center rounded-full font-semibold", className)}
+      style={{ width: size, height: size, fontSize: Math.round(size * 0.36), ["--h" as string]: hueOf(name) }}
+    >
+      {initials(name)}
     </span>
   );
 }
@@ -52,9 +73,13 @@ export function EmptyState({
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-col items-center justify-center gap-2 px-6 py-10 text-center", className)}>
-      <div className="mb-1 flex h-10 w-10 items-center justify-center rounded-xl border border-border-subtle bg-bg-elevated">
-        <Icon size={18} className="text-text-faint" />
+    <div className={cn("flex animate-blur-in flex-col items-center justify-center gap-2 px-6 py-10 text-center", className)}>
+      {/* Ícone com halo na cor do tema: vazio, mas convidativo. */}
+      <div className="relative mb-1.5">
+        <div className="absolute inset-0 scale-150 rounded-full bg-accent/10 blur-xl" />
+        <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-border bg-gradient-to-b from-bg-card to-bg-elevated shadow-card">
+          <Icon size={19} className="text-accent/80" />
+        </div>
       </div>
       <p className="text-sm font-medium text-text">{title}</p>
       {description && <p className="max-w-sm text-xs leading-relaxed text-text-muted">{description}</p>}
@@ -78,18 +103,36 @@ export function LoadingRows({ rows = 3 }: { rows?: number }) {
   return (
     <div className="space-y-2">
       {Array.from({ length: rows }, (_, i) => (
-        <div key={i} className="h-9 animate-pulse rounded-lg bg-bg-hover" style={{ opacity: 1 - i * 0.2 }} />
+        <div key={i} className="skeleton h-9 rounded-lg" style={{ opacity: 1 - i * 0.2 }} />
       ))}
     </div>
   );
 }
 
-export function PageHeader({ title, description, actions }: { title: string; description?: ReactNode; actions?: ReactNode }) {
+export function PageHeader({
+  title,
+  description,
+  actions,
+  icon: Icon,
+}: {
+  title: string;
+  description?: ReactNode;
+  actions?: ReactNode;
+  /** Ícone da área (o mesmo da barra lateral), num selo com a cor do tema. */
+  icon?: LucideIcon;
+}) {
   return (
-    <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight text-text">{title}</h1>
-        {description && <p className="mt-0.5 text-sm text-text-muted">{description}</p>}
+    <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+      <div className="flex min-w-0 items-center gap-3.5">
+        {Icon && (
+          <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-accent/25 bg-gradient-to-br from-accent/20 to-accent/5 text-accent shadow-[0_8px_24px_-12px_rgb(var(--accent)/0.6)]">
+            <Icon size={20} strokeWidth={1.9} />
+          </div>
+        )}
+        <div className="min-w-0">
+          <h1 className="text-[22px] font-semibold leading-tight tracking-tight text-text">{title}</h1>
+          {description && <p className="mt-0.5 text-sm text-text-muted">{description}</p>}
+        </div>
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>

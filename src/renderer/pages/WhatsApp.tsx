@@ -2,13 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import { Copy, Globe, Info, MessageCircle, Monitor, Search, Send, Users } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
-import { Badge, EmptyState, Field, LoadingRows, PageHeader } from "@/components/ui/primitives";
+import { Avatar, Badge, EmptyState, Field, LoadingRows, PageHeader } from "@/components/ui/primitives";
+import { formatPhone } from "@/lib/format";
+import { CLIENT_STATUS_LABEL } from "@/pages/Clients";
 import { attempt } from "@/lib/api";
 import { fuzzyFilter } from "@/lib/fuzzy";
 import { useClientsStore } from "@/stores/useClientsStore";
 import { toast, useUIStore } from "@/stores/useUIStore";
 
 import { tr } from "@/lib/i18n";
+import { PAGE_ICONS } from "@/lib/pageIcons";
 /**
  * WhatsApp só por caminhos oficiais: app desktop (`whatsapp://`) ou links
  * `wa.me`. Nada de bibliotecas não oficiais que automatizam o WhatsApp Web.
@@ -50,6 +53,7 @@ export function WhatsApp() {
     <div>
       <PageHeader
         title={tr("WhatsApp")}
+        icon={PAGE_ICONS.whatsapp}
         description={tr("Conversas pelo app oficial ou pelo WhatsApp Web, com os contatos dos seus clientes.")}
         actions={
           <>
@@ -101,17 +105,15 @@ export function WhatsApp() {
                   const number = (c.whatsapp || c.phone)!;
                   return (
                     <div key={c.id} className="flex items-center gap-3 px-3 py-2">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-success/10 text-xs font-semibold text-success">
-                        {c.name.slice(0, 2).toUpperCase()}
-                      </div>
+                      <Avatar name={c.name} />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm text-text">{c.name}</p>
                         <p className="text-[11px] text-text-faint">
-                          {number}
+                          {formatPhone(number)}
                           {!c.whatsapp && tr(" · telefone")}
                         </p>
                       </div>
-                      {c.status !== "ativo" && <Badge>{c.status}</Badge>}
+                      {c.status !== "ativo" && <Badge>{CLIENT_STATUS_LABEL[c.status]}</Badge>}
                       <Button size="xs" variant="secondary" onClick={() => openChat(number, message)}>
                         <MessageCircle size={12} className="text-success" />{" "}{tr("Abrir conversa")}</Button>
                     </div>

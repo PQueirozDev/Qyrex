@@ -13,6 +13,7 @@ import { useProjectsStore } from "@/stores/useProjectsStore";
 import { useClientsStore } from "@/stores/useClientsStore";
 import { confirmAction, useUIStore } from "@/stores/useUIStore";
 import { tr, trn } from "@/lib/i18n";
+import { PAGE_ICONS } from "@/lib/pageIcons";
 
 type View = "hoje" | "proximas" | "todas" | "concluidas";
 
@@ -97,9 +98,16 @@ function TaskRow({ task, onEdit }: { task: Task; onEdit: (t: Task) => void }) {
   );
 }
 
+const STATUS_DOT: Record<TaskStatus, string> = {
+  pendente: "bg-text-faint",
+  em_andamento: "bg-accent shadow-[0_0_8px_rgb(var(--accent)/0.7)]",
+  concluido: "bg-success",
+};
+
 function Kanban({ tasks, onEdit }: { tasks: Task[]; onEdit: (t: Task) => void }) {
   const { update } = useTasksStore();
   const [dragId, setDragId] = useState<string | null>(null);
+  const [over, setOver] = useState<TaskStatus | null>(null);
   const columns: TaskStatus[] = ["pendente", "em_andamento", "concluido"];
 
   return (
@@ -109,25 +117,58 @@ function Kanban({ tasks, onEdit }: { tasks: Task[]; onEdit: (t: Task) => void })
         return (
           <div
             key={status}
-            onDragOver={(e) => e.preventDefault()}
+            onDragOver={(e) => {
+              e.preventDefault();
+              if (over !== status) setOver(status);
+            }}
+            onDragLeave={(e) => {
+              // Só apaga ao sair da coluna de verdade (não ao passar por cima de um card dela).
+              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOver(null);
+            }}
             onDrop={() => {
               if (dragId) void update(dragId, { status });
               setDragId(null);
+              setOver(null);
             }}
-            className="min-h-[200px] rounded-card border border-border-subtle bg-bg-elevated/40 p-2"
+            className={cn(
+              "min-h-[200px] rounded-card border p-2 transition-[background-color,border-color,box-shadow] duration-200",
+              over === status && dragId
+                ? "border-accent/50 bg-accent/[0.06] shadow-[inset_0_0_0_1px_rgb(var(--accent)/0.25)]"
+                : "border-border-subtle bg-bg-elevated/40"
+            )}
           >
             <div className="flex items-center justify-between px-1.5 pb-2 pt-1">
-              <span className="section-title">{STATUS_LABEL[status]}</span>
-              <span className="text-[11px] text-text-faint">{items.length}</span>
+              <span className="flex items-center gap-2">
+                <span className={cn("h-2 w-2 rounded-full", STATUS_DOT[status])} />
+                <span className="section-title">{STATUS_LABEL[status]}</span>
+              </span>
+              <span className="rounded-full bg-bg-hover px-1.5 text-[11px] tabular-nums text-text-faint">{items.length}</span>
             </div>
             <div className="space-y-2">
+              {items.length === 0 && (
+                <div
+                  className={cn(
+                    "rounded-lg border border-dashed py-6 text-center text-[11px] transition-colors",
+                    over === status && dragId ? "border-accent/50 text-accent" : "border-border-subtle text-text-faint"
+                  )}
+                >
+                  {tr("Arraste um card para cá")}
+                </div>
+              )}
               {items.map((t) => (
                 <div
                   key={t.id}
                   draggable
                   onDragStart={() => setDragId(t.id)}
+                  onDragEnd={() => {
+                    setDragId(null);
+                    setOver(null);
+                  }}
                   onClick={() => onEdit(t)}
-                  className="cursor-grab rounded-lg border border-border-subtle bg-bg-card p-2.5 shadow-card active:cursor-grabbing"
+                  className={cn(
+                    "card-interactive cursor-grab rounded-lg border border-border-subtle bg-bg-card p-2.5 shadow-card active:cursor-grabbing",
+                    dragId === t.id && "scale-[0.98] opacity-40"
+                  )}
                 >
                   <p className={cn("text-[13px]", status === "concluido" ? "text-text-faint line-through" : "text-text")}>{t.title}</p>
                   <div className="mt-1.5 flex items-center gap-1.5">
@@ -215,6 +256,7 @@ export function Tasks() {
     <div>
       <PageHeader
         title={tr("Tarefas")}
+        icon={PAGE_ICONS.tarefas}
         description={`${trn(counts.todas, "{n} pendente", "{n} pendentes")} · ${trn(counts.hoje, "{n} para hoje ou atrasada", "{n} para hoje ou atrasadas")}`}
         actions={
           <>

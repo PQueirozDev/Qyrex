@@ -562,7 +562,13 @@ export const workspaceMock: WorkspaceApi = {
     },
   },
   calendar: {
-    list: () => ok(db.events),
+    // Como o calendarService: só o intervalo pedido, em ordem de horário.
+    list: (range) =>
+      ok(
+        db.events
+          .filter((e) => !range || (e.startsAt <= range.to && (e.endsAt ?? e.startsAt) >= range.from))
+          .sort((a, b) => a.startsAt.localeCompare(b.startsAt))
+      ),
     create: async (input) => {
       const e: CalendarEvent = { id: uid(), title: input.title, description: input.description ?? null, startsAt: input.startsAt, endsAt: input.endsAt ?? null, location: input.location ?? null, source: "local", externalId: null, createdAt: new Date().toISOString() };
       db.events.push(e);

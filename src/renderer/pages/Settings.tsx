@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { motion } from "motion/react";
 import {
   Bell,
   Bot,
@@ -298,12 +299,20 @@ export function Settings() {
             key={s.id}
             onClick={() => document.getElementById(`settings-${s.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" })}
             className={cn(
-              "flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] transition-colors",
-              activeSection === s.id ? "bg-bg-hover font-medium text-text" : "text-text-muted hover:bg-bg-hover/60 hover:text-text"
+              "relative flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] transition-colors",
+              activeSection === s.id ? "font-medium text-text" : "text-text-muted hover:bg-bg-hover/60 hover:text-text"
             )}
           >
-            <s.icon size={14} className={activeSection === s.id ? "text-accent" : "text-text-faint"} />
-            {s.label}
+            {/* Acompanha a seção visível com a mesma pílula em mola da barra lateral. */}
+            {activeSection === s.id && (
+              <motion.span
+                layoutId="settings-active"
+                transition={{ type: "spring", stiffness: 520, damping: 40, mass: 0.7 }}
+                className="absolute inset-0 rounded-lg bg-bg-hover"
+              />
+            )}
+            <s.icon size={14} className={cn("relative", activeSection === s.id ? "text-accent" : "text-text-faint")} />
+            <span className="relative">{s.label}</span>
           </button>
         ))}
       </nav>

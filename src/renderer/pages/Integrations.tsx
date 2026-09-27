@@ -11,6 +11,7 @@ import { useAIStore } from "@/stores/useAIStore";
 import { confirmAction, toast, useUIStore } from "@/stores/useUIStore";
 
 import { tr, trn } from "@/lib/i18n";
+import { PAGE_ICONS } from "@/lib/pageIcons";
 const SPOTIFY_REDIRECT = "http://127.0.0.1:43821/callback";
 
 interface Meta {
@@ -588,6 +589,7 @@ export function Integrations() {
     <div>
       <PageHeader
         title={tr("Integrações")}
+        icon={PAGE_ICONS.integracoes}
         description={
           <span className="flex items-center gap-1.5">
             <ShieldCheck size={13} className="text-success" />{tr("Chaves e tokens ficam cifrados no cofre do sistema (DPAPI) e nunca aparecem por inteiro.")}</span>

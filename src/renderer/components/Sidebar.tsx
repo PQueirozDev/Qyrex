@@ -1,22 +1,9 @@
-import {
-  Home,
-  Bot,
-  Code2,
-  SquareTerminal,
-  FolderOpen,
-  CalendarDays,
-  CheckSquare,
-  Users,
-  Megaphone,
-  MessageCircle,
-  Plug,
-  Sparkles,
-  Settings as SettingsIcon,
-  NotebookPen,
-  type LucideIcon,
-} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { motion } from "motion/react";
 import { cn } from "@/lib/cn";
+import { initials } from "@/lib/format";
 import { tr } from "@/lib/i18n";
+import { PAGE_ICONS } from "@/lib/pageIcons";
 import { useUIStore, type Page } from "@/stores/useUIStore";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { MiniPlayer } from "@/components/MiniPlayer";
@@ -30,43 +17,37 @@ interface NavItem {
   shortcut?: string;
 }
 
+const item = (id: Page, label: string, shortcut?: string): NavItem => ({ id, label, icon: PAGE_ICONS[id], shortcut });
+
 const SECTIONS: { title: string | null; items: NavItem[] }[] = [
   {
     title: null,
-    items: [
-      { id: "inicio", label: tr("Início"), icon: Home },
-      { id: "ia", label: tr("IA"), icon: Bot, shortcut: "Ctrl Shift A" },
-    ],
+    items: [item("inicio", tr("Início")), item("ia", tr("IA"), "Ctrl Shift A")],
   },
   {
     title: tr("Trabalho"),
     items: [
-      { id: "projetos", label: tr("Projetos"), icon: Code2, shortcut: "Ctrl Shift P" },
-      { id: "terminal", label: tr("Terminal"), icon: SquareTerminal },
-      { id: "arquivos", label: tr("Arquivos"), icon: FolderOpen },
-      { id: "tarefas", label: tr("Tarefas"), icon: CheckSquare },
-      { id: "agenda", label: tr("Agenda"), icon: CalendarDays },
-      { id: "notion", label: tr("Notion"), icon: NotebookPen },
+      item("projetos", tr("Projetos"), "Ctrl Shift P"),
+      item("terminal", tr("Terminal")),
+      item("arquivos", tr("Arquivos")),
+      item("tarefas", tr("Tarefas")),
+      item("agenda", tr("Agenda")),
+      item("notion", tr("Notion")),
     ],
   },
   {
     title: tr("Negócio"),
-    items: [
-      { id: "clientes", label: tr("Clientes"), icon: Users },
-      { id: "marketing", label: tr("Marketing"), icon: Megaphone },
-      { id: "whatsapp", label: tr("WhatsApp"), icon: MessageCircle },
-    ],
+    items: [item("clientes", tr("Clientes")), item("marketing", tr("Marketing")), item("whatsapp", tr("WhatsApp"))],
   },
 ];
 
-const FOOTER_ITEMS: NavItem[] = [
-  { id: "novidades", label: tr("Novidades"), icon: Sparkles },
-  { id: "integracoes", label: tr("Integrações"), icon: Plug },
-  { id: "configuracoes", label: tr("Configurações"), icon: SettingsIcon },
-];
+const FOOTER_ITEMS: NavItem[] = [item("novidades", tr("Novidades")), item("integracoes", tr("Integrações")), item("configuracoes", tr("Configurações"))];
 
 /** Todos os destinos navegáveis (usado pela Command Palette). */
 export const NAV_ITEMS: NavItem[] = [...SECTIONS.flatMap((s) => s.items), ...FOOTER_ITEMS];
+
+// Mola da pílula ativa: rápida, com um leve assentamento no fim.
+const PILL_SPRING = { type: "spring", stiffness: 520, damping: 40, mass: 0.7 } as const;
 
 function NavButton({ item, active, badge, onClick }: { item: NavItem; active: boolean; badge?: boolean; onClick: () => void }) {
   const Icon = item.icon;
@@ -74,28 +55,32 @@ function NavButton({ item, active, badge, onClick }: { item: NavItem; active: bo
     <button
       onClick={onClick}
       title={item.shortcut ? `${item.label} (${item.shortcut})` : item.label}
+      aria-current={active ? "page" : undefined}
       className={cn(
-        "group relative flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13px] transition-colors",
-        active ? "bg-bg-hover font-medium text-text" : "text-text-muted hover:bg-bg-hover/60 hover:text-text"
+        "press group relative flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13px] transition-colors",
+        active ? "font-medium text-text" : "text-text-muted hover:bg-bg-hover/60 hover:text-text"
       )}
     >
-      <span
-        className={cn(
-          "absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-r-full bg-accent transition-opacity",
-          active ? "opacity-100" : "opacity-0"
-        )}
+      {/* A pílula desliza de um item para o outro ao navegar (layoutId compartilhado). */}
+      {active && (
+        <motion.span layoutId="sidebar-active" transition={PILL_SPRING} className="absolute inset-0 rounded-lg border border-border-subtle bg-bg-hover shadow-card">
+          <span className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-r-full bg-accent shadow-[0_0_10px_rgb(var(--accent)/0.8)]" />
+        </motion.span>
+      )}
+      <Icon
+        size={16}
+        strokeWidth={active ? 2 : 1.75}
+        className={cn("relative transition-colors", active ? "text-accent" : "text-text-faint group-hover:text-text-muted")}
       />
-      <Icon size={16} strokeWidth={active ? 2 : 1.75} className={active ? "text-accent" : "text-text-faint group-hover:text-text-muted"} />
-      <span className="flex-1 text-left">{item.label}</span>
-      {badge && <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-label={tr("Novidades não lidas")} />}
+      <span className="relative flex-1 text-left">{item.label}</span>
+      {badge && (
+        <span className="relative flex h-2 w-2" aria-label={tr("Novidades não lidas")}>
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/60" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
+        </span>
+      )}
     </button>
   );
-}
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "Q";
-  return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
 }
 
 export function Sidebar() {
@@ -143,11 +128,11 @@ export function Sidebar() {
 
       <button
         onClick={() => navigate("configuracoes")}
-        className="mx-2 mb-2 flex items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-bg-hover"
+        className="press mx-2 mb-2 flex items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-bg-hover"
         title={tr("Configurações")}
       >
-        <span className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/15 text-[11px] font-semibold text-accent">
-          {initials(settings?.userName ?? "")}
+        <span className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent/30 to-accent/10 text-[11px] font-semibold text-accent ring-1 ring-accent/25">
+          {initials(settings?.userName ?? "", "Q")}
           <span
             className={cn("absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-bg-elevated", online ? "bg-success" : "bg-text-faint")}
           />

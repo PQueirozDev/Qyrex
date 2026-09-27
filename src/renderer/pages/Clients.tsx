@@ -20,7 +20,7 @@ import {
 import type { Client, ClientStatus } from "@shared/types";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Badge, Drawer, EmptyState, ErrorState, Field, LoadingRows, PageHeader, Segmented } from "@/components/ui/primitives";
+import { Avatar, Badge, Drawer, EmptyState, ErrorState, Field, LoadingRows, PageHeader, Segmented } from "@/components/ui/primitives";
 import { TaskFormDialog } from "@/components/TaskFormDialog";
 import { attempt } from "@/lib/api";
 import { cn } from "@/lib/cn";
@@ -33,7 +33,8 @@ import { useMarketingStore } from "@/stores/useMarketingStore";
 import { confirmAction, toast, useUIStore } from "@/stores/useUIStore";
 
 import { tr, trn } from "@/lib/i18n";
-export const CLIENT_STATUS_LABEL: Record<ClientStatus, string> = { ativo: "Ativo", inativo: "Inativo", prospecto: "Prospecto" };
+import { PAGE_ICONS } from "@/lib/pageIcons";
+export const CLIENT_STATUS_LABEL: Record<ClientStatus, string> = { ativo: tr("Ativo"), inativo: tr("Inativo"), prospecto: tr("Prospecto") };
 const STATUS_TONE = { ativo: "success", inativo: "neutral", prospecto: "accent" } as const;
 
 // --- Atalhos de contato ---------------------------------------------------------------
@@ -432,6 +433,7 @@ export function Clients() {
     <div>
       <PageHeader
         title={tr("Clientes")}
+        icon={PAGE_ICONS.clientes}
         description={trn(counts.ativo, "{n} ativo · {value}/mês em manutenção", "{n} ativos · {value}/mês em manutenção", { value: formatCurrency(monthly) })}
         actions={
           <Button size="sm" onClick={() => setOpenId("new")}>
@@ -483,9 +485,7 @@ export function Clients() {
                 onClick={() => setOpenId(c.id)}
                 className="group flex cursor-pointer items-center gap-3 px-4 py-2.5 transition-colors hover:bg-bg-hover/50"
               >
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-muted text-xs font-semibold text-accent">
-                  {c.name.slice(0, 2).toUpperCase()}
-                </div>
+                <Avatar name={c.name} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="truncate text-sm font-medium text-text">{c.name}</span>
@@ -501,13 +501,22 @@ export function Clients() {
                     )}
                   </div>
                 </div>
-                {c.monthlyValue != null && <span className="text-xs text-text-muted">{formatCurrency(c.monthlyValue)}{tr("/mês")}</span>}
-                {c.nextBillingDate && (
-                  <span className={cn("w-24 text-right text-[11px] first-letter:uppercase", c.nextBillingDate < today ? "text-danger" : "text-text-faint")}>
-                    {relativeDay(c.nextBillingDate)}
-                  </span>
-                )}
-                <div className="opacity-0 transition-opacity group-hover:opacity-100">
+                {/* Colunas de largura fixa: valores e datas alinhados entre as linhas. */}
+                <span className="w-32 text-right text-xs tabular-nums text-text-muted">
+                  {c.monthlyValue != null && (
+                    <>
+                      {formatCurrency(c.monthlyValue)}
+                      <span className="text-text-faint">{tr("/mês")}</span>
+                    </>
+                  )}
+                </span>
+                <span
+                  className={cn("w-28 text-right text-[11px] first-letter:uppercase", c.nextBillingDate && c.nextBillingDate < today ? "text-danger" : "text-text-faint")}
+                  title={c.nextBillingDate ? tr("Próxima cobrança") : undefined}
+                >
+                  {c.nextBillingDate && relativeDay(c.nextBillingDate)}
+                </span>
+                <div className="flex w-[120px] justify-end opacity-0 transition-opacity group-hover:opacity-100">
                   <ContactButtons client={c} />
                 </div>
               </div>

@@ -33,6 +33,7 @@ import { useSettingsStore } from "@/stores/useSettingsStore";
 import { confirmAction, promptText, toast, useUIStore } from "@/stores/useUIStore";
 
 import { getLocale, tr } from "@/lib/i18n";
+import { PAGE_ICONS } from "@/lib/pageIcons";
 const sep = (p: string) => (p.includes("\\") ? "\\" : "/");
 const norm = (p: string) => p.replace(/[\\/]+$/, "").toLowerCase().replace(/\//g, "\\");
 
@@ -339,7 +340,7 @@ export function FilesPage() {
   if (roots.length === 0) {
     return (
       <div>
-        <PageHeader title={tr("Arquivos")} />
+        <PageHeader title={tr("Arquivos")} icon={PAGE_ICONS.arquivos} />
         <Card>
           <EmptyState
             icon={FolderOpen}
@@ -359,6 +360,7 @@ export function FilesPage() {
     <div>
       <PageHeader
         title={tr("Arquivos")}
+        icon={PAGE_ICONS.arquivos}
         description={tr("Somente dentro das pastas autorizadas em Configurações.")}
         actions={
           <>

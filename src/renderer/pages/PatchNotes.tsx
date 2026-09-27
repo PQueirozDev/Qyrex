@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { PageHeader, Switch } from "@/components/ui/primitives";
 import { ChangelogRelease } from "@/components/Changelog";
 import { tr } from "@/lib/i18n";
+import { PAGE_ICONS } from "@/lib/pageIcons";
 import { attempt } from "@/lib/api";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useUpdateStatus } from "@/components/UpdateBanner";
@@ -103,7 +104,7 @@ export function PatchNotes() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <PageHeader title={tr("Novidades")} description={tr("O que mudou em cada versão do QrzSpace.")} />
+      <PageHeader title={tr("Novidades")} icon={PAGE_ICONS.novidades} description={tr("O que mudou em cada versão do QrzSpace.")} />
       <div className="space-y-4">
         <UpdateCard />
         <div className="relative space-y-4">

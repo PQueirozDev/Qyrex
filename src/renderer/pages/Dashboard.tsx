@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  ArrowUpRight,
   Bot,
   CalendarDays,
   CheckCircle2,
@@ -18,7 +19,7 @@ import {
 import type { CalendarEvent, GitCommit, RecentItem } from "@shared/types";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Badge, EmptyState, LoadingRows } from "@/components/ui/primitives";
+import { Avatar, Badge, EmptyState, LoadingRows } from "@/components/ui/primitives";
 import { useTasksStore } from "@/stores/useTasksStore";
 import { useProjectsStore } from "@/stores/useProjectsStore";
 import { useSettingsStore } from "@/stores/useSettingsStore";
@@ -48,12 +49,21 @@ const ACTIVITY_TEXT: Record<string, string> = {
 };
 
 const TILE_TONES = {
-  accent: "bg-accent/10 text-accent",
-  success: "bg-success/10 text-success",
-  warning: "bg-warning/10 text-warning",
-  danger: "bg-danger/10 text-danger",
-  neutral: "bg-bg-hover text-text-muted",
+  accent: "bg-accent/10 text-accent ring-accent/20",
+  success: "bg-success/10 text-success ring-success/20",
+  warning: "bg-warning/10 text-warning ring-warning/20",
+  danger: "bg-danger/10 text-danger ring-danger/20",
+  neutral: "bg-bg-hover text-text-muted ring-border",
 } as const;
+
+/** Variável CSS da cor de cada tom (para o brilho do hover). */
+const TILE_GLOW: Record<keyof typeof TILE_TONES, string> = {
+  accent: "var(--accent)",
+  success: "var(--success)",
+  warning: "var(--warning)",
+  danger: "var(--danger)",
+  neutral: "var(--text-faint)",
+};
 
 function StatTile({
   icon: Icon,
@@ -71,17 +81,29 @@ function StatTile({
   onClick: () => void;
 }) {
   return (
-    <button onClick={onClick} className="card-interactive rounded-card border border-border-subtle bg-bg-card p-4 text-left shadow-card">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-text-muted">{label}</span>
-        <span className={cn("flex h-7 w-7 items-center justify-center rounded-lg", TILE_TONES[tone])}>
-          <Icon size={14} />
+    <button
+      onClick={onClick}
+      className="card-interactive surface group relative overflow-hidden rounded-card border border-border-subtle bg-bg-card p-4 text-left shadow-card"
+    >
+      {/* Brilho na cor do card que acende no hover. */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100"
+        style={{ background: `rgb(${TILE_GLOW[tone]} / 0.22)` }}
+      />
+      <div className="relative flex items-center justify-between">
+        <span className="flex items-center gap-1 text-xs font-medium text-text-muted">
+          {label}
+          <ArrowUpRight size={12} className="-translate-x-1 text-text-faint opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100" />
+        </span>
+        <span className={cn("flex h-8 w-8 items-center justify-center rounded-lg ring-1 ring-inset", TILE_TONES[tone])}>
+          <Icon size={15} />
         </span>
       </div>
-      <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-text">
+      <p className="relative mt-2 text-[26px] font-semibold leading-tight tabular-nums tracking-tight text-text">
         <AnimatedValue value={value} />
       </p>
-      <p className="mt-0.5 truncate text-[11px] text-text-faint">{sub}</p>
+      <p className="relative mt-0.5 truncate text-[11px] text-text-faint">{sub}</p>
     </button>
   );
 }
@@ -164,9 +186,14 @@ export function Dashboard() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-text">
+          <h1 className="text-[26px] font-semibold leading-tight tracking-tight text-text">
             {greeting()}
-            {settings?.userName ? `, ${settings.userName}` : ""}
+            {settings?.userName && (
+              <>
+                {", "}
+                <span className="bg-gradient-to-r from-accent to-accent-hover bg-clip-text text-transparent">{settings.userName}</span>
+              </>
+            )}
           </h1>
           <p className="mt-0.5 text-sm first-letter:uppercase text-text-muted">
             {new Date().toLocaleDateString(getLocale(), { weekday: "long", day: "numeric", month: "long" })}
@@ -239,14 +266,30 @@ export function Dashboard() {
             ) : todayEvents.length === 0 ? (
               <p className="py-3 text-sm text-text-faint">{tr("Nenhum compromisso hoje.")}</p>
             ) : (
-              <ul className="space-y-1">
-                {todayEvents.map((e) => (
-                  <li key={e.id} className="flex items-center gap-3 rounded-md px-1 py-1.5">
-                    <span className="w-11 font-mono text-xs tabular-nums text-accent">{formatTime(e.startsAt)}</span>
-                    <span className="min-w-0 flex-1 truncate text-sm text-text">{e.title}</span>
-                    {e.source === "google" && <Badge>{tr("Google")}</Badge>}
-                  </li>
-                ))}
+              // Linha do tempo: o que já passou fica apagado e o próximo compromisso pulsa.
+              <ul className="relative">
+                <span aria-hidden className="absolute bottom-4 left-[64.5px] top-4 w-px bg-border" />
+                {todayEvents.map((e) => {
+                  const past = (e.endsAt ?? e.startsAt) < nowTime;
+                  const isNext = e.id === nextToday?.id;
+                  return (
+                    <li key={e.id} className={cn("relative flex items-center gap-3 rounded-md px-1 py-1.5", past && "opacity-45")}>
+                      <span className={cn("w-11 font-mono text-xs tabular-nums", isNext ? "text-accent" : "text-text-muted")}>{formatTime(e.startsAt)}</span>
+                      <span className="relative flex h-2.5 w-2.5 shrink-0 items-center justify-center">
+                        {isNext && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/50" />}
+                        <span
+                          className={cn(
+                            "relative h-2.5 w-2.5 rounded-full ring-[3px] ring-bg-card",
+                            isNext ? "bg-accent" : past ? "bg-text-faint" : "bg-border"
+                          )}
+                        />
+                      </span>
+                      <span className={cn("min-w-0 flex-1 truncate text-sm", isNext ? "font-medium text-text" : "text-text")}>{e.title}</span>
+                      {isNext && <Badge tone="accent">{tr("Próximo")}</Badge>}
+                      {e.source === "google" && <Badge>{tr("Google")}</Badge>}
+                    </li>
+                  );
+                })}
               </ul>
             )}
             {nextEvents.length > 0 && (
@@ -380,10 +423,13 @@ export function Dashboard() {
             ) : (
               <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                 {recentProjects.map((project) => (
-                  <div key={project.id} className="flex flex-col rounded-lg border border-border-subtle bg-bg-elevated/50 p-3">
-                    <button className="text-left" onClick={() => navigate("projetos", project.id)}>
-                      <p className="truncate text-sm font-semibold text-text">{project.name}</p>
-                      <p className="mt-0.5 truncate text-xs text-text-faint">{project.technologies.join(" • ") || "—"}</p>
+                  <div key={project.id} className="card-interactive flex flex-col rounded-lg border border-border-subtle bg-bg-elevated/50 p-3">
+                    <button className="flex items-center gap-2.5 text-left" onClick={() => navigate("projetos", project.id)}>
+                      <Avatar name={project.name} size={30} className="rounded-lg" />
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-semibold text-text">{project.name}</span>
+                        <span className="mt-0.5 block truncate text-xs text-text-faint">{project.technologies.join(" • ") || "—"}</span>
+                      </span>
                     </button>
                     {project.git?.isRepo && (
                       <p className="mt-1.5 text-[11px] text-text-faint">

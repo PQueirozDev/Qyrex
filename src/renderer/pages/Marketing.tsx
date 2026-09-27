@@ -13,8 +13,9 @@ import { useClientsStore } from "@/stores/useClientsStore";
 import { confirmAction, toast, useUIStore } from "@/stores/useUIStore";
 
 import { getLocale, tr } from "@/lib/i18n";
+import { PAGE_ICONS } from "@/lib/pageIcons";
 const STATUSES: MarketingStatus[] = ["ideia", "produzindo", "pronto", "publicado"];
-const STATUS_LABEL: Record<MarketingStatus, string> = { ideia: "Ideia", produzindo: "Produzindo", pronto: "Pronto", publicado: "Publicado" };
+const STATUS_LABEL: Record<MarketingStatus, string> = { ideia: tr("Ideia"), produzindo: tr("Produzindo"), pronto: tr("Pronto"), publicado: tr("Publicado") };
 const TYPE_LABEL: Record<MarketingContentType, string> = { post: "Post", story: "Story", reel: "Reel" };
 const TYPE_ICON = { post: Image, story: Smartphone, reel: Film } as const;
 
@@ -201,16 +202,32 @@ function ContentDialog({ open, item, defaultDate, onClose }: { open: boolean; it
 
 // --- Visões ---------------------------------------------------------------------------------
 
-function ContentCard({ item, onOpen, draggable, onDragStart }: { item: MarketingContent; onOpen: () => void; draggable?: boolean; onDragStart?: () => void }) {
+function ContentCard({
+  item,
+  onOpen,
+  draggable,
+  dragging,
+  onDragStart,
+  onDragEnd,
+}: {
+  item: MarketingContent;
+  onOpen: () => void;
+  draggable?: boolean;
+  dragging?: boolean;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
+}) {
   const client = useClientsStore((s) => s.clients.find((c) => c.id === item.clientId));
   return (
     <div
       draggable={draggable}
       onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
       onClick={onOpen}
       className={cn(
-        "rounded-lg border border-border-subtle bg-bg-card p-2.5 shadow-card transition-colors hover:border-border",
-        draggable && "cursor-grab active:cursor-grabbing"
+        "card-interactive rounded-lg border border-border-subtle bg-bg-card p-2.5 shadow-card",
+        draggable && "cursor-grab active:cursor-grabbing",
+        dragging && "scale-[0.98] opacity-40"
       )}
     >
       <p className={cn("text-[13px]", item.status === "publicado" ? "text-text-muted" : "text-text")}>{item.title}</p>
@@ -227,6 +244,14 @@ function ContentCard({ item, onOpen, draggable, onDragStart }: { item: Marketing
   );
 }
 
+// Cor de cada etapa do funil de conteúdo (ponto no topo da coluna).
+const STATUS_DOT: Record<MarketingStatus, string> = {
+  ideia: "bg-warning",
+  produzindo: "bg-accent shadow-[0_0_8px_rgb(var(--accent)/0.7)]",
+  pronto: "bg-success",
+  publicado: "bg-text-faint",
+};
+
 function Kanban({ items, onOpen }: { items: MarketingContent[]; onOpen: (i: MarketingContent) => void }) {
   const update = useMarketingStore((s) => s.update);
   const [dragId, setDragId] = useState<string | null>(null);
@@ -241,9 +266,12 @@ function Kanban({ items, onOpen }: { items: MarketingContent[]; onOpen: (i: Mark
             key={status}
             onDragOver={(e) => {
               e.preventDefault();
-              setOver(status);
+              if (over !== status) setOver(status);
             }}
-            onDragLeave={() => setOver(null)}
+            onDragLeave={(e) => {
+              // Passar por cima de um card da coluna não conta como sair dela.
+              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOver(null);
+            }}
             onDrop={() => {
               const dragged = items.find((i) => i.id === dragId);
               if (dragged && dragged.status !== status) void update(dragged.id, { status });
@@ -251,17 +279,43 @@ function Kanban({ items, onOpen }: { items: MarketingContent[]; onOpen: (i: Mark
               setOver(null);
             }}
             className={cn(
-              "min-h-[240px] rounded-card border bg-bg-elevated/40 p-2 transition-colors",
-              over === status ? "border-accent/40" : "border-border-subtle"
+              "min-h-[240px] rounded-card border p-2 transition-[background-color,border-color,box-shadow] duration-200",
+              over === status && dragId
+                ? "border-accent/50 bg-accent/[0.06] shadow-[inset_0_0_0_1px_rgb(var(--accent)/0.25)]"
+                : "border-border-subtle bg-bg-elevated/40"
             )}
           >
             <div className="flex items-center justify-between px-1.5 pb-2 pt-1">
-              <span className="section-title">{STATUS_LABEL[status]}</span>
-              <span className="text-[11px] text-text-faint">{column.length}</span>
+              <span className="flex items-center gap-2">
+                <span className={cn("h-2 w-2 rounded-full", STATUS_DOT[status])} />
+                <span className="section-title">{STATUS_LABEL[status]}</span>
+              </span>
+              <span className="rounded-full bg-bg-hover px-1.5 text-[11px] tabular-nums text-text-faint">{column.length}</span>
             </div>
             <div className="space-y-2">
+              {column.length === 0 && (
+                <div
+                  className={cn(
+                    "rounded-lg border border-dashed py-6 text-center text-[11px] transition-colors",
+                    over === status && dragId ? "border-accent/50 text-accent" : "border-border-subtle text-text-faint"
+                  )}
+                >
+                  {tr("Arraste um card para cá")}
+                </div>
+              )}
               {column.map((i) => (
-                <ContentCard key={i.id} item={i} onOpen={() => onOpen(i)} draggable onDragStart={() => setDragId(i.id)} />
+                <ContentCard
+                  key={i.id}
+                  item={i}
+                  onOpen={() => onOpen(i)}
+                  draggable
+                  dragging={dragId === i.id}
+                  onDragStart={() => setDragId(i.id)}
+                  onDragEnd={() => {
+                    setDragId(null);
+                    setOver(null);
+                  }}
+                />
               ))}
             </div>
           </div>
@@ -390,6 +444,7 @@ export function Marketing() {
     <div>
       <PageHeader
         title={tr("Marketing")}
+        icon={PAGE_ICONS.marketing}
         description={tr("Calendário de conteúdo: da ideia à publicação.")}
         actions={
           <>

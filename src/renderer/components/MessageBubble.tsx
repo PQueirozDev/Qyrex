@@ -142,26 +142,31 @@ function CodeBlock({ children, className, run }: ComponentProps<"code"> & { node
 
   return (
     <div className="not-prose my-2">
-      <div className="group relative">
-        <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-          {runnable && (
-            <Button size="xs" variant="secondary" onClick={() => void requestRun()} loading={running}>
-              {!running && <Play size={11} />}{" "}{tr("Executar")}</Button>
-          )}
-          <button
-            onClick={() => {
-              void navigator.clipboard.writeText(text);
-              setCopied(true);
-              setTimeout(() => setCopied(false), 1500);
-            }}
-            className="rounded-md border border-border bg-bg-elevated p-1 text-text-faint hover:text-text"
-            aria-label={tr("Copiar código")}
-          >
-            {copied ? <Check size={13} /> : <Copy size={13} />}
-          </button>
+      {/* Uma caixa só: cabeçalho com a linguagem e as ações, e o código sem o fundo próprio do highlight.js. */}
+      <div className="overflow-hidden rounded-lg border border-border-subtle bg-bg">
+        <div className="flex items-center justify-between gap-2 border-b border-border-subtle bg-bg-elevated/70 py-1 pl-3 pr-1.5">
+          <span className="font-mono text-[11px] text-text-faint">{language ?? tr("Código")}</span>
+          <div className="flex items-center gap-1">
+            {runnable && (
+              <Button size="xs" variant="ghost" onClick={() => void requestRun()} loading={running}>
+                {!running && <Play size={11} />}{" "}{tr("Executar")}</Button>
+            )}
+            <button
+              onClick={() => {
+                void navigator.clipboard.writeText(text);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1500);
+              }}
+              className="press flex items-center gap-1 rounded-md px-1.5 py-1 text-[11px] text-text-faint transition-colors hover:bg-bg-hover hover:text-text"
+              aria-label={tr("Copiar código")}
+            >
+              {copied ? <Check size={12} className="text-success" /> : <Copy size={12} />}
+              {copied ? tr("Copiado") : tr("Copiar")}
+            </button>
+          </div>
         </div>
-        <pre className={cn("overflow-x-auto rounded-lg border border-border-subtle bg-bg-elevated p-3 text-[13px]", className)}>
-          <code className={className}>{children}</code>
+        <pre className="overflow-x-auto p-3 text-[13px] leading-relaxed">
+          <code className={cn(className, "code-plain")}>{children}</code>
         </pre>
       </div>
       {result && <RunOutput result={result} />}

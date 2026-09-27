@@ -23,7 +23,7 @@ import type { GitChangedFile, GitCommit, GitHubOverview, ProjectWithGit } from "
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Dialog } from "@/components/ui/Dialog";
-import { Badge, Drawer, EmptyState, ErrorState, Field, LoadingRows, Menu, PageHeader, Spinner } from "@/components/ui/primitives";
+import { Avatar, Badge, Drawer, EmptyState, ErrorState, Field, LoadingRows, Menu, PageHeader, Spinner } from "@/components/ui/primitives";
 import { TaskFormDialog } from "@/components/TaskFormDialog";
 import { attempt, errorMessage, unwrap } from "@/lib/api";
 import { cn } from "@/lib/cn";
@@ -35,6 +35,7 @@ import { useTasksStore } from "@/stores/useTasksStore";
 import { confirmAction, toast, useUIStore } from "@/stores/useUIStore";
 
 import { tr, trn } from "@/lib/i18n";
+import { PAGE_ICONS } from "@/lib/pageIcons";
 // --- Diálogo de criação/edição ------------------------------------------------------
 
 function ProjectFormDialog({ open, project, onClose }: { open: boolean; project: ProjectWithGit | null; onClose: () => void }) {
@@ -519,7 +520,8 @@ function ProjectCard({ project, onOpen }: { project: ProjectWithGit; onOpen: () 
 
   return (
     <Card className="card-interactive group flex flex-col p-4">
-      <div className="flex items-start gap-2">
+      <div className="flex items-start gap-2.5">
+        <Avatar name={project.name} size={34} className="rounded-lg" />
         <button className="min-w-0 flex-1 text-left" onClick={onOpen}>
           <p className="truncate text-sm font-semibold text-text">{project.name}</p>
           <p className="mt-0.5 line-clamp-2 min-h-[2.2em] text-xs text-text-muted">{project.description || project.localPath}</p>
@@ -631,6 +633,7 @@ export function Projects() {
     <div>
       <PageHeader
         title={tr("Projetos")}
+        icon={PAGE_ICONS.projetos}
         description={trn(projects.length, "{n} projeto no QrzSpace", "{n} projetos no QrzSpace")}
         actions={
           <>

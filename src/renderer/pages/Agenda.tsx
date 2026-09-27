@@ -12,6 +12,7 @@ import { useCalendarStore } from "@/stores/useCalendarStore";
 import { confirmAction, toast, useUIStore } from "@/stores/useUIStore";
 
 import { getLocale, tr, trn } from "@/lib/i18n";
+import { PAGE_ICONS } from "@/lib/pageIcons";
 type View = "dia" | "semana" | "mes";
 
 const WEEKDAYS = [tr("Dom"), tr("Seg"), tr("Ter"), tr("Qua"), tr("Qui"), tr("Sex"), tr("Sáb")];
@@ -438,6 +439,7 @@ export function Agenda() {
     <div>
       <PageHeader
         title={tr("Agenda")}
+        icon={PAGE_ICONS.agenda}
         description={tr("Compromissos locais e do Google Agenda (somente leitura).")}
         actions={
           <>

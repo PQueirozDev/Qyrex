@@ -344,7 +344,7 @@ export const EN: Record<string, string> = {
   "Sem projeto (sem anexos)": "No project (no attachments)",
   "Perguntar ao conselho": "Ask the council",
   "Erro": "Error",
-  "Pronto": "Done",
+  "Pronto": "Ready",
   "Erro na IA.": "AI error.",
   "Síntese": "Synthesis",
   "Sintetizar com": "Synthesize with",
@@ -1014,4 +1014,13 @@ export const EN: Record<string, string> = {
   "Arquivo aberto": "File opened",
   "Cliente aberto": "Client opened",
   "Marcar: {status}": "Mark as: {status}",
+  // Status de clientes e etapas do Marketing
+  "Ativo": "Active",
+  "Inativo": "Inactive",
+  "Prospecto": "Prospect",
+  "Ideia": "Idea",
+  "Produzindo": "In production",
+  "Publicado": "Published",
+  "Código": "Code",
+  "Arraste um card para cá": "Drag a card here",
 };

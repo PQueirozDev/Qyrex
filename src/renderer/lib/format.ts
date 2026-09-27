@@ -93,6 +93,30 @@ export function formatCurrency(value: number | null | undefined): string {
   return value.toLocaleString(getLocale(), { style: "currency", currency: "BRL" });
 }
 
+/**
+ * Telefone brasileiro legível: "11900000001" → "(11) 90000-0001",
+ * "5511900000001" → "+55 (11) 90000-0001". Outros formatos voltam como vieram.
+ */
+export function formatPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, "");
+  // Número com "+" de outro país fica como o usuário escreveu.
+  if (raw.trim().startsWith("+") && !digits.startsWith("55")) return raw;
+  const country = digits.length >= 12 && digits.startsWith("55") ? "+55 " : "";
+  const local = country ? digits.slice(2) : digits;
+  if (local.length === 11) return `${country}(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`;
+  if (local.length === 10) return `${country}(${local.slice(0, 2)}) ${local.slice(2, 6)}-${local.slice(6)}`;
+  if (local.length === 9 && !country) return `${local.slice(0, 5)}-${local.slice(5)}`;
+  if (local.length === 8 && !country) return `${local.slice(0, 4)}-${local.slice(4)}`;
+  return raw;
+}
+
+/** Iniciais para avatar: primeira letra da primeira e da última palavra ("Studio Nova Pilates" → "SP"). */
+export function initials(name: string, fallback = "?"): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return fallback;
+  return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
+}
+
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
