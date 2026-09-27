@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { CheckSquare, Columns3, List, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 import type { Task, TaskStatus } from "@shared/types";
 import { Button } from "@/components/ui/Button";
@@ -12,11 +12,13 @@ import { useTasksStore } from "@/stores/useTasksStore";
 import { useProjectsStore } from "@/stores/useProjectsStore";
 import { useClientsStore } from "@/stores/useClientsStore";
 import { confirmAction, useUIStore } from "@/stores/useUIStore";
-import { tr } from "@/lib/i18n";
+import { tr, trn } from "@/lib/i18n";
 
 type View = "hoje" | "proximas" | "todas" | "concluidas";
 
 const PRIORITY_TONE = { baixa: "neutral", normal: "neutral", alta: "warning", urgente: "danger" } as const;
+
+const MetaDot = () => <span className="shrink-0 text-text-faint/50">•</span>;
 
 function TaskRow({ task, onEdit }: { task: Task; onEdit: (t: Task) => void }) {
   const { toggleDone, remove, update } = useTasksStore();
@@ -26,6 +28,7 @@ function TaskRow({ task, onEdit }: { task: Task; onEdit: (t: Task) => void }) {
   const project = projects.find((p) => p.id === task.projectId);
   const client = clients.find((c) => c.id === task.clientId);
   const done = task.status === "concluido";
+  const meta = [project?.name, client?.name].filter((part): part is string => Boolean(part));
 
   return (
     <div className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-bg-hover/50">
@@ -41,20 +44,30 @@ function TaskRow({ task, onEdit }: { task: Task; onEdit: (t: Task) => void }) {
           <span className={cn("truncate text-sm", done ? "text-text-faint line-through" : "text-text")}>{task.title}</span>
           {task.status === "em_andamento" && <Badge tone="accent">{tr("Em andamento")}</Badge>}
         </div>
-        {(task.description || project || client || task.tags.length > 0) && (
-          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] text-text-faint">
-            {project && <span>{project.name}</span>}
-            {client && <span>· {client.name}</span>}
-            {task.tags.map((t) => (
-              <span key={t}>#{t}</span>
+        {(meta.length > 0 || task.tags.length > 0 || task.description) && (
+          <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[11px] text-text-faint">
+            {/* Separador só entre itens que existem (antes sobrava "· Cliente" quando não havia projeto). */}
+            {meta.map((part, i) => (
+              <Fragment key={part}>
+                {i > 0 && <MetaDot />}
+                <span className="shrink-0">{part}</span>
+              </Fragment>
             ))}
-            {task.description && <span className="max-w-[320px] truncate">· {task.description}</span>}
+            {task.tags.map((t) => (
+              <span key={t} className="shrink-0 rounded bg-bg-hover px-1 text-text-muted">#{t}</span>
+            ))}
+            {task.description && (
+              <>
+                {(meta.length > 0 || task.tags.length > 0) && <MetaDot />}
+                <span className="min-w-0 truncate">{task.description}</span>
+              </>
+            )}
           </div>
         )}
       </button>
       {task.priority !== "normal" && <Badge tone={PRIORITY_TONE[task.priority]}>{PRIORITY_LABEL[task.priority]}</Badge>}
       {task.dueDate && (
-        <span className={cn("w-24 text-right text-[11px] capitalize", !done && task.dueDate < today ? "text-danger" : "text-text-faint")}>
+        <span className={cn("w-24 text-right text-[11px] first-letter:uppercase", !done && task.dueDate < today ? "text-danger" : "text-text-faint")}>
           {relativeDay(task.dueDate)}
           {task.dueTime ? ` ${task.dueTime}` : ""}
         </span>
@@ -66,7 +79,7 @@ function TaskRow({ task, onEdit }: { task: Task; onEdit: (t: Task) => void }) {
             { label: tr("Editar"), icon: Pencil, onSelect: () => onEdit(task) },
             ...(["pendente", "em_andamento", "concluido"] as TaskStatus[])
               .filter((s) => s !== task.status)
-              .map((s) => ({ label: `Marcar: ${STATUS_LABEL[s]}`, icon: CheckSquare, onSelect: () => void update(task.id, { status: s }) })),
+              .map((s) => ({ label: tr("Marcar: {status}", { status: STATUS_LABEL[s] }), icon: CheckSquare, onSelect: () => void update(task.id, { status: s }) })),
             "separator",
             {
               label: tr("Excluir"),
@@ -119,7 +132,7 @@ function Kanban({ tasks, onEdit }: { tasks: Task[]; onEdit: (t: Task) => void })
                   <p className={cn("text-[13px]", status === "concluido" ? "text-text-faint line-through" : "text-text")}>{t.title}</p>
                   <div className="mt-1.5 flex items-center gap-1.5">
                     {t.priority !== "normal" && <Badge tone={PRIORITY_TONE[t.priority]}>{PRIORITY_LABEL[t.priority]}</Badge>}
-                    {t.dueDate && <span className="text-[11px] capitalize text-text-faint">{relativeDay(t.dueDate)}</span>}
+                    {t.dueDate && <span className="inline-block text-[11px] text-text-faint first-letter:uppercase">{relativeDay(t.dueDate)}</span>}
                   </div>
                 </div>
               ))}
@@ -202,7 +215,7 @@ export function Tasks() {
     <div>
       <PageHeader
         title={tr("Tarefas")}
-        description={tr("{pending} pendente(s) · {today} para hoje ou atrasada(s)", { pending: counts.todas, today: counts.hoje })}
+        description={`${trn(counts.todas, "{n} pendente", "{n} pendentes")} · ${trn(counts.hoje, "{n} para hoje ou atrasada", "{n} para hoje ou atrasadas")}`}
         actions={
           <>
             <Segmented

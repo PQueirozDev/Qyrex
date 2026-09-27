@@ -15,6 +15,22 @@ export function translate(lang: Language, text: string, vars?: Record<string, st
   return out;
 }
 
+/**
+ * Singular/plural sem "(s)": escolhe a frase pelo número ANTES de traduzir, e
+ * cada forma é uma chave própria no dicionário. Em pt e en, só 1 é singular.
+ * `{n}` recebe o número automaticamente:
+ *   translatePlural("en", 3, "{n} tarefa", "{n} tarefas") → "3 tasks"
+ */
+export function translatePlural(
+  lang: Language,
+  n: number,
+  one: string,
+  other: string,
+  vars?: Record<string, string | number>
+): string {
+  return translate(lang, n === 1 ? one : other, { n, ...vars });
+}
+
 export function hasTranslation(text: string): boolean {
   return Object.prototype.hasOwnProperty.call(EN, text);
 }

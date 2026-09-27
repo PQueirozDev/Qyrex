@@ -3,6 +3,7 @@
  * (portfólio). Roda a interface real do app no navegador, com dados fictícios
  * guardados só no sessionStorage: nada acessa disco, rede, IA ou Windows.
  */
+import { CHANGELOG } from "../shared/changelog";
 import type { WorkspaceApi } from "../preload/index";
 import type {
   AIConversation,
@@ -33,6 +34,9 @@ import type {
 // ---------------------------------------------------------------------------------
 // utilidades
 // ---------------------------------------------------------------------------------
+
+/** A demo mostra sempre a versão mais recente do changelog (a mesma do package.json). */
+const APP_VERSION = CHANGELOG[0].version;
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const ok = async <T>(data: T, delay = 60 + Math.random() * 90): Promise<IpcResult<T>> => {
@@ -119,7 +123,7 @@ function seed() {
     language: params.get("lang") === "en" ? "en" : "pt",
     discord: { enabled: false, clientId: null, showProject: false },
     autoUpdate: true,
-    lastSeenVersion: "1.3.1",
+    lastSeenVersion: APP_VERSION,
     startWithSystem: false,
     minimizeToTray: true,
     allowedProjectDirs: [ROOT],
@@ -357,7 +361,7 @@ export const workspaceMock: WorkspaceApi = {
     removeAllowedDir: () => fail("Na demo não é possível remover a pasta de exemplo."),
   },
   system: {
-    info: () => ok({ platform: "win32", appVersion: "1.3.1", vscodePath: db.settings.vscodePath, logsDir: null, terminalAvailable: true }, 20),
+    info: () => ok({ platform: "win32", appVersion: APP_VERSION, vscodePath: db.settings.vscodePath, logsDir: null, terminalAvailable: true }, 20),
     memory: () => ok(412, 10),
     setTitleBarColors: () => ok(undefined, 0),
     openVSCode: () => fail(DEMO_ONLY),
@@ -794,8 +798,8 @@ export const workspaceMock: WorkspaceApi = {
     sync: () => ok(db.events.filter((e) => e.source === "google").length, 700),
   },
   updates: {
-    status: () => ok({ state: "not-available" as const, version: "1.3.1" }),
-    check: () => ok({ state: "not-available" as const, version: "1.3.1" }, 800),
+    status: () => ok({ state: "not-available" as const, version: APP_VERSION }),
+    check: () => ok({ state: "not-available" as const, version: APP_VERSION }, 800),
     download: () => ok(undefined),
     install: () => ok(undefined),
     onStatus: () => () => undefined,

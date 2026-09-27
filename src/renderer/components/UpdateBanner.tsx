@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { RotateCw, Sparkles, X } from "lucide-react";
 import type { UpdateStatus } from "@shared/types";
-import { CHANGELOG } from "@shared/changelog";
+import { CHANGELOG, compareVersions } from "@shared/changelog";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { ChangelogRelease } from "@/components/Changelog";
@@ -108,14 +108,17 @@ export function WhatsNewDialog() {
 
   useEffect(() => {
     // Só após atualizar: numa instalação nova (lastSeenVersion nulo) quem avisa é o ponto na sidebar.
-    if (settings && current && entry && settings.lastSeenVersion && settings.lastSeenVersion !== current) setOpen(true);
+    // "Anterior" e não "diferente": a aba Novidades marca a versão mais nova do changelog como lida,
+    // e comparar por igualdade fazia os dois ficarem regravando versões um do outro.
+    if (settings && current && entry && settings.lastSeenVersion && compareVersions(settings.lastSeenVersion, current) < 0) setOpen(true);
   }, [settings, current, entry]);
 
   if (!entry) return null;
 
   const close = () => {
     setOpen(false);
-    void update({ lastSeenVersion: entry.version });
+    const seen = settings?.lastSeenVersion;
+    if (!seen || compareVersions(seen, entry.version) < 0) void update({ lastSeenVersion: entry.version });
   };
 
   return (

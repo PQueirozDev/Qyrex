@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { CheckCircle2, CloudDownload, Loader2, RefreshCw, RotateCw, TriangleAlert } from "lucide-react";
-import { CHANGELOG } from "@shared/changelog";
+import { CHANGELOG, compareVersions } from "@shared/changelog";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { PageHeader, Switch } from "@/components/ui/primitives";
@@ -98,7 +98,7 @@ export function PatchNotes() {
 
   // Abrir a aba conta como "lido".
   useEffect(() => {
-    if (settings && latest && settings.lastSeenVersion !== latest) void update({ lastSeenVersion: latest });
+    if (settings && latest && (!settings.lastSeenVersion || compareVersions(settings.lastSeenVersion, latest) < 0)) void update({ lastSeenVersion: latest });
   }, [settings, latest, update]);
 
   return (

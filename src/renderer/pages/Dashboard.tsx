@@ -29,7 +29,7 @@ import { addDays, toLocalDateTime, formatCurrency, formatDate, formatTime, greet
 import { cn } from "@/lib/cn";
 import { PRIORITY_LABEL } from "@/components/TaskFormDialog";
 
-import { getLocale, tr } from "@/lib/i18n";
+import { getLocale, tr, trn } from "@/lib/i18n";
 import { AnimatedValue } from "@/components/ui/AnimatedValue";
 const ACTIVITY_ICON: Record<string, typeof Code2> = {
   project: Code2,
@@ -40,11 +40,11 @@ const ACTIVITY_ICON: Record<string, typeof Code2> = {
 };
 
 const ACTIVITY_TEXT: Record<string, string> = {
-  project: "Projeto aberto",
-  file: "Arquivo aberto",
+  project: tr("Projeto aberto"),
+  file: tr("Arquivo aberto"),
   task_completed: tr("Tarefa concluída"),
-  client: "Cliente aberto",
-  commit: "Commit",
+  client: tr("Cliente aberto"),
+  commit: tr("Commit"),
 };
 
 const TILE_TONES = {
@@ -172,7 +172,9 @@ export function Dashboard() {
             {new Date().toLocaleDateString(getLocale(), { weekday: "long", day: "numeric", month: "long" })}
             {" · "}
             <span className="normal-case">
-              {tr("{tasks} tarefa(s) em foco · {events} compromisso(s) hoje", { tasks: focusTasks.length, events: todayEvents.length })}
+              {trn(focusTasks.length, "{n} tarefa em foco", "{n} tarefas em foco")}
+              {" · "}
+              {trn(todayEvents.length, "{n} compromisso hoje", "{n} compromissos hoje")}
             </span>
           </p>
         </div>
@@ -183,7 +185,7 @@ export function Dashboard() {
           icon={CheckSquare}
           label={tr("Tarefas em foco")}
           value={focusTasks.length}
-          sub={overdue > 0 ? tr("{n} atrasada(s)", { n: overdue }) : tr("{n} concluída(s) hoje", { n: doneToday.length })}
+          sub={overdue > 0 ? trn(overdue, "{n} atrasada", "{n} atrasadas") : trn(doneToday.length, "{n} concluída hoje", "{n} concluídas hoje")}
           tone={overdue > 0 ? "danger" : "accent"}
           onClick={() => navigate("tarefas")}
         />
@@ -207,7 +209,7 @@ export function Dashboard() {
           icon={Wallet}
           label={tr("Manutenção mensal")}
           value={formatCurrency(monthlyTotal) || formatCurrency(0)}
-          sub={tr("{n} cliente(s) ativo(s)", { n: activeClients })}
+          sub={trn(activeClients, "{n} cliente ativo", "{n} clientes ativos")}
           tone="neutral"
           onClick={() => navigate("clientes")}
         />
@@ -251,7 +253,7 @@ export function Dashboard() {
               <div className="mt-2 border-t border-border-subtle pt-2">
                 {nextEvents.map((e) => (
                   <div key={e.id} className="flex items-center gap-3 px-1 py-1 text-xs text-text-muted">
-                    <span className="w-14 shrink-0 capitalize text-text-faint">{shortDay(e.startsAt)}</span>
+                    <span className="w-14 shrink-0 text-text-faint first-letter:uppercase">{shortDay(e.startsAt)}</span>
                     <span className="truncate">
                       {formatTime(e.startsAt)} · {e.title}
                     </span>
@@ -269,7 +271,7 @@ export function Dashboard() {
             icon={<CheckSquare size={12} />}
             action={
               <div className="flex items-center gap-2">
-                {doneToday.length > 0 && <span className="text-[11px] text-success">{tr("{n} feita(s) hoje", { n: doneToday.length })}</span>}
+                {doneToday.length > 0 && <span className="text-[11px] text-success">{trn(doneToday.length, "{n} feita hoje", "{n} feitas hoje")}</span>}
                 <Button variant="ghost" size="xs" onClick={() => navigate("tarefas")}>{tr("Ver todas")}</Button>
               </div>
             }
@@ -386,7 +388,7 @@ export function Dashboard() {
                     {project.git?.isRepo && (
                       <p className="mt-1.5 text-[11px] text-text-faint">
                         <span className="font-mono text-text-muted">{project.git.branch}</span>
-                        {project.git.modifiedCount > 0 && <span className="text-warning"> · {tr("{n} alteração(ões)", { n: project.git.modifiedCount })}</span>}
+                        {project.git.modifiedCount > 0 && <span className="text-warning"> · {trn(project.git.modifiedCount, "{n} alteração", "{n} alterações")}</span>}
                       </p>
                     )}
                     <div className="mt-auto flex gap-1 pt-3">

@@ -79,7 +79,7 @@ export function AttachFilesDialog({ open, rootPath, initiallySelected, onClose, 
       footer={
         <>
           <span className="mr-auto text-xs text-text-faint">
-            {tr("{n} de até {max} arquivo(s)", { n: selected.size, max: MAX_FILES })}</span>
+            {tr("{n} de até {max} arquivos", { n: selected.size, max: MAX_FILES })}</span>
           <Button variant="ghost" size="sm" onClick={onClose}>{tr("Cancelar")}</Button>
           <Button size="sm" onClick={() => onConfirm(Array.from(selected.values()))}>{tr("Confirmar anexos")}</Button>
         </>

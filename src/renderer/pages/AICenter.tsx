@@ -32,7 +32,7 @@ import { useProjectsStore } from "@/stores/useProjectsStore";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { confirmAction, promptText, useUIStore } from "@/stores/useUIStore";
 
-import { tr } from "@/lib/i18n";
+import { tr, trn } from "@/lib/i18n";
 import { AIUsageView } from "@/components/AIUsageView";
 const PROVIDER_IDS: AIProviderId[] = ["anthropic", "openai", "google"];
 
@@ -666,7 +666,7 @@ function CouncilView() {
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
         size="sm"
-        title={tr("Enviar para {n} provider(s)?", { n: targets.length })}
+        title={trn(targets.length, "Enviar para {n} provider?", "Enviar para {n} providers?")}
         description={tr("Cada provider cobra pela própria resposta na sua API key.")}
         footer={
           <>
@@ -685,7 +685,7 @@ function CouncilView() {
             </li>
           ))}
         </ul>
-        {attached.length > 0 && <p className="mt-2 text-xs text-text-muted">{attached.length}{" "}{tr("arquivo(s) anexado(s) vão junto para todos.")}</p>}
+        {attached.length > 0 && <p className="mt-2 text-xs text-text-muted">{trn(attached.length, "{n} arquivo anexado vai junto para todos.", "{n} arquivos anexados vão junto para todos.")}</p>}
       </Dialog>
 
       {project && (

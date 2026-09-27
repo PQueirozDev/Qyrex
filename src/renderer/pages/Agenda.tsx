@@ -11,7 +11,7 @@ import { addDays, formatTime, parseLocalDate, parseLocalDateTime, todayISO, toLo
 import { useCalendarStore } from "@/stores/useCalendarStore";
 import { confirmAction, toast, useUIStore } from "@/stores/useUIStore";
 
-import { getLocale, tr } from "@/lib/i18n";
+import { getLocale, tr, trn } from "@/lib/i18n";
 type View = "dia" | "semana" | "mes";
 
 const WEEKDAYS = [tr("Dom"), tr("Seg"), tr("Ter"), tr("Qua"), tr("Qui"), tr("Sex"), tr("Sáb")];
@@ -420,7 +420,7 @@ export function Agenda() {
     const count = await attempt(window.workspace.googleCalendar.sync());
     setSyncing(false);
     if (count !== undefined) {
-      toast.success(tr("Google Agenda sincronizado: {n} evento(s)", { n: count }));
+      toast.success(trn(count, "Google Agenda sincronizado: {n} evento", "Google Agenda sincronizado: {n} eventos"));
       void load();
     }
   }

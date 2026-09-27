@@ -80,7 +80,8 @@ tests/             # vitest; tests/setup.ts mocka "electron"; helpers.ts cria ba
 - Navegação sem router: `useUIStore.navigate(page, param)`. As páginas leem `pageParam`.
 - Novo canal IPC: service → `handle()` em `handlers.ts` com schema em `security/validation.ts` → método em `preload/index.ts` → tipos em `shared/types.ts` → teste.
 - Erros do main com valores dinâmicos: `tt("Texto com {x}", { x })` de `src/main/i18n.ts` (traduz no idioma atual). Mensagens padrão do zod saem no idioma do app (`parse` em `security/validation.ts`).
-- Texto novo na UI: sempre `tr("texto em português")` e a tradução em `src/shared/locales/en.ts`. Frases com números/nomes usam placeholders: `tr("{n} tarefa(s)", { n })` — nunca concatenar pedaços.
+- Texto novo na UI: sempre `tr("texto em português")` e a tradução em `src/shared/locales/en.ts`. Frases com nomes usam placeholders: `tr("Abrir {name}", { name })` — nunca concatenar pedaços.
+- Contagens usam plural de verdade, nunca "(s)": `trn(n, "{n} tarefa", "{n} tarefas")` no renderer e `translatePlural(lang, n, ...)` no main (as duas formas são chaves no `en.ts`; o teste de i18n recusa "(s)").
 - Nova versão: bump no `package.json` + entrada em `src/shared/changelog.ts` + `npm run release`.
 - Novo provider de IA: arquivo em `integrations/providers/` implementando `AIProvider` + uma linha em `providers/index.ts`.
 - Nova migration: `00N_nome.sql`. Nunca edite uma migration já aplicada.

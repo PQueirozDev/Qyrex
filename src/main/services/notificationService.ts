@@ -1,7 +1,7 @@
 import { Notification } from "electron";
 import { getDb, getSettings } from "../database/db.js";
 import { createLogger } from "../logger.js";
-import { translate } from "../../shared/i18n.js";
+import { translate, translatePlural } from "../../shared/i18n.js";
 
 const log = createLogger("notifications");
 
@@ -79,7 +79,7 @@ export function dueReminders(now: Date): Reminder[] {
         reminders.push({
           key: `tasks-today:${today}`,
           title: tr("Tarefas de hoje"),
-          body: tr("Você tem {n} tarefa(s) para hoje.", { n: count }),
+          body: translatePlural(language, count, "Você tem {n} tarefa para hoje.", "Você tem {n} tarefas para hoje."),
           page: "tarefas",
         });
       }

@@ -10,7 +10,7 @@ import { timeAgo } from "@/lib/format";
 import { useAIStore } from "@/stores/useAIStore";
 import { confirmAction, toast, useUIStore } from "@/stores/useUIStore";
 
-import { tr } from "@/lib/i18n";
+import { tr, trn } from "@/lib/i18n";
 const SPOTIFY_REDIRECT = "http://127.0.0.1:43821/callback";
 
 interface Meta {
@@ -413,7 +413,7 @@ function GoogleCalendarCard({ status, reload }: { status: IntegrationStatus | un
     setBusy("sync");
     const count = await attempt(window.workspace.googleCalendar.sync());
     setBusy(null);
-    if (count !== undefined) toast.success(tr("{n} evento(s) sincronizado(s)", { n: count }));
+    if (count !== undefined) toast.success(trn(count, "{n} evento sincronizado", "{n} eventos sincronizados"));
     reload();
   }
 

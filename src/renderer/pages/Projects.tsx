@@ -34,7 +34,7 @@ import { useClientsStore } from "@/stores/useClientsStore";
 import { useTasksStore } from "@/stores/useTasksStore";
 import { confirmAction, toast, useUIStore } from "@/stores/useUIStore";
 
-import { tr } from "@/lib/i18n";
+import { tr, trn } from "@/lib/i18n";
 // --- Diálogo de criação/edição ------------------------------------------------------
 
 function ProjectFormDialog({ open, project, onClose }: { open: boolean; project: ProjectWithGit | null; onClose: () => void }) {
@@ -240,7 +240,7 @@ function GitSection({ project, onChanged }: { project: ProjectWithGit; onChanged
         </Badge>
         {/* A lista de alterações é mais recente que o status do card (recarrega no botão Atualizar). */}
         {(changes?.length ?? git.modifiedCount) > 0 ? (
-          <Badge tone="warning">{tr("{n} alterado(s)", { n: changes?.length ?? git.modifiedCount })}</Badge>
+          <Badge tone="warning">{trn(changes?.length ?? git.modifiedCount, "{n} alterado", "{n} alterados")}</Badge>
         ) : (
           <Badge tone="success">{tr("Limpo")}</Badge>
         )}
@@ -498,7 +498,7 @@ function ProjectDrawer({ project, onClose, onEdit }: { project: ProjectWithGit; 
                   <button className="min-w-0 flex-1 truncate text-left text-text" onClick={() => navigate("tarefas", t.id)}>
                     {t.title}
                   </button>
-                  {t.dueDate && <span className="text-[11px] capitalize text-text-faint">{relativeDay(t.dueDate)}</span>}
+                  {t.dueDate && <span className="inline-block text-[11px] text-text-faint first-letter:uppercase">{relativeDay(t.dueDate)}</span>}
                 </div>
               ))}
             </div>
@@ -544,7 +544,7 @@ function ProjectCard({ project, onOpen }: { project: ProjectWithGit; onOpen: () 
         {git?.isRepo ? (
           <>
             <GitBranch size={11} /> {git.branch ?? "?"}
-            {git.modifiedCount > 0 && <span className="text-warning">· {tr("{n} alterado(s)", { n: git.modifiedCount })}</span>}
+            {git.modifiedCount > 0 && <span className="text-warning">· {trn(git.modifiedCount, "{n} alterado", "{n} alterados")}</span>}
           </>
         ) : (
           <span>{tr("Sem git")}</span>
@@ -631,7 +631,7 @@ export function Projects() {
     <div>
       <PageHeader
         title={tr("Projetos")}
-        description={tr("{n} projeto(s) no QrzSpace", { n: projects.length })}
+        description={trn(projects.length, "{n} projeto no QrzSpace", "{n} projetos no QrzSpace")}
         actions={
           <>
             <input className="input w-56 py-1 text-xs" placeholder={tr("Filtrar projetos...")} value={search} onChange={(e) => setSearch(e.target.value)} />

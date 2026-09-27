@@ -1,6 +1,7 @@
 // Extrai todas as chaves de tradução do código (usado pelo teste de i18n e
 // para manter src/shared/locales/en.ts completo).
 //   - tr("...") / translate(lang, "...") / tr(err.message) não conta
+//   - trn(n, "singular", "plural") / translatePlural(lang, n, "singular", "plural")
 //   - mensagens de erro do main: new Error("...") e mensagens do zod
 const fs = require("node:fs");
 const path = require("node:path");
@@ -33,6 +34,11 @@ function extractKeys(root) {
         const literal = (n) => n && (ts.isStringLiteral(n) || ts.isNoSubstitutionTemplateLiteral(n)) ? n.text : null;
         if ((callee === "tr" || callee === "tm" || callee === "tt") && literal(args[0]) !== null) add(literal(args[0]), file);
         if (callee === "translate" && literal(args[1]) !== null) add(literal(args[1]), file);
+        // Plurais: trn(n, "um", "vários") e translatePlural(lang, n, "um", "vários") — as duas formas são chaves.
+        const pluralAt = callee === "trn" ? 1 : callee === "translatePlural" ? 2 : -1;
+        if (pluralAt >= 0) {
+          for (const arg of [args[pluralAt], args[pluralAt + 1]]) if (literal(arg) !== null) add(literal(arg), file);
+        }
         // Mensagens de erro exibidas pelo main (traduzidas no handler IPC)
         if (isMain && /\.(regex|refine|min|max)$/.test(callee)) {
           const msg = literal(args[args.length - 1]);

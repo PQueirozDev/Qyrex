@@ -1,4 +1,4 @@
-import { translate } from "@shared/i18n";
+import { translate, translatePlural } from "@shared/i18n";
 import type { Language } from "@shared/types";
 
 /**
@@ -23,6 +23,11 @@ document.documentElement.lang = current === "en" ? "en" : "pt-BR";
 /** Traduz um texto da interface (a chave é o próprio texto em português). */
 export function tr(text: string, vars?: Record<string, string | number>): string {
   return translate(current, text, vars);
+}
+
+/** Traduz escolhendo singular ou plural pelo número (`{n}` é preenchido sozinho). */
+export function trn(n: number, one: string, other: string, vars?: Record<string, string | number>): string {
+  return translatePlural(current, n, one, other, vars);
 }
 
 export function getLanguage(): Language {

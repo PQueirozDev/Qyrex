@@ -2,6 +2,17 @@
  * Patch notes exibidas na aba "Novidades". A versão mais recente vem primeiro.
  * Ao publicar uma versão: bump no package.json + nova entrada aqui (pt e en).
  */
+/** Compara versões "1.10.0" x "1.9.2" numericamente (negativo: a < b). Sufixos (-beta) são ignorados. */
+export function compareVersions(a: string, b: string): number {
+  const parts = (v: string) => v.split(/[-+]/)[0].split(".").map((n) => Number(n) || 0);
+  const [pa, pb] = [parts(a), parts(b)];
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const diff = (pa[i] ?? 0) - (pb[i] ?? 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
+
 export interface ChangelogEntry {
   version: string;
   date: string;

@@ -20,7 +20,7 @@ import { tr } from "@/lib/i18n";
 import { useUIStore, type Page } from "@/stores/useUIStore";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { MiniPlayer } from "@/components/MiniPlayer";
-import { CHANGELOG } from "@shared/changelog";
+import { CHANGELOG, compareVersions } from "@shared/changelog";
 import logoUrl from "@/assets/logo.svg";
 
 interface NavItem {
@@ -106,7 +106,7 @@ export function Sidebar() {
   const system = useSettingsStore((s) => s.system);
 
   const latest = CHANGELOG[0]?.version;
-  const unreadNews = Boolean(latest && settings && settings.lastSeenVersion !== latest);
+  const unreadNews = Boolean(latest && settings && (!settings.lastSeenVersion || compareVersions(settings.lastSeenVersion, latest) < 0));
 
   return (
     <aside className="flex h-full w-[224px] shrink-0 flex-col border-r border-border-subtle bg-bg-elevated">

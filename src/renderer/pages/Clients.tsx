@@ -32,7 +32,7 @@ import { useTasksStore } from "@/stores/useTasksStore";
 import { useMarketingStore } from "@/stores/useMarketingStore";
 import { confirmAction, toast, useUIStore } from "@/stores/useUIStore";
 
-import { tr } from "@/lib/i18n";
+import { tr, trn } from "@/lib/i18n";
 export const CLIENT_STATUS_LABEL: Record<ClientStatus, string> = { ativo: "Ativo", inativo: "Inativo", prospecto: "Prospecto" };
 const STATUS_TONE = { ativo: "success", inativo: "neutral", prospecto: "accent" } as const;
 
@@ -335,7 +335,7 @@ function ClientDrawer({ client, onClose }: { client: Client | null; onClose: () 
                       <button className="min-w-0 flex-1 truncate text-left text-text" onClick={() => navigate("tarefas", t.id)}>
                         {t.title}
                       </button>
-                      {t.dueDate && <span className="text-[11px] capitalize text-text-faint">{relativeDay(t.dueDate)}</span>}
+                      {t.dueDate && <span className="inline-block text-[11px] text-text-faint first-letter:uppercase">{relativeDay(t.dueDate)}</span>}
                     </div>
                   ))}
                 </div>
@@ -432,7 +432,7 @@ export function Clients() {
     <div>
       <PageHeader
         title={tr("Clientes")}
-        description={tr("{n} ativo(s) · {value}/mês em manutenção", { n: counts.ativo, value: formatCurrency(monthly) })}
+        description={trn(counts.ativo, "{n} ativo · {value}/mês em manutenção", "{n} ativos · {value}/mês em manutenção", { value: formatCurrency(monthly) })}
         actions={
           <Button size="sm" onClick={() => setOpenId("new")}>
             <Plus size={14} />{" "}{tr("Novo cliente")}</Button>
@@ -503,7 +503,7 @@ export function Clients() {
                 </div>
                 {c.monthlyValue != null && <span className="text-xs text-text-muted">{formatCurrency(c.monthlyValue)}{tr("/mês")}</span>}
                 {c.nextBillingDate && (
-                  <span className={cn("w-24 text-right text-[11px] capitalize", c.nextBillingDate < today ? "text-danger" : "text-text-faint")}>
+                  <span className={cn("w-24 text-right text-[11px] first-letter:uppercase", c.nextBillingDate < today ? "text-danger" : "text-text-faint")}>
                     {relativeDay(c.nextBillingDate)}
                   </span>
                 )}

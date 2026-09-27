@@ -20,6 +20,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { SearchResults } from "@shared/types";
+import { tm } from "@shared/i18n";
 import { cn } from "@/lib/cn";
 import { fuzzyScore } from "@/lib/fuzzy";
 import { attempt } from "@/lib/api";
@@ -42,7 +43,8 @@ interface Command {
   run: () => void;
 }
 
-const GROUP_ORDER = ["Ações", "Projetos", "Clientes", "Tarefas", "Marketing", "Arquivos", "Navegação"];
+// Nomes dos grupos (traduzidos na hora de exibir; tm() só marca para o extrator de chaves).
+const GROUP_ORDER = [tm("Ações"), tm("Projetos"), tm("Clientes"), tm("Tarefas"), tm("Marketing"), tm("Arquivos"), tm("Navegação")];
 
 /**
  * Command Palette global (Ctrl+K), inspirada no Raycast: fuzzy search sobre
@@ -145,7 +147,7 @@ export function CommandPalette() {
     }
 
     const projectCommands: Command[] = projects.flatMap((p) => [
-      { id: `p-${p.id}`, group: "Projetos", label: `Abrir projeto ${p.name}`, hint: tr("VS Code"), keywords: p.technologies.join(" "), icon: Code2, run: act(() => void openProject(p, "vscode")) },
+      { id: `p-${p.id}`, group: "Projetos", label: tr("Abrir projeto {name}", { name: p.name }), hint: tr("VS Code"), keywords: p.technologies.join(" "), icon: Code2, run: act(() => void openProject(p, "vscode")) },
       { id: `pt-${p.id}`, group: "Projetos", label: tr("Terminal em {name}", { name: p.name }), icon: SquareTerminal, run: act(() => navigate("terminal", p.id)) },
       { id: `pd-${p.id}`, group: "Projetos", label: tr("Detalhes de {name}", { name: p.name }), hint: tr("Git, GitHub, tarefas"), icon: Folder, run: act(() => navigate("projetos", p.id)) },
     ]);
@@ -153,7 +155,7 @@ export function CommandPalette() {
     const clientCommands: Command[] = clients.map((c) => ({
       id: `c-${c.id}`,
       group: "Clientes",
-      label: `Abrir cliente ${c.name}`,
+      label: tr("Abrir cliente {name}", { name: c.name }),
       keywords: `${c.company ?? ""} ${c.instagram ?? ""}`,
       icon: Users,
       run: act(() => navigate("clientes", c.id)),

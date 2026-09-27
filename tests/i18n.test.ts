@@ -2,7 +2,7 @@ import path from "node:path";
 import { createRequire } from "node:module";
 import { describe, expect, it } from "vitest";
 import { EN } from "../src/shared/locales/en";
-import { translate } from "../src/shared/i18n";
+import { translate, translatePlural } from "../src/shared/i18n";
 
 const require = createRequire(import.meta.url);
 const { extractKeys } = require("../scripts/i18n-keys.cjs") as { extractKeys: (root: string) => Map<string, string> };
@@ -35,8 +35,21 @@ describe("i18n", () => {
   });
 
   it("traduz e interpola variáveis", () => {
-    expect(translate("en", "Você tem {n} tarefa(s) para hoje.", { n: 3 })).toBe("You have 3 task(s) for today.");
-    expect(translate("pt", "Você tem {n} tarefa(s) para hoje.", { n: 3 })).toBe("Você tem 3 tarefa(s) para hoje.");
+    expect(translate("en", "Você tem {n} tarefas para hoje.", { n: 3 })).toBe("You have 3 tasks for today.");
+    expect(translate("pt", "Você tem {n} tarefas para hoje.", { n: 3 })).toBe("Você tem 3 tarefas para hoje.");
+  });
+
+  it("plural escolhe a forma pelo número antes de traduzir", () => {
+    const one = "Você tem {n} tarefa para hoje.";
+    const other = "Você tem {n} tarefas para hoje.";
+    expect(translatePlural("pt", 1, one, other)).toBe("Você tem 1 tarefa para hoje.");
+    expect(translatePlural("pt", 0, one, other)).toBe("Você tem 0 tarefas para hoje.");
+    expect(translatePlural("en", 1, one, other)).toBe("You have 1 task for today.");
+    expect(translatePlural("en", 4, one, other)).toBe("You have 4 tasks for today.");
+  });
+
+  it("nenhum texto usa o plural preguiçoso “(s)”", () => {
+    expect([...keys.keys()].filter((k) => /\((s|es|ões)\)/.test(k))).toEqual([]);
   });
 
   it("texto sem tradução cai no português (nunca some da tela)", () => {
