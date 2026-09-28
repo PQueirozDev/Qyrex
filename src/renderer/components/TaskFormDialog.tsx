@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { Trash2 } from "lucide-react";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/primitives";
 import { useTasksStore } from "@/stores/useTasksStore";
 import { useProjectsStore } from "@/stores/useProjectsStore";
 import { useClientsStore } from "@/stores/useClientsStore";
+import { confirmAction } from "@/stores/useUIStore";
 import type { Task, TaskPriority, TaskStatus } from "@shared/types";
 import { tr } from "@/lib/i18n";
 
@@ -17,6 +19,18 @@ interface Props {
   /** Tarefa existente para edição; ausente = criar nova. */
   task?: Task | null;
   defaults?: Partial<Pick<Task, "projectId" | "clientId" | "dueDate" | "status">>;
+}
+
+/** Pede confirmação e exclui a tarefa. Devolve true se ela foi excluída. */
+export async function confirmDeleteTask(task: Task): Promise<boolean> {
+  const ok = await confirmAction({
+    title: tr("Excluir \"{name}\"?", { name: task.title }),
+    description: tr("Essa ação não pode ser desfeita."),
+    danger: true,
+    confirmLabel: tr("Excluir"),
+  });
+  if (!ok) return false;
+  return useTasksStore.getState().remove(task.id);
 }
 
 /** Formulário completo de tarefa — usado na página Tarefas, no Ctrl+Shift+T e no tray. */
@@ -86,6 +100,11 @@ export function TaskFormDialog({ open, onClose, task, defaults }: Props) {
     if (ok) onClose();
   }
 
+  async function handleDelete() {
+    if (!task) return;
+    if (await confirmDeleteTask(task)) onClose();
+  }
+
   return (
     <Dialog
       open={open}
@@ -94,6 +113,10 @@ export function TaskFormDialog({ open, onClose, task, defaults }: Props) {
       dismissable={false}
       footer={
         <>
+          {task && (
+            <Button size="sm" variant="danger" onClick={() => void handleDelete()}>
+              <Trash2 size={13} />{" "}{tr("Excluir")}</Button>
+          )}
           <span className="mr-auto text-[11px] text-text-faint">{tr("Ctrl+Enter para salvar")}</span>
           <Button variant="ghost" size="sm" onClick={onClose}>{tr("Cancelar")}</Button>
           <Button size="sm" onClick={save} disabled={!title.trim()} loading={saving}>

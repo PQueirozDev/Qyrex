@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type { Task } from "@shared/types";
 import { attempt, errorMessage, unwrap } from "@/lib/api";
 import { tr } from "@/lib/i18n";
+import { toast } from "@/stores/useUIStore";
 
 type CreateInput = Parameters<typeof window.workspace.tasks.create>[0];
 type UpdatePatch = Parameters<typeof window.workspace.tasks.update>[1];
@@ -15,7 +16,7 @@ interface TasksState {
   create: (input: CreateInput) => Promise<boolean>;
   update: (id: string, patch: UpdatePatch) => Promise<boolean>;
   toggleDone: (task: Task) => Promise<void>;
-  remove: (id: string) => Promise<void>;
+  remove: (id: string) => Promise<boolean>;
 }
 
 export const useTasksStore = create<TasksState>((set, get) => ({
@@ -51,7 +52,17 @@ export const useTasksStore = create<TasksState>((set, get) => ({
     await get().load();
   },
   remove: async (id) => {
-    set({ tasks: get().tasks.filter((t) => t.id !== id) });
-    await attempt(window.workspace.tasks.delete(id), tr("Tarefa excluída"));
+    const previous = get().tasks;
+    set({ tasks: previous.filter((t) => t.id !== id) });
+    try {
+      await unwrap(window.workspace.tasks.delete(id));
+      toast.success(tr("Tarefa excluída"));
+      return true;
+    } catch (err) {
+      // Se falhar, a tarefa volta para a lista em vez de sumir só na tela.
+      set({ tasks: previous });
+      toast.error(errorMessage(err));
+      return false;
+    }
   },
 }));

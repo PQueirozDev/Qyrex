@@ -501,6 +501,20 @@ await step("Tarefas: criar pelo campo rápido", async () => {
   if (!id) throw new Error("tarefa não salva no banco");
 });
 
+await step("Tarefas: excluir pelo diálogo de edição", async () => {
+  await type(`$$("input").find((i) => i.placeholder.startsWith("Adicionar tarefa"))`, "Tarefa para excluir", { enter: true });
+  await waitFor(`findButton("Tarefa para excluir", document.querySelector("main"))`, { label: "tarefa na lista" });
+  await click("Tarefa para excluir", `document.querySelector("main")`);
+  await waitFor(`dialog() && findButton("Excluir", dialog())`, { label: "botão Excluir no diálogo" });
+  await click("Excluir", `dialog()`);
+  // Diálogo de confirmação por cima do formulário.
+  await waitFor(`textOf(dialog()).includes("Essa ação não pode ser desfeita")`, { label: "confirmação" });
+  await click("Excluir", `dialog()`);
+  await waitFor(`!textOf(document.querySelector("main")).includes("Tarefa para excluir") && !dialog()`, { label: "tarefa sumiu e diálogo fechou" });
+  const still = await ev(`return (await window.workspace.tasks.list({})).data.some((t) => t.title === "Tarefa para excluir")`);
+  if (still) throw new Error("tarefa continua no banco");
+});
+
 await step("Clientes: cadastrar cliente", async () => {
   await nav("Clientes");
   await click("Novo cliente");

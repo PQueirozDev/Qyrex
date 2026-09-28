@@ -371,6 +371,7 @@ export const EN: Record<string, string> = {
   "Excluir o cliente \"{name}\"?": "Delete client \"{name}\"?",
   "Projetos, tarefas e conteúdos vinculados continuam existindo, só perdem o vínculo.": "Linked projects, tasks and content remain; they just lose the link.",
   "Excluir cliente": "Delete client",
+  "Excluir tarefa": "Delete task",
   "Nome": "Name",
   "Empresa": "Company",
   "Com DDD. Ex.: 11 99999-0000": "With area code. E.g. 11 99999-0000",

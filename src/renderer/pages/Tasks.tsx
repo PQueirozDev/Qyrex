@@ -4,14 +4,14 @@ import type { Task, TaskStatus } from "@shared/types";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge, EmptyState, ErrorState, LoadingRows, Menu, PageHeader, Segmented } from "@/components/ui/primitives";
-import { PRIORITY_LABEL, STATUS_LABEL, TaskFormDialog } from "@/components/TaskFormDialog";
+import { confirmDeleteTask, PRIORITY_LABEL, STATUS_LABEL, TaskFormDialog } from "@/components/TaskFormDialog";
 import { cn } from "@/lib/cn";
 import { relativeDay, todayISO } from "@/lib/format";
 import { fuzzyFilter } from "@/lib/fuzzy";
 import { useTasksStore } from "@/stores/useTasksStore";
 import { useProjectsStore } from "@/stores/useProjectsStore";
 import { useClientsStore } from "@/stores/useClientsStore";
-import { confirmAction, useUIStore } from "@/stores/useUIStore";
+import { useUIStore } from "@/stores/useUIStore";
 import { tr, trn } from "@/lib/i18n";
 import { PAGE_ICONS } from "@/lib/pageIcons";
 
@@ -22,7 +22,7 @@ const PRIORITY_TONE = { baixa: "neutral", normal: "neutral", alta: "warning", ur
 const MetaDot = () => <span className="shrink-0 text-text-faint/50">•</span>;
 
 function TaskRow({ task, onEdit }: { task: Task; onEdit: (t: Task) => void }) {
-  const { toggleDone, remove, update } = useTasksStore();
+  const { toggleDone, update } = useTasksStore();
   const projects = useProjectsStore((s) => s.projects);
   const clients = useClientsStore((s) => s.clients);
   const today = todayISO();
@@ -73,7 +73,7 @@ function TaskRow({ task, onEdit }: { task: Task; onEdit: (t: Task) => void }) {
           {task.dueTime ? ` ${task.dueTime}` : ""}
         </span>
       )}
-      <div className="opacity-0 transition-opacity group-hover:opacity-100">
+      <div className="opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
         <Menu
           trigger={<MoreHorizontal size={15} />}
           items={[
@@ -86,10 +86,7 @@ function TaskRow({ task, onEdit }: { task: Task; onEdit: (t: Task) => void }) {
               label: tr("Excluir"),
               icon: Trash2,
               danger: true,
-              onSelect: async () => {
-                if (await confirmAction({ title: tr("Excluir \"{name}\"?", { name: task.title }), description: tr("Essa ação não pode ser desfeita."), danger: true, confirmLabel: tr("Excluir") }))
-                  void remove(task.id);
-              },
+              onSelect: () => void confirmDeleteTask(task),
             },
           ]}
         />
@@ -166,11 +163,24 @@ function Kanban({ tasks, onEdit }: { tasks: Task[]; onEdit: (t: Task) => void })
                   }}
                   onClick={() => onEdit(t)}
                   className={cn(
-                    "card-interactive cursor-grab rounded-lg border border-border-subtle bg-bg-card p-2.5 shadow-card active:cursor-grabbing",
+                    "card-interactive group relative cursor-grab rounded-lg border border-border-subtle bg-bg-card p-2.5 shadow-card active:cursor-grabbing",
                     dragId === t.id && "scale-[0.98] opacity-40"
                   )}
                 >
-                  <p className={cn("text-[13px]", status === "concluido" ? "text-text-faint line-through" : "text-text")}>{t.title}</p>
+                  <button
+                    type="button"
+                    draggable={false}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void confirmDeleteTask(t);
+                    }}
+                    className="absolute right-1.5 top-1.5 rounded p-1 text-text-faint opacity-0 transition-opacity hover:bg-bg-hover hover:text-danger focus-visible:opacity-100 group-hover:opacity-100"
+                    title={tr("Excluir tarefa")}
+                    aria-label={tr("Excluir tarefa")}
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                  <p className={cn("pr-6 text-[13px]", status === "concluido" ? "text-text-faint line-through" : "text-text")}>{t.title}</p>
                   <div className="mt-1.5 flex items-center gap-1.5">
                     {t.priority !== "normal" && <Badge tone={PRIORITY_TONE[t.priority]}>{PRIORITY_LABEL[t.priority]}</Badge>}
                     {t.dueDate && <span className="inline-block text-[11px] text-text-faint first-letter:uppercase">{relativeDay(t.dueDate)}</span>}

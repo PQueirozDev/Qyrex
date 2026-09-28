@@ -22,6 +22,39 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.6.1",
+    date: "2026-09-28",
+    title: { pt: "Excluir tarefas", en: "Delete tasks" },
+    sections: [
+      {
+        kind: "new",
+        items: [
+          {
+            pt: "Botão Excluir no diálogo de edição da tarefa, em qualquer lugar onde ele abre.",
+            en: "Delete button in the task edit dialog, wherever it opens.",
+          },
+          {
+            pt: "Cards do quadro de Tarefas com lixeira ao passar o mouse.",
+            en: "Task board cards show a trash button on hover.",
+          },
+        ],
+      },
+      {
+        kind: "fixed",
+        items: [
+          {
+            pt: "O menu de ações da lista de tarefas agora também aparece pelo teclado.",
+            en: "The task list's action menu now also shows up with keyboard navigation.",
+          },
+          {
+            pt: "Se a exclusão falhar, a tarefa volta para a lista em vez de sumir só na tela.",
+            en: "If deleting fails, the task comes back to the list instead of vanishing only on screen.",
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: "1.6.0",
     date: "2026-09-27",
     title: { pt: "Visual renovado", en: "A refreshed look" },
