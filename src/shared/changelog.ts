@@ -22,6 +22,35 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.6.2",
+    date: "2026-09-28",
+    title: { pt: "Excluir projetos", en: "Delete projects" },
+    sections: [
+      {
+        kind: "new",
+        items: [
+          {
+            pt: "Projetos podem ser excluídos pelo card (lixeira ao passar o mouse), pelo painel de detalhes e pelo diálogo de edição. Só o cadastro sai do QrzSpace; a pasta continua intacta.",
+            en: "Projects can be deleted from the card (trash button on hover), the details panel and the edit dialog. Only the entry leaves QrzSpace; the folder stays untouched.",
+          },
+          {
+            pt: "Cards do quadro de Marketing com lixeira ao passar o mouse.",
+            en: "Marketing board cards show a trash button on hover.",
+          },
+        ],
+      },
+      {
+        kind: "fixed",
+        items: [
+          {
+            pt: "A opção de favoritar no painel do projeto aparecia sempre em português.",
+            en: "The favorite option in the project panel always showed up in Portuguese.",
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: "1.6.1",
     date: "2026-09-28",
     title: { pt: "Excluir tarefas", en: "Delete tasks" },

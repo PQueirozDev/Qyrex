@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type { ProjectWithGit } from "@shared/types";
 import { attempt, errorMessage, unwrap } from "@/lib/api";
 import { tr } from "@/lib/i18n";
+import { toast } from "@/stores/useUIStore";
 
 type CreateInput = Parameters<typeof window.workspace.projects.create>[0];
 type UpdatePatch = Parameters<typeof window.workspace.projects.update>[1];
@@ -14,7 +15,7 @@ interface ProjectsState {
   load: () => Promise<void>;
   create: (input: CreateInput) => Promise<boolean>;
   update: (id: string, patch: UpdatePatch) => Promise<boolean>;
-  remove: (id: string) => Promise<void>;
+  remove: (id: string) => Promise<boolean>;
   toggleFavorite: (id: string) => Promise<void>;
   open: (project: ProjectWithGit, target: "vscode" | "terminal" | "explorer" | "github") => Promise<void>;
 }
@@ -46,8 +47,16 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
     return Boolean(ok);
   },
   remove: async (id) => {
-    await attempt(window.workspace.projects.delete(id), tr("Projeto removido do QrzSpace"));
-    await get().load();
+    try {
+      await unwrap(window.workspace.projects.delete(id));
+      toast.success(tr("Projeto excluído"));
+      return true;
+    } catch (err) {
+      toast.error(errorMessage(err));
+      return false;
+    } finally {
+      await get().load();
+    }
   },
   toggleFavorite: async (id) => {
     set({ projects: get().projects.map((p) => (p.id === id ? { ...p, favorite: !p.favorite } : p)) });

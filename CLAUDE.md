@@ -4,9 +4,9 @@ Guia para o Claude Code continuar o **QrzSpace**: um app desktop (Electron + Rea
 
 Sempre responda e comente o código em **português do Brasil**, com acentuação correta.
 
-## Estado atual (v1.6.1)
+## Estado atual (v1.6.2)
 
-App completo e publicado. `npm run check` passa (typecheck, lint sem warnings e 205 testes; 3 testes de caminho do Windows são pulados fora do Windows). `npm run e2e` passa (25 etapas pela interface, com as APIs simuladas).
+App completo e publicado. `npm run check` passa (typecheck, lint sem warnings e 205 testes; 3 testes de caminho do Windows são pulados fora do Windows). `npm run e2e` passa (26 etapas pela interface, com as APIs simuladas).
 
 ### Feito
 - `src/main/**`: ipc/handlers com validação zod e checagem de remetente, services, integrações (Claude via `@anthropic-ai/sdk`, OpenAI e Gemini via REST, GitHub com PAT, Spotify com PKCE, Google Calendar com OAuth loopback, Discord Rich Presence via named pipe), segurança (paths, commands, exec, secrets, validation), logger com redaction (inclusive cookies), notificações, terminal node-pty, tray, CSP e atualização automática (`services/updateService.ts`, electron-updater).

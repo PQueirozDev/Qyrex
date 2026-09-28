@@ -532,6 +532,28 @@ await step("Marketing: ideia rápida", async () => {
   await waitFor(`textOf(document.querySelector("main")).includes("Ideia do E2E")`, { label: "ideia no quadro" });
 });
 
+await step("Projetos: excluir pelo card sem apagar a pasta", async () => {
+  const dir = path.join(WORK, "descartavel");
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, "manter.txt"), "não pode sumir");
+  const r = await ev(`const res = await window.workspace.projects.create({ name: "Projeto para excluir", localPath: ${JSON.stringify(dir)} }); return res.ok || res.error;`);
+  if (r !== true) throw new Error(String(r));
+  await nav("Projetos");
+  await waitFor(`$$("p").some((p) => textOf(p) === "Projeto para excluir")`, { label: "card do projeto" });
+  const clicked = await ev(`
+    const card = $$("p").find((p) => textOf(p) === "Projeto para excluir").closest(".card-interactive");
+    const b = $$("button", card).find((x) => x.getAttribute("aria-label") === "Excluir projeto");
+    if (!b) return false; b.click(); return true;`);
+  if (!clicked) throw new Error("botão de excluir não está no card");
+  await waitFor(`textOf(dialog()).includes("Nenhum arquivo da pasta é excluído")`, { label: "confirmação" });
+  await click("Excluir", `dialog()`);
+  await waitFor(`!$$("p").some((p) => textOf(p) === "Projeto para excluir") && !dialog()`, { label: "card sumiu" });
+  const still = await ev(`return (await window.workspace.projects.list()).data.some((p) => p.name === "Projeto para excluir")`);
+  if (still) throw new Error("projeto continua no banco");
+  if (!fs.existsSync(path.join(dir, "manter.txt"))) throw new Error("a pasta do projeto foi apagada");
+  return "cadastro excluído, pasta intacta";
+});
+
 await step("Arquivos: navegar na pasta autorizada", async () => {
   await nav("Arquivos");
   await waitFor(`textOf(document.querySelector("main")).includes("demo")`, { label: "pasta demo" });

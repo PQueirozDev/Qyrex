@@ -37,7 +37,7 @@ function TaskRow({ task, onEdit }: { task: Task; onEdit: (t: Task) => void }) {
         type="checkbox"
         checked={done}
         onChange={() => void toggleDone(task)}
-        className="h-4 w-4 shrink-0 cursor-pointer accent-accent"
+        className="h-4 w-4 shrink-0 cursor-pointer"
         aria-label={done ? tr("Reabrir") : tr("Concluir")}
       />
       <button className="min-w-0 flex-1 text-left" onClick={() => onEdit(task)}>

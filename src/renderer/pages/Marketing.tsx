@@ -218,6 +218,13 @@ function ContentCard({
   onDragEnd?: () => void;
 }) {
   const client = useClientsStore((s) => s.clients.find((c) => c.id === item.clientId));
+  const remove = useMarketingStore((s) => s.remove);
+
+  async function handleDelete() {
+    if (await confirmAction({ title: tr("Excluir \"{name}\"?", { name: item.title }), description: tr("Essa ação não pode ser desfeita."), danger: true, confirmLabel: tr("Excluir") }))
+      await remove(item.id);
+  }
+
   return (
     <div
       draggable={draggable}
@@ -225,12 +232,25 @@ function ContentCard({
       onDragEnd={onDragEnd}
       onClick={onOpen}
       className={cn(
-        "card-interactive rounded-lg border border-border-subtle bg-bg-card p-2.5 shadow-card",
+        "card-interactive group relative rounded-lg border border-border-subtle bg-bg-card p-2.5 shadow-card",
         draggable && "cursor-grab active:cursor-grabbing",
         dragging && "scale-[0.98] opacity-40"
       )}
     >
-      <p className={cn("text-[13px]", item.status === "publicado" ? "text-text-muted" : "text-text")}>{item.title}</p>
+      <button
+        type="button"
+        draggable={false}
+        onClick={(e) => {
+          e.stopPropagation();
+          void handleDelete();
+        }}
+        className="absolute right-1.5 top-1.5 rounded p-1 text-text-faint opacity-0 transition-opacity hover:bg-bg-hover hover:text-danger focus-visible:opacity-100 group-hover:opacity-100"
+        title={tr("Excluir conteúdo")}
+        aria-label={tr("Excluir conteúdo")}
+      >
+        <Trash2 size={13} />
+      </button>
+      <p className={cn("pr-6 text-[13px]", item.status === "publicado" ? "text-text-muted" : "text-text")}>{item.title}</p>
       <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
         <TypeBadge type={item.type} />
         {client && <span className="text-[11px] text-text-faint">{client.name}</span>}

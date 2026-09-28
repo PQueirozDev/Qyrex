@@ -36,9 +36,32 @@ import { confirmAction, toast, useUIStore } from "@/stores/useUIStore";
 
 import { tr, trn } from "@/lib/i18n";
 import { PAGE_ICONS } from "@/lib/pageIcons";
+/** Pede confirmação e exclui o cadastro do projeto (a pasta fica intacta). Devolve true se excluiu. */
+async function confirmDeleteProject(project: ProjectWithGit): Promise<boolean> {
+  const ok = await confirmAction({
+    title: tr("Excluir o projeto \"{name}\"?", { name: project.name }),
+    description: tr("Só o cadastro é apagado do QrzSpace. Nenhum arquivo da pasta é excluído."),
+    detail: project.localPath,
+    danger: true,
+    confirmLabel: tr("Excluir"),
+  });
+  if (!ok) return false;
+  return useProjectsStore.getState().remove(project.id);
+}
+
 // --- Diálogo de criação/edição ------------------------------------------------------
 
-function ProjectFormDialog({ open, project, onClose }: { open: boolean; project: ProjectWithGit | null; onClose: () => void }) {
+function ProjectFormDialog({
+  open,
+  project,
+  onClose,
+  onDelete,
+}: {
+  open: boolean;
+  project: ProjectWithGit | null;
+  onClose: () => void;
+  onDelete: (project: ProjectWithGit) => void;
+}) {
   const { create, update } = useProjectsStore();
   const clients = useClientsStore((s) => s.clients);
 
@@ -111,6 +134,10 @@ function ProjectFormDialog({ open, project, onClose }: { open: boolean; project:
       description={project ? undefined : tr("Escolha a pasta: nome, tecnologias e GitHub são detectados automaticamente.")}
       footer={
         <>
+          {project && (
+            <Button size="sm" variant="danger" className="mr-auto" onClick={() => onDelete(project)}>
+              <Trash2 size={13} />{" "}{tr("Excluir")}</Button>
+          )}
           <Button variant="ghost" size="sm" onClick={onClose}>{tr("Cancelar")}</Button>
           <Button size="sm" onClick={save} loading={saving} disabled={!name.trim() || !localPath}>
             {project ? tr("Salvar") : tr("Adicionar projeto")}
@@ -393,8 +420,18 @@ function GitHubSection({ url }: { url: string }) {
   );
 }
 
-function ProjectDrawer({ project, onClose, onEdit }: { project: ProjectWithGit; onClose: () => void; onEdit: () => void }) {
-  const { open, remove, load, toggleFavorite } = useProjectsStore();
+function ProjectDrawer({
+  project,
+  onClose,
+  onEdit,
+  onDelete,
+}: {
+  project: ProjectWithGit;
+  onClose: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const { open, load, toggleFavorite } = useProjectsStore();
   const { tasks, loaded: tasksLoaded, load: loadTasks, toggleDone } = useTasksStore();
   const clients = useClientsStore((s) => s.clients);
   const navigate = useUIStore((s) => s.navigate);
@@ -406,19 +443,6 @@ function ProjectDrawer({ project, onClose, onEdit }: { project: ProjectWithGit; 
 
   const projectTasks = tasks.filter((t) => t.projectId === project.id && t.status !== "concluido");
   const client = clients.find((c) => c.id === project.clientId);
-
-  async function handleRemove() {
-    const ok = await confirmAction({
-      title: tr("Remover \"{name}\" do QrzSpace?", { name: project.name }),
-      description: tr("Só o cadastro é removido. Nenhum arquivo da pasta é apagado."),
-      detail: project.localPath,
-      danger: true,
-      confirmLabel: tr("Remover"),
-    });
-    if (!ok) return;
-    await remove(project.id);
-    onClose();
-  }
 
   return (
     <Drawer
@@ -432,15 +456,20 @@ function ProjectDrawer({ project, onClose, onEdit }: { project: ProjectWithGit; 
         </span>
       }
       actions={
-        <Menu
-          trigger={<MoreHorizontal size={15} />}
-          items={[
-            { label: project.favorite ? "Remover dos favoritos" : "Favoritar", icon: Star, onSelect: () => void toggleFavorite(project.id) },
-            { label: tr("Editar"), icon: Pencil, onSelect: onEdit },
-            "separator",
-            { label: tr("Remover do QrzSpace"), icon: Trash2, danger: true, onSelect: () => void handleRemove() },
-          ]}
-        />
+        <>
+          <Button size="icon-sm" variant="ghost" onClick={onDelete} title={tr("Excluir projeto")} aria-label={tr("Excluir projeto")}>
+            <Trash2 size={13} className="text-danger" />
+          </Button>
+          <Menu
+            trigger={<MoreHorizontal size={15} />}
+            items={[
+              { label: project.favorite ? tr("Remover dos favoritos") : tr("Favoritar"), icon: Star, onSelect: () => void toggleFavorite(project.id) },
+              { label: tr("Editar"), icon: Pencil, onSelect: onEdit },
+              "separator",
+              { label: tr("Excluir projeto"), icon: Trash2, danger: true, onSelect: onDelete },
+            ]}
+          />
+        </>
       }
     >
       <div className="space-y-5">
@@ -495,7 +524,7 @@ function ProjectDrawer({ project, onClose, onEdit }: { project: ProjectWithGit; 
             <div className="space-y-1">
               {projectTasks.map((t) => (
                 <div key={t.id} className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" className="accent-accent" checked={false} onChange={() => void toggleDone(t)} aria-label={tr("Concluir")} />
+                  <input type="checkbox" checked={false} onChange={() => void toggleDone(t)} aria-label={tr("Concluir")} />
                   <button className="min-w-0 flex-1 truncate text-left text-text" onClick={() => navigate("tarefas", t.id)}>
                     {t.title}
                   </button>
@@ -513,7 +542,7 @@ function ProjectDrawer({ project, onClose, onEdit }: { project: ProjectWithGit; 
 
 // --- Página ---------------------------------------------------------------------------
 
-function ProjectCard({ project, onOpen }: { project: ProjectWithGit; onOpen: () => void }) {
+function ProjectCard({ project, onOpen, onDelete }: { project: ProjectWithGit; onOpen: () => void; onDelete: () => void }) {
   const { open, toggleFavorite } = useProjectsStore();
   const navigate = useUIStore((s) => s.navigate);
   const git = project.git;
@@ -532,6 +561,14 @@ function ProjectCard({ project, onOpen }: { project: ProjectWithGit; onOpen: () 
           aria-label={project.favorite ? tr("Remover dos favoritos") : tr("Favoritar")}
         >
           <Star size={14} className={project.favorite ? "fill-warning" : ""} />
+        </button>
+        <button
+          onClick={onDelete}
+          className="rounded-md p-1 text-text-faint opacity-0 transition-colors hover:bg-bg-hover hover:text-danger focus-visible:opacity-100 group-hover:opacity-100"
+          title={tr("Excluir projeto")}
+          aria-label={tr("Excluir projeto")}
+        >
+          <Trash2 size={14} />
         </button>
       </div>
 
@@ -615,6 +652,15 @@ export function Projects() {
     }
   }, [detailId, loaded, projects]);
 
+  async function deleteProject(project: ProjectWithGit) {
+    if (!(await confirmDeleteProject(project))) return;
+    // Fecha o que estiver aberto antes da lista recarregar (senão o drawer acusaria "não encontrado").
+    setEditing(null);
+    setFormOpen(false);
+    if (detailId === project.id) setDetailId(null);
+    if (pageParam) navigate("projetos");
+  }
+
   const closeForm = () => {
     setFormOpen(false);
     setEditing(null);
@@ -624,7 +670,7 @@ export function Projects() {
   const grid = (items: ProjectWithGit[]) => (
     <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
       {items.map((p) => (
-        <ProjectCard key={p.id} project={p} onOpen={() => setDetailId(p.id)} />
+        <ProjectCard key={p.id} project={p} onOpen={() => setDetailId(p.id)} onDelete={() => void deleteProject(p)} />
       ))}
     </div>
   );
@@ -682,7 +728,7 @@ export function Projects() {
         </div>
       )}
 
-      <ProjectFormDialog open={formOpen || !!editing} project={editing} onClose={closeForm} />
+      <ProjectFormDialog open={formOpen || !!editing} project={editing} onClose={closeForm} onDelete={(p) => void deleteProject(p)} />
 
       {detail && (
         <ProjectDrawer
@@ -692,6 +738,7 @@ export function Projects() {
             if (pageParam) navigate("projetos");
           }}
           onEdit={() => setEditing(detail)}
+          onDelete={() => void deleteProject(detail)}
         />
       )}
     </div>
