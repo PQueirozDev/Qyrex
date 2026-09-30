@@ -9,6 +9,8 @@ import {
   FileText,
   FolderPlus,
   Gamepad2,
+  Github,
+  Globe,
   Info,
   Languages,
   Monitor,
@@ -28,6 +30,8 @@ import { Badge, EmptyState, Spinner, Switch } from "@/components/ui/primitives";
 import { attempt } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/i18n";
+import { REPO_URL, SITE_HOST, SITE_URL } from "@shared/links";
+import logoUrl from "@/assets/logo.svg";
 import { THEMES, type ThemeDefinition } from "@/lib/themes";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useAIStore } from "@/stores/useAIStore";
@@ -521,13 +525,19 @@ export function Settings() {
 
         <Section id="sobre" title={tr("Sobre")}>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-accent-hover text-lg font-bold text-accent-fg">
-              Q
-            </div>
+            <img src={logoUrl} alt="" className="h-10 w-10 shrink-0 [image-rendering:pixelated]" draggable={false} />
             <div>
               <p className="text-sm font-medium text-text">Qyrex {system ? `v${system.appVersion}` : ""}</p>
               <p className="text-xs text-text-muted">{tr("Central de trabalho: projetos, tarefas, arquivos, IA, clientes, marketing e integrações.")}</p>
             </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="secondary" onClick={() => void attempt(window.workspace.system.openExternalUrl(SITE_URL))}>
+              <Globe size={13} /> {SITE_HOST}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => void attempt(window.workspace.system.openExternalUrl(REPO_URL))}>
+              <Github size={13} /> {tr("Código no GitHub")}
+            </Button>
           </div>
           <p className="flex items-center gap-1.5 text-[11px] text-text-faint">
             <Monitor size={11} /> {system?.platform} · {tr("Tudo local, no SQLite desta máquina.")}

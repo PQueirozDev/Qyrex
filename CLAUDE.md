@@ -4,14 +4,14 @@ Guia para o Claude Code continuar o **Qyrex**: um app desktop (Electron + React 
 
 Sempre responda e comente o código em **português do Brasil**, com acentuação correta.
 
-## Estado atual (v1.7.0)
+## Estado atual (v1.7.1)
 
 App completo e publicado. `npm run check` passa (typecheck, lint sem warnings e 208 testes; 3 testes de caminho do Windows são pulados fora do Windows). `npm run e2e` passa (26 etapas pela interface, com as APIs simuladas).
 
 ### Feito
 - **Nome e marca (1.7.0)**: o app se chamava QrzSpace e virou **Qyrex** (open source, licença MIT). O `appId` continua `com.pedroqueiroz.qrzspace` de propósito (o instalador novo substitui o antigo e o atalho fixado continua valendo). A pasta de dados mudou com o nome: `src/main/legacyData.ts` copia `%APPDATA%/QrzSpace` para `%APPDATA%/Qyrex` na primeira abertura (nunca sobrescreve um banco existente; a pasta antiga fica como backup).
 - **Pixel art**: `site/pixel/pixel.mjs` desenha em código a capivara com a laranja, a cena do onsen (vídeo do site, precisa do ffmpeg), a folha de sprites e o ícone 32×32 (`build/icon.svg` + `src/renderer/assets/logo.svg`). Depois de mudar o ícone, rode `npm run icons`. O logo da sidebar fica em 32 px com `image-rendering: pixelated` (tamanho inteiro, senão borra).
-- **Site**: `site/` é estático (index.html, styles.css, app.js, assets/). No ar em https://qyrexapp.vercel.app (projeto `qyrex` na Vercel, time pqueirozdev; `qyrex.vercel.app` é de outra conta). Publicar: `cd site && npx vercel --prod --scope pqueirozdev` (não há deploy automático pelo git). Links do repositório/download ficam em `LINKS` no topo de `site/app.js`. O screenshot `site/assets/app-inicio.webp` sai da demo (`npm run build:demo`).
+- **Site**: `site/` é estático (index.html, styles.css, app.js, assets/). No ar em https://qyrexapp.vercel.app (projeto `qyrex` na Vercel, time pqueirozdev; `qyrex.vercel.app` é de outra conta). O projeto está ligado ao GitHub com Root Directory `site`: cada push na main publica o site sozinho (sem build). Se o Root Directory sumir, a Vercel compila a raiz do repo e o site dá 404. Links do site dentro do app: `src/shared/links.ts` (Configurações → Sobre, Novidades e bandeja). Links do repositório/download ficam em `LINKS` no topo de `site/app.js`. O screenshot `site/assets/app-inicio.webp` sai da demo (`npm run build:demo`).
 - `src/main/**`: ipc/handlers com validação zod e checagem de remetente, services, integrações (Claude via `@anthropic-ai/sdk`, OpenAI e Gemini via REST, GitHub com PAT, Spotify com PKCE, Google Calendar com OAuth loopback, Discord Rich Presence via named pipe), segurança (paths, commands, exec, secrets, validation), logger com redaction (inclusive cookies), notificações, terminal node-pty, tray, CSP e atualização automática (`services/updateService.ts`, electron-updater).
 - `src/preload/index.ts`: API completa em `window.workspace` (fonte da verdade dos canais IPC).
 - Renderer: todas as páginas, incluindo **Novidades** (`pages/PatchNotes.tsx`) e **Configurações** com seletor visual de temas, idioma, Discord e atualizações.

@@ -1,11 +1,12 @@
 import { useEffect } from "react";
-import { CheckCircle2, CloudDownload, Loader2, RefreshCw, RotateCw, TriangleAlert } from "lucide-react";
+import { CheckCircle2, CloudDownload, Globe, Loader2, RefreshCw, RotateCw, TriangleAlert } from "lucide-react";
 import { CHANGELOG, compareVersions } from "@shared/changelog";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { PageHeader, Switch } from "@/components/ui/primitives";
 import { ChangelogRelease } from "@/components/Changelog";
 import { tr } from "@/lib/i18n";
+import { SITE_HOST, SITE_URL } from "@shared/links";
 import { PAGE_ICONS } from "@/lib/pageIcons";
 import { attempt } from "@/lib/api";
 import { useSettingsStore } from "@/stores/useSettingsStore";
@@ -82,6 +83,14 @@ export function UpdateCard() {
         </div>
         {action}
       </div>
+      <button
+        type="button"
+        className="press mt-3 inline-flex items-center gap-1.5 text-xs text-text-muted transition-colors hover:text-accent"
+        onClick={() => void attempt(window.workspace.system.openExternalUrl(SITE_URL))}
+        title={tr("Abrir o site do Qyrex")}
+      >
+        <Globe size={12} /> {SITE_HOST}
+      </button>
       <div className="mt-3 flex items-center justify-between gap-3 border-t border-border-subtle pt-3">
         <div>
           <p className="text-[13px] text-text">{tr("Atualizar automaticamente")}</p>

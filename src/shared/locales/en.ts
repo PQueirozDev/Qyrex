@@ -1025,4 +1025,7 @@ export const EN: Record<string, string> = {
   "Publicado": "Published",
   "Código": "Code",
   "Arraste um card para cá": "Drag a card here",
+  "Site do Qyrex": "Qyrex website",
+  "Código no GitHub": "Code on GitHub",
+  "Abrir o site do Qyrex": "Open the Qyrex website",
 };

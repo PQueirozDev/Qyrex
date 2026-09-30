@@ -16,6 +16,7 @@ import { stopLocalMedia } from "./integrations/media/localMedia.js";
 import { attachUpdateListener, startAutoUpdate } from "./services/updateService.js";
 import { translate } from "../shared/i18n.js";
 import { copyLegacyUserData, LEGACY_PRODUCT_NAME } from "./legacyData.js";
+import { SITE_URL } from "../shared/links.js";
 import type { AppCommand, AppSettings } from "../shared/types.js";
 
 /** Cor de fundo da janela antes do React carregar (evita "flash" branco/preto). */
@@ -193,6 +194,8 @@ function buildTrayMenu(): Menu {
         click: () => void openInVSCode(p.localPath).catch((err) => log.error("Falha ao abrir projeto:", err)),
       })),
     },
+    { type: "separator" },
+    { label: tr("Site do Qyrex"), click: () => void shell.openExternal(SITE_URL) },
     { type: "separator" },
     {
       label: tr("Sair"),

@@ -22,6 +22,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.7.1",
+    date: "2026-09-30",
+    title: { pt: "Site do Qyrex no app", en: "Qyrex website in the app" },
+    sections: [
+      {
+        kind: "new",
+        items: [
+          {
+            pt: "Link para o site (qyrexapp.vercel.app) e para o código no GitHub em Configurações → Sobre, na aba Novidades e no menu da bandeja.",
+            en: "Links to the website (qyrexapp.vercel.app) and to the code on GitHub in Settings → About, on the What's new tab and in the tray menu.",
+          },
+          {
+            pt: "Configurações → Sobre agora mostra o ícone da capivara.",
+            en: "Settings → About now shows the capybara icon.",
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: "1.7.0",
     date: "2026-09-29",
     title: { pt: "Agora é Qyrex", en: "Now it's Qyrex" },
