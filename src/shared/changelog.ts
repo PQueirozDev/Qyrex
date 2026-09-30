@@ -22,6 +22,22 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.9.1",
+    date: "2026-09-30",
+    title: { pt: "Abertura com mais calma", en: "A calmer opening" },
+    sections: [
+      {
+        kind: "improved",
+        items: [
+          {
+            pt: "A animação de abertura ficou mais demorada: a capivara entra mais devagar, o nome aparece letra a letra com mais espaço e uma barrinha enche enquanto o app carrega.",
+            en: "The opening animation now takes longer: the capybara comes in slower, the name appears letter by letter with more room and a small bar fills while the app loads.",
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: "1.9.0",
     date: "2026-09-30",
     title: { pt: "Animação de abertura e seu tempo de uso", en: "Opening animation and your usage time" },
