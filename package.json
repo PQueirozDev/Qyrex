@@ -4,7 +4,7 @@
   "version": "1.7.0",
   "description": "Central de trabalho desktop open source para devs e freelancers: projetos, tarefas, arquivos, IA, clientes, marketing e integrações num lugar só.",
   "author": "Pedro Queiroz",
-  "homepage": "https://qyrex.vercel.app",
+  "homepage": "https://qyrexapp.vercel.app",
   "repository": "github:PQueirozDev/Qyrex",
   "license": "MIT",
   "private": true,
