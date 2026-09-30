@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, CheckCircle2, Code2, FolderPlus, Plug, SquareTerminal, Trash2, User, XCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, Code2, FolderPlus, ImagePlus, Plug, SquareTerminal, Trash2, User, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import { attempt } from "@/lib/api";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { tr } from "@/lib/i18n";
+import { ProfileAvatar } from "@/components/ProfileAvatar";
+import logoUrl from "@/assets/logo.svg";
 
 const STEPS = [
   { title: tr("Pasta dos projetos"), icon: FolderPlus },
@@ -17,7 +19,7 @@ const STEPS = [
 
 /** Primeira execução: nada é obrigatório além de concluir — integrações externas são opcionais. */
 export function Onboarding() {
-  const { settings, system, update, addAllowedDir, removeAllowedDir, loadSystem } = useSettingsStore();
+  const { settings, system, update, addAllowedDir, removeAllowedDir, loadSystem, avatar, pickAvatar, removeAvatar } = useSettingsStore();
   const [step, setStep] = useState(0);
   const [name, setName] = useState(settings?.userName ?? "");
   const [vscode, setVscode] = useState<string | null>(system?.vscodePath ?? null);
@@ -45,7 +47,7 @@ export function Onboarding() {
   }
 
   async function finish(goToIntegrations = false) {
-    await update({ userName: name.trim() || "Pedro", onboardingCompleted: true });
+    await update({ userName: name.trim(), onboardingCompleted: true });
     if (goToIntegrations) {
       const { useUIStore } = await import("@/stores/useUIStore");
       useUIStore.getState().navigate("integracoes");
@@ -74,7 +76,7 @@ export function Onboarding() {
           </div>
         </div>
         <div className="mb-6 text-center">
-          <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-accent-hover text-lg font-bold text-accent-fg shadow">Q</div>
+          <img src={logoUrl} alt="" draggable={false} className="mx-auto mb-3 h-16 w-16 [image-rendering:pixelated] drop-shadow-[0_8px_18px_rgb(255_154_60/0.25)]" />
           <h1 className="text-xl font-semibold tracking-tight text-text">{tr("Bem-vindo ao Qyrex")}</h1>
           <p className="mt-1 text-sm text-text-muted">{tr("Vamos configurar o essencial. Leva menos de um minuto.")}</p>
         </div>
@@ -143,7 +145,32 @@ export function Onboarding() {
           {step === 3 && (
             <div className="space-y-2">
               <p className="text-sm text-text-muted">{tr("Como você quer ser chamado no Dashboard?")}</p>
-              <input className="input text-[15px]" value={name} onChange={(e) => setName(e.target.value)} placeholder={tr("Pedro")} autoFocus />
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => void pickAvatar()}
+                  className="press group relative shrink-0 rounded-full"
+                  title={avatar ? tr("Trocar foto") : tr("Escolher foto")}
+                  aria-label={avatar ? tr("Trocar foto") : tr("Escolher foto")}
+                >
+                  <ProfileAvatar size={48} />
+                  <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/45 text-white opacity-0 transition-opacity group-hover:opacity-100">
+                    <ImagePlus size={16} />
+                  </span>
+                </button>
+                <input className="input text-[15px]" value={name} onChange={(e) => setName(e.target.value)} placeholder={tr("Seu nome")} autoFocus />
+              </div>
+              <p className="text-xs text-text-faint">
+                {tr("Foto de perfil opcional: clique no círculo para escolher uma imagem.")}
+                {avatar && (
+                  <>
+                    {" "}
+                    <button type="button" className="text-text-muted underline-offset-2 hover:text-danger hover:underline" onClick={() => void removeAvatar()}>
+                      {tr("Remover")}
+                    </button>
+                  </>
+                )}
+              </p>
             </div>
           )}
 

@@ -30,6 +30,7 @@ const WINDOW_BG: Record<AppSettings["theme"], string> = {
   midnight: "#070b16",
   violet: "#0d0b14",
   sand: "#f7f3ec",
+  onsen: "#0d1020",
 };
 
 const tr = (text: string) => translate(getSettings().language, text);

@@ -75,6 +75,29 @@
   color-scheme: dark;
 }
 
+/* Onsen: a marca do Qyrex. Noite azul do vídeo da capivara e laranja de yuzu. */
+:root[data-theme="onsen"] {
+  --bg: 13 16 32;
+  --bg-elevated: 17 21 42;
+  --bg-card: 21 26 50;
+  --bg-hover: 29 35 64;
+  --border: 40 47 82;
+  --border-subtle: 27 33 60;
+  --text: 238 240 248;
+  --text-muted: 160 167 194;
+  --text-faint: 104 112 150;
+  --accent: 255 154 60;
+  --accent-hover: 255 180 105;
+  --accent-muted: 64 40 26;
+  --accent-fg: 31 15 2;
+  --danger: 248 113 113;
+  --success: 123 216 143;
+  --warning: 245 196 81;
+  --shadow-card: 0 1px 0 0 rgba(180, 190, 255, 0.07) inset, 0 10px 30px -14px rgba(0, 0, 0, 0.7);
+  --shadow-pop: 0 24px 60px -16px rgba(0, 0, 0, 0.8);
+  color-scheme: dark;
+}
+
 /* Violeta: escuro aveludado com lilás (inspirado no Linear). */
 :root[data-theme="violet"] {
   --bg: 13 11 20;

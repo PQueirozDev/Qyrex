@@ -58,7 +58,7 @@ const url = z.string().url().max(2048);
 export const settingsPatch = z
   .object({
     userName: z.string().trim().max(60),
-    theme: z.enum(["dark", "light", "system", "midnight", "violet", "sand"]),
+    theme: z.enum(["dark", "light", "system", "midnight", "violet", "sand", "onsen"]),
     language: z.enum(["pt", "en"]),
     autoUpdate: z.boolean(),
     lastSeenVersion: z.string().regex(/^\d+\.\d+\.\d+([-+][\w.]+)?$/).nullable(),

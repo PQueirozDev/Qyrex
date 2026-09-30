@@ -11,6 +11,7 @@ import {
   Gamepad2,
   Github,
   Globe,
+  ImagePlus,
   Info,
   Languages,
   Monitor,
@@ -32,6 +33,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/i18n";
 import { REPO_URL, SITE_HOST, SITE_URL } from "@shared/links";
 import logoUrl from "@/assets/logo.svg";
+import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { THEMES, type ThemeDefinition } from "@/lib/themes";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useAIStore } from "@/stores/useAIStore";
@@ -129,27 +131,32 @@ function ThemePicker({ value, onChange }: { value: AppSettings["theme"]; onChang
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
       {options.map((opt) => {
         const active = value === opt.id;
+        // "Sistema" ocupa a linha inteira, em formato horizontal: os temas fecham as linhas certinho.
+        const wide = opt.id === "system";
         return (
           <button
             key={opt.id}
             onClick={() => onChange(opt.id)}
             className={cn(
               "group relative rounded-lg border p-2 text-left transition-all",
+              wide && "col-span-2 flex items-center gap-3 md:col-span-3",
               active ? "border-accent ring-2 ring-accent/25" : "border-border-subtle hover:border-border hover:bg-bg-hover/50"
             )}
             aria-pressed={active}
             data-theme-option={opt.id}
           >
-            {opt.preview}
-            <div className="mt-2 flex items-center justify-between gap-2 px-0.5">
-              <span className="text-[13px] font-medium text-text">{opt.name}</span>
-              {active && (
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-accent text-accent-fg">
-                  <Check size={10} strokeWidth={3} />
-                </span>
-              )}
+            <div className={cn(wide && "w-40 shrink-0")}>{opt.preview}</div>
+            <div className={cn(wide && "min-w-0 flex-1")}>
+              <div className={cn("flex items-center justify-between gap-2 px-0.5", !wide && "mt-2")}>
+                <span className="text-[13px] font-medium text-text">{opt.name}</span>
+                {active && (
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-accent text-accent-fg">
+                    <Check size={10} strokeWidth={3} />
+                  </span>
+                )}
+              </div>
+              <p className="px-0.5 text-[11px] leading-snug text-text-faint">{opt.description}</p>
             </div>
-            <p className="px-0.5 text-[11px] leading-snug text-text-faint">{opt.description}</p>
           </button>
         );
       })}
@@ -239,7 +246,7 @@ function DiscordSection() {
 }
 
 export function Settings() {
-  const { settings, system, update, addAllowedDir, removeAllowedDir, loadSystem } = useSettingsStore();
+  const { settings, system, update, addAllowedDir, removeAllowedDir, loadSystem, avatar, pickAvatar, removeAvatar } = useSettingsStore();
   const { providers, loadProviders } = useAIStore();
   const [name, setName] = useState(settings?.userName ?? "");
   const [allowedCommands, setAllowedCommands] = useState<string[] | null>(null);
@@ -359,6 +366,19 @@ export function Settings() {
         </Section>
 
         <Section id="geral" title={tr("Geral")}>
+          <Row label={tr("Foto de perfil")} hint={tr("Aparece na barra lateral. A imagem é recortada em quadrado e fica só neste PC.")}>
+            <div className="flex items-center gap-3">
+              <ProfileAvatar size={44} />
+              <Button size="sm" variant="secondary" onClick={() => void pickAvatar()}>
+                <ImagePlus size={13} /> {avatar ? tr("Trocar foto") : tr("Escolher foto")}
+              </Button>
+              {avatar && (
+                <Button size="sm" variant="ghost" onClick={() => void removeAvatar()}>
+                  <Trash2 size={13} /> {tr("Remover")}
+                </Button>
+              )}
+            </div>
+          </Row>
           <Row label={tr("Seu nome")} hint={tr("Usado na saudação do Início.")}>
             <input
               className="input w-56"

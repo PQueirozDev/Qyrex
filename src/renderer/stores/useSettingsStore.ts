@@ -8,7 +8,13 @@ type SettingsPatch = Parameters<typeof window.workspace.settings.update>[0];
 interface SettingsState {
   settings: AppSettings | null;
   system: SystemInfo | null;
+  /** Foto de perfil (data URL) ou null para usar as iniciais. */
+  avatar: string | null;
   load: () => Promise<void>;
+  loadAvatar: () => Promise<void>;
+  /** Abre o seletor de imagens. Devolve true se a foto mudou. */
+  pickAvatar: () => Promise<boolean>;
+  removeAvatar: () => Promise<void>;
   loadSystem: () => Promise<void>;
   update: (patch: SettingsPatch) => Promise<void>;
   addAllowedDir: (dir?: string) => Promise<boolean>;
@@ -18,10 +24,25 @@ interface SettingsState {
 export const useSettingsStore = create<SettingsState>((set) => ({
   settings: null,
   system: null,
+  avatar: null,
 
   load: async () => {
     const data = await attempt(window.workspace.settings.get());
     if (data) set({ settings: data });
+  },
+  loadAvatar: async () => {
+    const data = await attempt(window.workspace.profile.getAvatar());
+    set({ avatar: data ?? null });
+  },
+  pickAvatar: async () => {
+    const data = await attempt(window.workspace.profile.pickAvatar());
+    if (!data) return false;
+    set({ avatar: data });
+    return true;
+  },
+  removeAvatar: async () => {
+    // attempt devolve null quando deu certo e undefined quando falhou (já com toast).
+    if ((await attempt(window.workspace.profile.removeAvatar())) === null) set({ avatar: null });
   },
   loadSystem: async () => {
     const data = await attempt(window.workspace.system.info());

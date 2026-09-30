@@ -22,6 +22,39 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.8.0",
+    date: "2026-09-30",
+    title: { pt: "Foto de perfil e tema Onsen", en: "Profile photo and Onsen theme" },
+    sections: [
+      {
+        kind: "new",
+        items: [
+          {
+            pt: "Foto de perfil: escolha uma imagem em Configurações → Geral (ou no primeiro acesso). Ela aparece na barra lateral e na saudação do Início, recortada em quadrado e guardada só neste PC.",
+            en: "Profile photo: pick an image in Settings → General (or during first-run setup). It shows in the sidebar and in the Home greeting, cropped to a square and kept on this PC only.",
+          },
+          {
+            pt: "Tema Onsen, com as cores da marca: noite azul e laranja de yuzu.",
+            en: "Onsen theme, with the brand colors: night blue and yuzu orange.",
+          },
+        ],
+      },
+      {
+        kind: "improved",
+        items: [
+          {
+            pt: "No seletor de temas, a opção Sistema ocupa a linha inteira e os temas ficam alinhados.",
+            en: "In the theme picker, the System option spans the full row and the themes line up.",
+          },
+          {
+            pt: "Primeiro acesso com o ícone da capivara e sem nome pré-preenchido.",
+            en: "First-run setup shows the capybara icon and no longer pre-fills a name.",
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: "1.7.1",
     date: "2026-09-30",
     title: { pt: "Site do Qyrex no app", en: "Qyrex website in the app" },

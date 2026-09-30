@@ -379,7 +379,7 @@ export interface NotificationPrefs {
   marketing: boolean;
 }
 
-export type ThemeId = "dark" | "light" | "midnight" | "violet" | "sand";
+export type ThemeId = "dark" | "light" | "midnight" | "violet" | "sand" | "onsen";
 export type Language = "pt" | "en";
 
 export interface DiscordPrefs {

@@ -81,7 +81,7 @@ describe("configurações novas (idioma, tema, Discord, atualização)", () => {
   });
 
   it("validação aceita os temas novos e rejeita valores inválidos", () => {
-    for (const theme of ["dark", "light", "system", "midnight", "violet", "sand"]) {
+    for (const theme of ["dark", "light", "system", "midnight", "violet", "sand", "onsen"]) {
       expect(() => parse(settingsPatch, { theme })).not.toThrow();
     }
     expect(() => parse(settingsPatch, { theme: "neon" })).toThrow();
@@ -101,13 +101,13 @@ describe("temas", () => {
   const themesSrc = fs.readFileSync(path.join(ROOT, "src/renderer/lib/themes.ts"), "utf8");
   const ids = [...themesSrc.matchAll(/id: "(\w+)"/g)].map((m) => m[1]);
 
-  it("catálogo tem os 5 temas", () => {
-    expect(ids).toEqual(["dark", "light", "midnight", "violet", "sand"]);
+  it("catálogo tem os 6 temas", () => {
+    expect(ids).toEqual(["dark", "light", "midnight", "violet", "sand", "onsen"]);
   });
 
   it("todo tema adicional tem bloco de cores completo no CSS", () => {
     const tokens = ["--bg", "--bg-elevated", "--bg-card", "--bg-hover", "--border", "--text", "--text-muted", "--accent", "--accent-fg", "--danger", "--success"];
-    for (const id of ["midnight", "violet", "sand"]) {
+    for (const id of ["midnight", "violet", "sand", "onsen"]) {
       const block = new RegExp(`:root\\[data-theme="${id}"\\] \\{([\\s\\S]*?)\\n\\}`).exec(css)?.[1];
       expect(block, `bloco CSS de ${id}`).toBeTruthy();
       for (const token of tokens) expect(block).toContain(`${token}:`);

@@ -80,6 +80,13 @@ const api = {
     addAllowedDir: (dir?: string) => invoke<AppSettings>("settings:addAllowedDir", dir),
     removeAllowedDir: (dir: string) => invoke<AppSettings>("settings:removeAllowedDir", dir),
   },
+  profile: {
+    /** Foto de perfil como data URL, ou null se não houver. */
+    getAvatar: () => invoke<string | null>("profile:getAvatar"),
+    /** Abre o seletor de imagens; devolve a foto nova ou null se cancelar. */
+    pickAvatar: () => invoke<string | null>("profile:pickAvatar"),
+    removeAvatar: () => invoke<null>("profile:removeAvatar"),
+  },
   system: {
     info: () => invoke<SystemInfo>("system:info"),
     /** Memória usada pelo app (todos os processos), em MB. */

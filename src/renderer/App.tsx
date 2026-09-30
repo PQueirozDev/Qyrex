@@ -97,12 +97,13 @@ export function App() {
   const quickTaskOpen = useUIStore((s) => s.quickTaskOpen);
   const setQuickTaskOpen = useUIStore((s) => s.setQuickTaskOpen);
   const setOnline = useUIStore((s) => s.setOnline);
-  const { settings, load, loadSystem } = useSettingsStore();
+  const { settings, load, loadSystem, loadAvatar } = useSettingsStore();
 
   useEffect(() => {
     void load();
     void loadSystem();
-  }, [load, loadSystem]);
+    void loadAvatar();
+  }, [load, loadSystem, loadAvatar]);
 
   useEffect(() => (settings ? applyTheme(settings.theme) : undefined), [settings?.theme, settings]);
 

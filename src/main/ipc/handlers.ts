@@ -28,6 +28,7 @@ import * as v from "../security/validation.js";
 import { createLogger, getLogDir } from "../logger.js";
 import { translate } from "../../shared/i18n.js";
 import * as updateService from "../services/updateService.js";
+import * as profileService from "../services/profileService.js";
 import * as usageService from "../services/usageService.js";
 import { getDiscordStatus, setDiscordActivity } from "../integrations/discord.js";
 
@@ -159,6 +160,10 @@ export function registerIpcHandlers(): void {
   handle("system:pickDirectory", (e, title) =>
     systemService.pickDirectory(windowOf(e), title === undefined ? undefined : v.parse(z.string().max(120), title))
   );
+  // Foto de perfil: o arquivo vem sempre do seletor nativo, nunca de um caminho do renderer.
+  handle("profile:getAvatar", () => profileService.getAvatar());
+  handle("profile:pickAvatar", (e) => profileService.pickAvatar(windowOf(e)));
+  handle("profile:removeAvatar", () => profileService.removeAvatar());
   handle("system:pickVSCode", async (e) => {
     const picked = await systemService.pickExecutable(windowOf(e));
     return picked ? systemService.setVSCodePath(picked) : null;

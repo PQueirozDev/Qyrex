@@ -172,8 +172,52 @@ const save = () => {
 };
 export function resetDemo() {
   sessionStorage.removeItem(KEY);
+  sessionStorage.removeItem(AVATAR_KEY);
   localStorage.removeItem("qrz.theme");
   location.reload();
+}
+
+// Foto de perfil da demo: escolhida por um <input type="file"> do navegador,
+// recortada no quadrado central por um canvas (256 px) e guardada só na sessão.
+const AVATAR_KEY = "qrz-demo-avatar";
+function readDemoAvatar(): string | null {
+  try {
+    return sessionStorage.getItem(AVATAR_KEY);
+  } catch {
+    return null;
+  }
+}
+function writeDemoAvatar(url: string | null) {
+  try {
+    if (url) sessionStorage.setItem(AVATAR_KEY, url);
+    else sessionStorage.removeItem(AVATAR_KEY);
+  } catch {
+    // sem storage: a foto vale só até recarregar
+  }
+}
+function pickDemoAvatar(): Promise<string | null> {
+  return new Promise((resolve) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/png,image/jpeg,image/webp,image/gif,image/bmp";
+    input.addEventListener("cancel", () => resolve(null));
+    input.addEventListener("change", () => {
+      const file = input.files?.[0];
+      if (!file) return resolve(null);
+      const img = new Image();
+      img.onload = () => {
+        const side = Math.min(img.naturalWidth, img.naturalHeight);
+        const canvas = document.createElement("canvas");
+        canvas.width = canvas.height = 256;
+        canvas.getContext("2d")?.drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, 256, 256);
+        URL.revokeObjectURL(img.src);
+        resolve(canvas.toDataURL("image/png"));
+      };
+      img.onerror = () => resolve(null);
+      img.src = URL.createObjectURL(file);
+    });
+    input.click();
+  });
 }
 
 // ---------------------------------------------------------------------------------
@@ -359,6 +403,18 @@ export const workspaceMock: WorkspaceApi = {
     },
     addAllowedDir: () => fail("Na demo, as pastas já vêm autorizadas (C:\\Projetos)."),
     removeAllowedDir: () => fail("Na demo não é possível remover a pasta de exemplo."),
+  },
+  profile: {
+    getAvatar: () => ok(readDemoAvatar(), 10),
+    pickAvatar: async () => {
+      const url = await pickDemoAvatar();
+      if (url) writeDemoAvatar(url);
+      return ok(url, 10);
+    },
+    removeAvatar: () => {
+      writeDemoAvatar(null);
+      return ok(null, 10);
+    },
   },
   system: {
     info: () => ok({ platform: "win32", appVersion: APP_VERSION, vscodePath: db.settings.vscodePath, logsDir: null, terminalAvailable: true }, 20),

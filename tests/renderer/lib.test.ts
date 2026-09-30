@@ -70,7 +70,7 @@ describe("temas", () => {
   });
 
   it("temas escuros e claros marcados corretamente", () => {
-    expect(THEMES.filter((t) => t.dark).map((t) => t.id)).toEqual(["dark", "midnight", "violet"]);
+    expect(THEMES.filter((t) => t.dark).map((t) => t.id)).toEqual(["dark", "midnight", "violet", "onsen"]);
     expect(THEMES.filter((t) => !t.dark).map((t) => t.id)).toEqual(["light", "sand"]);
   });
 });

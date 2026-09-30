@@ -4,9 +4,9 @@ Guia para o Claude Code continuar o **Qyrex**: um app desktop (Electron + React 
 
 Sempre responda e comente o código em **português do Brasil**, com acentuação correta.
 
-## Estado atual (v1.7.1)
+## Estado atual (v1.8.0)
 
-App completo e publicado. `npm run check` passa (typecheck, lint sem warnings e 208 testes; 3 testes de caminho do Windows são pulados fora do Windows). `npm run e2e` passa (26 etapas pela interface, com as APIs simuladas).
+App completo e publicado. `npm run check` passa (typecheck, lint sem warnings e 211 testes; 3 testes de caminho do Windows são pulados fora do Windows). `npm run e2e` passa (26 etapas pela interface, com as APIs simuladas).
 
 ### Feito
 - **Nome e marca (1.7.0)**: o app se chamava QrzSpace e virou **Qyrex** (open source, licença MIT). O `appId` continua `com.pedroqueiroz.qrzspace` de propósito (o instalador novo substitui o antigo e o atalho fixado continua valendo). A pasta de dados mudou com o nome: `src/main/legacyData.ts` copia `%APPDATA%/QrzSpace` para `%APPDATA%/Qyrex` na primeira abertura (nunca sobrescreve um banco existente; a pasta antiga fica como backup).
@@ -15,7 +15,7 @@ App completo e publicado. `npm run check` passa (typecheck, lint sem warnings e 
 - `src/main/**`: ipc/handlers com validação zod e checagem de remetente, services, integrações (Claude via `@anthropic-ai/sdk`, OpenAI e Gemini via REST, GitHub com PAT, Spotify com PKCE, Google Calendar com OAuth loopback, Discord Rich Presence via named pipe), segurança (paths, commands, exec, secrets, validation), logger com redaction (inclusive cookies), notificações, terminal node-pty, tray, CSP e atualização automática (`services/updateService.ts`, electron-updater).
 - `src/preload/index.ts`: API completa em `window.workspace` (fonte da verdade dos canais IPC).
 - Renderer: todas as páginas, incluindo **Novidades** (`pages/PatchNotes.tsx`) e **Configurações** com seletor visual de temas, idioma, Discord e atualizações.
-- **Temas**: `lib/themes.ts` (catálogo) + blocos `:root[data-theme="<id>"]` em `styles/index.css`. Temas: dark, light, midnight, violet, sand (+ system).
+- **Temas**: `lib/themes.ts` (catálogo) + blocos `:root[data-theme="<id>"]` em `styles/index.css`. Temas: dark, light, midnight, violet, sand, onsen (+ system). "Onsen" usa as cores da marca (azul-noite e laranja #ff9a3c, iguais ao site). No seletor, "Sistema" ocupa a linha inteira para a grade fechar.
 - **Idioma (i18n)**: textos em português são a chave; `src/shared/locales/en.ts` traduz. Renderer usa `tr()` de `@/lib/i18n`; main usa `translate(lang, ...)` de `shared/i18n`; textos que só são traduzidos depois (enviados por variável) são marcados com `tm()`. O teste `tests/i18n.test.ts` falha se faltar tradução, se sobrar chave morta ou se placeholders `{x}` não baterem. `node scripts/i18n-keys.cjs --missing` lista o que falta.
 - **Uso da IA**: `services/usageService.ts` registra tokens (só contadores) em `ai_usage` a cada `runStream`; providers informam via `onUsage`. Custo estimado só para modelos com preço conhecido (tabela Anthropic em `PRICES`). Aba "Uso" em `components/AIUsageView.tsx`.
 - **IA pela assinatura**: `integrations/cli/subscriptions.ts` roda o Claude Code (`claude -p`, stream-json) e o Codex (`codex exec --json`) já logados no PC, com TODAS as ferramentas desligadas, cwd vazio e sessão efêmera. `aiService` usa isso quando `integrations.metadata.authMode === "subscription"` (Claude → claude, OpenAI → codex). Uso registrado como `claude-code/<modelo>` / `codex/<modelo>` (sem custo).
@@ -24,8 +24,9 @@ App completo e publicado. `npm run check` passa (typecheck, lint sem warnings e 
 - **Visual (1.6.0)**: `lib/pageIcons.ts` (`PAGE_ICONS`, ícone único por área: sidebar e `PageHeader icon`), `Avatar` (cor estável por nome, classe `.avatar`), `.surface` (véu de luz nos cards escuros), `.skeleton` (carregamento com brilho), checkbox e `select.input` estilizados no CSS global (não use `accent-*` nem seta nativa), pílula ativa com `layoutId` na sidebar/Configurações, kanbans com destaque de coluna ao arrastar.
 - **HUD**: biblioteca `motion` (layout/spring). Barra de título nativa escondida (`titleBarOverlay`, cores sincronizadas com o tema via `system:setTitleBarColors`); `.drag-region`/`.no-drag`/`.titlebar-safe`, `.press`, `.shine`, `AnimatedValue`, `Segmented` com pílula deslizante.
 - **Ícone**: fonte em `build/icon.svg` (cópia em `src/renderer/assets/logo.svg` para a barra lateral). `npm run icons` rasteriza pelo Electron e gera `build/icon.png` + `build/icon.ico` (PNG embutido). A atividade do Discord usa `icon.png` do repositório público QrzSpace-releases.
+- **Foto de perfil (1.8.0)**: `services/profileService.ts`. A imagem vem SEMPRE do seletor nativo (`profile:pickAvatar`, o renderer nunca manda caminho), é recortada no quadrado central (`centerSquare`), reduzida para 256 px e salva em `<userData>/avatar.png`; vai para a UI como data URL. Estado em `useSettingsStore.avatar`; componente `components/ProfileAvatar.tsx` (foto ou iniciais) na sidebar, no Início, em Configurações → Geral e no onboarding. Na demo, `<input type=file>` + canvas, só na sessão.
 - **Notion**: `integrations/notion.ts` (token de integração interna no cofre, `Notion-Version: 2022-06-28`, URL em `endpoints.notion()`). Busca, leitura (blocos → Markdown, até ~400 blocos), criação de página em página ou banco (acha a propriedade de título). Aba `pages/Notion.tsx`; "Perguntar à IA" usa `useAIStore.pendingDraft` (amarrado à conversa, idempotente).
-- **Demo web (portfólio)**: `npm run build:demo` gera `dist-demo/` com a interface REAL do renderer e `window.workspace` simulado (`src/demo/workspaceMock.ts`, tipado como `WorkspaceApi`: se um canal novo entrar no preload, o typecheck obriga a simular). Dados fictícios em sessionStorage. Publicar = copiar `dist-demo/` para `pq-portfolio/qrzspace-demo/`.
+- **Demo web (portfólio)**: `npm run build:demo` gera `dist-demo/` com a interface REAL do renderer e `window.workspace` simulado (`src/demo/workspaceMock.ts`, tipado como `WorkspaceApi`: se um canal novo entrar no preload, o typecheck obriga a simular). Dados fictícios em sessionStorage. Publicar = copiar `dist-demo/` para `pq-portfolio/qyrex-demo/` (o antigo `/qrzspace-demo/` redireciona).
 - **Patch notes**: `src/shared/changelog.ts` (pt/en). O teste exige que a versão do `package.json` seja a primeira entrada.
 - **Atualizações**: publicadas em **PQueirozDev/QrzSpace-releases** (repositório público com os instaladores; o feed de atualização dos apps já instalados aponta para ele). `npm run release` gera o instalador e cria a release com o `gh` (patch notes do changelog em pt e en).
 
@@ -110,4 +111,4 @@ tests/             # vitest; tests/setup.ts mocka "electron"; helpers.ts cria ba
 - Não use `window.prompt`/`window.confirm` (não funcionam no Electron). Use `promptText`/`confirmAction`.
 - Visual: dark premium e minimalista (Linear/Raycast/Vercel). Use tokens `bg`, `bg-elevated`, `bg-card`, `bg-hover`, `border(-subtle)`, `text(-muted|-faint)`, `accent`, `danger/success/warning`, as classes `.input`, `.label`, `.section-title` e as animações `animate-pop-in`/`fade-in`/`slide-in`.
 - Modelos Claude: padrão `claude-opus-5`. Lista viva via `models.list` e fallback em `providers/anthropic.ts`.
-- Commits pequenos por etapa. Rode `npm run check` antes de cada commit.
+- Commits pequenos por etapa. Rode `npm run check` antes de cada commit. Autor: `Pedro Queiroz <pedrohenriqueiroz158@gmail.com>`, sem `Co-Authored-By` de IA (pedido do usuário).

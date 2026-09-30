@@ -32,6 +32,7 @@ import { PRIORITY_LABEL } from "@/components/TaskFormDialog";
 
 import { getLocale, tr, trn } from "@/lib/i18n";
 import { AnimatedValue } from "@/components/ui/AnimatedValue";
+import { ProfileAvatar } from "@/components/ProfileAvatar";
 const ACTIVITY_ICON: Record<string, typeof Code2> = {
   project: Code2,
   file: FileText,
@@ -115,6 +116,7 @@ export function Dashboard() {
   const { projects, loaded: projectsLoaded, load: loadProjects, open: openProject } = useProjectsStore();
   const { clients, load: loadClients } = useClientsStore();
   const settings = useSettingsStore((s) => s.settings);
+  const avatar = useSettingsStore((s) => s.avatar);
 
   const [events, setEvents] = useState<CalendarEvent[] | null>(null);
   const [activity, setActivity] = useState<RecentItem[]>([]);
@@ -185,25 +187,28 @@ export function Dashboard() {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-[26px] font-semibold leading-tight tracking-tight text-text">
-            {greeting()}
-            {settings?.userName && (
-              <>
-                {", "}
-                <span className="bg-gradient-to-r from-accent to-accent-hover bg-clip-text text-transparent">{settings.userName}</span>
-              </>
-            )}
-          </h1>
-          <p className="mt-0.5 text-sm first-letter:uppercase text-text-muted">
-            {new Date().toLocaleDateString(getLocale(), { weekday: "long", day: "numeric", month: "long" })}
-            {" · "}
-            <span className="normal-case">
-              {trn(focusTasks.length, "{n} tarefa em foco", "{n} tarefas em foco")}
+        <div className="flex items-center gap-4">
+          {avatar && <ProfileAvatar size={54} className="shadow-card ring-2 ring-accent/30" />}
+          <div>
+            <h1 className="text-[26px] font-semibold leading-tight tracking-tight text-text">
+              {greeting()}
+              {settings?.userName && (
+                <>
+                  {", "}
+                  <span className="bg-gradient-to-r from-accent to-accent-hover bg-clip-text text-transparent">{settings.userName}</span>
+                </>
+              )}
+            </h1>
+            <p className="mt-0.5 text-sm first-letter:uppercase text-text-muted">
+              {new Date().toLocaleDateString(getLocale(), { weekday: "long", day: "numeric", month: "long" })}
               {" · "}
-              {trn(todayEvents.length, "{n} compromisso hoje", "{n} compromissos hoje")}
-            </span>
-          </p>
+              <span className="normal-case">
+                {trn(focusTasks.length, "{n} tarefa em foco", "{n} tarefas em foco")}
+                {" · "}
+                {trn(todayEvents.length, "{n} compromisso hoje", "{n} compromissos hoje")}
+              </span>
+            </p>
+          </div>
         </div>
       </div>
 

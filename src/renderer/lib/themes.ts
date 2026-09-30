@@ -51,6 +51,13 @@ export const THEMES: ThemeDefinition[] = [
     dark: false,
     preview: { bg: "#f7f3ec", sidebar: "#fbf8f3", card: "#fffdf9", border: "#e7dfd2", text: "#2b241c", muted: "#978a78", accent: "#c95a26" },
   },
+  {
+    id: "onsen",
+    name: tr("Onsen"),
+    description: tr("Noite azul e laranja de yuzu, as cores da capivara."),
+    dark: true,
+    preview: { bg: "#0d1020", sidebar: "#11152a", card: "#151a32", border: "#282f52", text: "#eef0f8", muted: "#6870a0", accent: "#ff9a3c" },
+  },
 ];
 
 export const THEME_IDS = THEMES.map((t) => t.id);

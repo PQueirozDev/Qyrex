@@ -1,12 +1,12 @@
 import type { LucideIcon } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/cn";
-import { initials } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { PAGE_ICONS } from "@/lib/pageIcons";
 import { useUIStore, type Page } from "@/stores/useUIStore";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { MiniPlayer } from "@/components/MiniPlayer";
+import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { CHANGELOG, compareVersions } from "@shared/changelog";
 import logoUrl from "@/assets/logo.svg";
 
@@ -131,12 +131,11 @@ export function Sidebar() {
         className="press mx-2 mb-2 flex items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-bg-hover"
         title={tr("Configurações")}
       >
-        <span className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent/30 to-accent/10 text-[11px] font-semibold text-accent ring-1 ring-accent/25">
-          {initials(settings?.userName ?? "", "Q")}
+        <ProfileAvatar size={28}>
           <span
             className={cn("absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-bg-elevated", online ? "bg-success" : "bg-text-faint")}
           />
-        </span>
+        </ProfileAvatar>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[12px] font-medium text-text">{settings?.userName || tr("Você")}</span>
           <span className="block text-[11px] text-text-faint">{online ? tr("Online") : tr("Offline")}</span>
