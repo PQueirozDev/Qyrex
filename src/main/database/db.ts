@@ -97,6 +97,7 @@ interface SettingsRow {
   discord: string;
   auto_update: number;
   last_seen_version: string | null;
+  splash_animation: number;
 }
 
 const DEFAULT_DISCORD: DiscordPrefs = { enabled: false, clientId: null, showProject: false };
@@ -129,6 +130,7 @@ export function getSettings(): AppSettings {
     discord: { ...DEFAULT_DISCORD, ...parseJson<Partial<DiscordPrefs>>(row.discord, {}) },
     autoUpdate: Boolean(row.auto_update),
     lastSeenVersion: row.last_seen_version,
+    splashAnimation: Boolean(row.splash_animation),
   };
 }
 
@@ -142,7 +144,8 @@ export function updateSettings(partial: Partial<AppSettings>): AppSettings {
         allowed_project_dirs = ?, default_terminal = ?,
         ai_default_provider = ?, ai_default_model = ?,
         notifications = ?, onboarding_completed = ?, vscode_path = ?,
-        language = ?, discord = ?, auto_update = ?, last_seen_version = ?
+        language = ?, discord = ?, auto_update = ?, last_seen_version = ?,
+        splash_animation = ?
        WHERE id = 1`
     )
     .run(
@@ -160,7 +163,8 @@ export function updateSettings(partial: Partial<AppSettings>): AppSettings {
       merged.language,
       JSON.stringify(merged.discord),
       merged.autoUpdate ? 1 : 0,
-      merged.lastSeenVersion
+      merged.lastSeenVersion,
+      merged.splashAnimation ? 1 : 0
     );
 
   return merged;

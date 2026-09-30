@@ -10,6 +10,7 @@ import type {
   AIMessage,
   AIProviderId,
   AIProviderStatus,
+  AppUsageSummary,
   AIStreamChunk,
   AIUsageRecord,
   AIUsageSummary,
@@ -132,6 +133,7 @@ function seed() {
     aiDefaultModel: null,
     notifications: { tasks: true, events: true, billing: true, marketing: true },
     onboardingCompleted: true,
+    splashAnimation: true,
     vscodePath: "C:\\Program Files\\Microsoft VS Code\\Code.exe",
   };
   const changes: Record<string, GitChangedFile[]> = {
@@ -279,6 +281,38 @@ async function runStream(requestId: string, provider: AIProviderId, model: strin
   stream.emit({ requestId, type: "done" });
 }
 
+/** Histórico de exemplo do tempo de uso do app (determinístico; fins de semana com menos uso). */
+function appUsageSummary(days: number): AppUsageSummary {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const key = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  let rnd = 11;
+  const next = () => ((rnd = (rnd * 9301 + 49297) % 233280) / 233280);
+  const all: AppUsageSummary["days"] = [];
+  for (let i = 199; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const weekend = d.getDay() === 0 || d.getDay() === 6;
+    const skip = i > 12 && next() < (weekend ? 0.65 : 0.18);
+    const seconds = skip ? 0 : Math.round((weekend ? 1800 : 5400) + next() * (weekend ? 3600 : 14400)) - (i === 0 ? 3600 : 0);
+    all.push({ day: key(d), seconds: Math.max(0, seconds), sessions: skip ? 0 : 1 + Math.floor(next() * 3) });
+  }
+  const used = all.filter((d) => d.seconds > 0);
+  let current = 0;
+  for (let i = all.length - 1; i >= 0 && all[i].seconds > 0; i--) current++;
+  let longest = 0;
+  let run = 0;
+  for (const d of all) longest = Math.max(longest, (run = d.seconds > 0 ? run + 1 : 0));
+  return {
+    days: all.slice(-days),
+    todaySeconds: all[all.length - 1].seconds,
+    totalSeconds: used.reduce((s, d) => s + d.seconds, 0),
+    activeDays: used.length,
+    currentStreak: current,
+    longestStreak: longest,
+    firstDay: all[0].day,
+  };
+}
+
 function usageSummary(days: number | null): AIUsageSummary {
   // Histórico de exemplo dos últimos 30 dias + o que foi usado nesta visita.
   const byDay: AIUsageSummary["byDay"] = [];
@@ -415,6 +449,9 @@ export const workspaceMock: WorkspaceApi = {
       writeDemoAvatar(null);
       return ok(null, 10);
     },
+  },
+  appUsage: {
+    summary: (days: number) => ok(appUsageSummary(days), 40),
   },
   system: {
     info: () => ok({ platform: "win32", appVersion: APP_VERSION, vscodePath: db.settings.vscodePath, logsDir: null, terminalAvailable: true }, 20),

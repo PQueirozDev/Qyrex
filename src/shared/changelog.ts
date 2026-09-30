@@ -22,6 +22,35 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.9.0",
+    date: "2026-09-30",
+    title: { pt: "Animação de abertura e seu tempo de uso", en: "Opening animation and your usage time" },
+    sections: [
+      {
+        kind: "new",
+        items: [
+          {
+            pt: "Seu uso do Qyrex: no Início, o botão \"Hoje\" mostra quanto tempo você usou o app hoje e abre o histórico com dias usados, média por dia, sequência de dias, os últimos 7 dias e um mapa dos últimos 6 meses. Só conta com a janela aberta e o PC em uso.",
+            en: "Your Qyrex usage: on Home, the \"Today\" button shows how long you used the app today and opens the history with days used, daily average, day streak, the last 7 days and a map of the last 6 months. It only counts with the window open and the PC in use.",
+          },
+          {
+            pt: "Animação de abertura: a capivara entra com mola, o nome sobe letra a letra e a tela se dissolve no app. Dá para desligar em Configurações → Aparência.",
+            en: "Opening animation: the capybara springs in, the name rises letter by letter and the screen dissolves into the app. You can turn it off in Settings → Appearance.",
+          },
+        ],
+      },
+      {
+        kind: "improved",
+        items: [
+          {
+            pt: "A foto de perfil já vem com o ícone do Qyrex. Para trocar, vá em Configurações → Geral; \"Usar ícone padrão\" volta para a capivara.",
+            en: "Your profile photo now starts as the Qyrex icon. To change it, go to Settings → General; \"Use default icon\" brings the capybara back.",
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: "1.8.0",
     date: "2026-09-30",
     title: { pt: "Foto de perfil e tema Onsen", en: "Profile photo and Onsen theme" },

@@ -6,6 +6,7 @@ import type {
   AIProviderStatus,
   AIStreamChunk,
   AIUsageSummary,
+  AppUsageSummary,
   AppCommand,
   AppSettings,
   AttachedFileRef,
@@ -86,6 +87,10 @@ const api = {
     /** Abre o seletor de imagens; devolve a foto nova ou null se cancelar. */
     pickAvatar: () => invoke<string | null>("profile:pickAvatar"),
     removeAvatar: () => invoke<null>("profile:removeAvatar"),
+  },
+  appUsage: {
+    /** Tempo de uso do Qyrex por dia nos últimos `days` dias (1 a 366). */
+    summary: (days: number) => invoke<AppUsageSummary>("appUsage:summary", days),
   },
   system: {
     info: () => invoke<SystemInfo>("system:info"),

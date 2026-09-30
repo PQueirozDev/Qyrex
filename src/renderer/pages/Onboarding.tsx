@@ -161,12 +161,12 @@ export function Onboarding() {
                 <input className="input text-[15px]" value={name} onChange={(e) => setName(e.target.value)} placeholder={tr("Seu nome")} autoFocus />
               </div>
               <p className="text-xs text-text-faint">
-                {tr("Foto de perfil opcional: clique no círculo para escolher uma imagem.")}
+                {tr("Sua foto começa com o ícone do Qyrex: clique no círculo para escolher outra.")}
                 {avatar && (
                   <>
                     {" "}
                     <button type="button" className="text-text-muted underline-offset-2 hover:text-danger hover:underline" onClick={() => void removeAvatar()}>
-                      {tr("Remover")}
+                      {tr("Usar ícone padrão")}
                     </button>
                   </>
                 )}

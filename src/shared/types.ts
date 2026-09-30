@@ -405,6 +405,8 @@ export interface AppSettings {
   aiDefaultModel: string | null;
   notifications: NotificationPrefs;
   onboardingCompleted: boolean;
+  /** Animação de abertura (logo + nome) ao abrir a janela. */
+  splashAnimation: boolean;
   vscodePath: string | null;
 }
 
@@ -475,6 +477,26 @@ export interface AIUsageTotals {
   costUsd: number;
   /** Requisições cujo custo não pôde ser estimado (modelo sem preço conhecido). */
   unpricedRequests: number;
+}
+
+/** Tempo com o Qyrex aberto e em uso num dia (data local AAAA-MM-DD). */
+export interface AppUsageDay {
+  day: string;
+  seconds: number;
+  sessions: number;
+}
+
+export interface AppUsageSummary {
+  /** Dias do período pedido, do mais antigo ao mais recente (dias sem uso vêm com 0). */
+  days: AppUsageDay[];
+  todaySeconds: number;
+  totalSeconds: number;
+  activeDays: number;
+  /** Dias seguidos com uso até hoje (ou até ontem, se hoje ainda não contou). */
+  currentStreak: number;
+  longestStreak: number;
+  /** Primeiro dia registrado (todo o histórico), ou null se ainda não há registro. */
+  firstDay: string | null;
 }
 
 export interface AIUsageSummary {

@@ -30,6 +30,7 @@ import { translate } from "../../shared/i18n.js";
 import * as updateService from "../services/updateService.js";
 import * as profileService from "../services/profileService.js";
 import * as usageService from "../services/usageService.js";
+import * as appUsageService from "../services/appUsageService.js";
 import { getDiscordStatus, setDiscordActivity } from "../integrations/discord.js";
 
 const log = createLogger("ipc");
@@ -164,6 +165,7 @@ export function registerIpcHandlers(): void {
   handle("profile:getAvatar", () => profileService.getAvatar());
   handle("profile:pickAvatar", (e) => profileService.pickAvatar(windowOf(e)));
   handle("profile:removeAvatar", () => profileService.removeAvatar());
+  handle("appUsage:summary", (_e, days) => appUsageService.getAppUsageSummary(v.parse(z.number().int().min(1).max(366), days)));
   handle("system:pickVSCode", async (e) => {
     const picked = await systemService.pickExecutable(windowOf(e));
     return picked ? systemService.setVSCodePath(picked) : null;

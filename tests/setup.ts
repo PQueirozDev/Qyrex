@@ -27,6 +27,7 @@ vi.mock("electron", () => {
     dialog: { showOpenDialog: vi.fn(async () => ({ canceled: true, filePaths: [] })) },
     ipcMain: { handle: vi.fn() },
     BrowserWindow: { fromWebContents: () => null },
+    powerMonitor: { getSystemIdleTime: () => 0 },
     Notification: class {
       static isSupported() {
         return false;

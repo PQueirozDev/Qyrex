@@ -33,6 +33,7 @@ import { PRIORITY_LABEL } from "@/components/TaskFormDialog";
 import { getLocale, tr, trn } from "@/lib/i18n";
 import { AnimatedValue } from "@/components/ui/AnimatedValue";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
+import { AppUsageButton } from "@/components/AppUsage";
 const ACTIVITY_ICON: Record<string, typeof Code2> = {
   project: Code2,
   file: FileText,
@@ -116,7 +117,6 @@ export function Dashboard() {
   const { projects, loaded: projectsLoaded, load: loadProjects, open: openProject } = useProjectsStore();
   const { clients, load: loadClients } = useClientsStore();
   const settings = useSettingsStore((s) => s.settings);
-  const avatar = useSettingsStore((s) => s.avatar);
 
   const [events, setEvents] = useState<CalendarEvent[] | null>(null);
   const [activity, setActivity] = useState<RecentItem[]>([]);
@@ -188,7 +188,7 @@ export function Dashboard() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex items-center gap-4">
-          {avatar && <ProfileAvatar size={54} className="shadow-card ring-2 ring-accent/30" />}
+          <ProfileAvatar size={54} className="shadow-card ring-2 ring-accent/30" />
           <div>
             <h1 className="text-[26px] font-semibold leading-tight tracking-tight text-text">
               {greeting()}
@@ -210,6 +210,7 @@ export function Dashboard() {
             </p>
           </div>
         </div>
+        <AppUsageButton />
       </div>
 
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">

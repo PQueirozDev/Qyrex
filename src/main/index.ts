@@ -8,6 +8,7 @@ import { listProjects } from "./services/projectService.js";
 import { detectVSCode, openInVSCode } from "./services/systemService.js";
 import { spawnDetached } from "./security/exec.js";
 import { startNotifications, stopNotifications } from "./services/notificationService.js";
+import { startAppUsageTracker } from "./services/appUsageService.js";
 import { killAll as killAllTerminals } from "./services/terminalService.js";
 import { listIntegrationStatus } from "./services/integrationsService.js";
 import * as googleCalendar from "./integrations/googleCalendar.js";
@@ -290,6 +291,7 @@ app.whenReady().then(() => {
   applyDiscordSettings();
   startAutoUpdate();
   startNotifications(navigate);
+  startAppUsageTracker(() => mainWindow);
   log.info(`Qyrex ${app.getVersion()} iniciado${isDev ? " (dev)" : ""}`);
 
   // Sincronização do Google Calendar sob demanda: só se estiver conectado, e

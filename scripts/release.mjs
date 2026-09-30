@@ -45,7 +45,7 @@ const notes = [
   `## ${entry.title.en}`,
   section("en"),
   "---",
-  "Baixe `Qyrex-Setup-" + pkg.version + ".exe`. Quem já tem o app instalado recebe a atualização automaticamente.",
+  "Baixe `Qyrex-Setup.exe` (mesmo arquivo que `Qyrex-Setup-" + pkg.version + ".exe`). Quem já tem o app instalado recebe a atualização automaticamente.",
 ].join("\n\n");
 
 console.log(`Gerando o instalador ${tag}...`);
@@ -59,6 +59,12 @@ for (const f of files) {
     process.exit(1);
   }
 }
+// Cópia com nome fixo para o botão do site baixar direto:
+// releases/latest/download/Qyrex-Setup.exe sempre aponta para a versão mais nova.
+// O feed de atualização (latest.yml) continua apontando para o arquivo com versão.
+const stable = path.join("release", "Qyrex-Setup.exe");
+fs.copyFileSync(files[0], stable);
+files.push(stable);
 
 console.log(`Publicando ${tag} em ${REPO}...`);
 const notesFile = path.join("release", "release-notes.md");

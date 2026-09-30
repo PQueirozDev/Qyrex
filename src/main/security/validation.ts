@@ -85,6 +85,7 @@ export const settingsPatch = z
       marketing: z.boolean(),
     }),
     onboardingCompleted: z.boolean(),
+    splashAnimation: z.boolean(),
   })
   .partial();
 

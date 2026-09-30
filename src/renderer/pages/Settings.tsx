@@ -333,6 +333,9 @@ export function Settings() {
 
         <Section id="aparencia" title={tr("Aparência")} description={tr("Escolha o tema do Qyrex. A mudança é aplicada na hora.")}>
           <ThemePicker value={settings.theme} onChange={(theme) => void update({ theme })} />
+          <Row label={tr("Animação de abertura")} hint={tr("Mostra a capivara e o nome do Qyrex ao abrir o app.")}>
+            <Switch checked={settings.splashAnimation} onChange={(v) => void update({ splashAnimation: v })} />
+          </Row>
         </Section>
 
         <Section id="idioma" title={tr("Idioma")} description={tr("Idioma da interface, das notificações e das respostas da IA. O app recarrega ao trocar.")}>
@@ -366,7 +369,7 @@ export function Settings() {
         </Section>
 
         <Section id="geral" title={tr("Geral")}>
-          <Row label={tr("Foto de perfil")} hint={tr("Aparece na barra lateral. A imagem é recortada em quadrado e fica só neste PC.")}>
+          <Row label={tr("Foto de perfil")} hint={tr("Por padrão é o ícone do Qyrex. A imagem escolhida é recortada em quadrado e fica só neste PC.")}>
             <div className="flex items-center gap-3">
               <ProfileAvatar size={44} />
               <Button size="sm" variant="secondary" onClick={() => void pickAvatar()}>
@@ -374,7 +377,7 @@ export function Settings() {
               </Button>
               {avatar && (
                 <Button size="sm" variant="ghost" onClick={() => void removeAvatar()}>
-                  <Trash2 size={13} /> {tr("Remover")}
+                  <Trash2 size={13} /> {tr("Usar ícone padrão")}
                 </Button>
               )}
             </div>
