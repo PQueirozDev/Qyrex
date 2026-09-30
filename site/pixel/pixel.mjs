@@ -604,6 +604,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   fs.mkdirSync(ASSETS, { recursive: true });
   const what = process.argv[2] ?? "all";
   if (what === "all" || what === "icon") renderIcon();
-  if (what === "all" || what === "sprite") await renderSprite();
+  if (what === "sprite") await renderSprite(); // fora do "all": o site não usa mais o sprite
   if (what === "all" || what === "video") await renderVideo();
 }

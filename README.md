@@ -1,4 +1,4 @@
-<p align="center"><img src="site/assets/capy.png" width="240" alt="Capivara em pixel art com uma laranja na cabeça, mascote do Qyrex"></p>
+<p align="center"><img src="site/assets/qyrex-onsen-poster.png" width="720" alt="Pixel art do Qyrex: capivara com uma laranja na cabeça num onsen à noite, com um notebook numa bandeja"></p>
 
 # Qyrex
 
@@ -217,8 +217,8 @@ site/pixel/      # pixel art desenhada em código: capivara, cena do onsen, íco
 
 Toda a arte é desenhada em código, pixel a pixel, em `site/pixel/pixel.mjs`: a
 capivara (com a laranja na cabeça), a cena do onsen noturno do vídeo do site
-(96 quadros a 12 fps, recortados e ampliados 5× sem suavização), a folha de
-sprites do topo do site e o ícone 32×32 do app. Para mudar algo, edite o script
+(96 quadros a 12 fps, recortados e ampliados 5× sem suavização) e o ícone
+32×32 do app. Para mudar algo, edite o script
 e rode `node site/pixel/pixel.mjs` e depois `npm run icons`.
 
 ## Contribuir
