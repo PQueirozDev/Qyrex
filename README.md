@@ -7,7 +7,7 @@ reúne projetos, tarefas, arquivos, IA, clientes, marketing, agenda e
 integrações num lugar só. Ele **orquestra** VS Code, terminal, Explorer,
 WhatsApp e Spotify, sem tentar substituir nenhum deles.
 
-**Site:** [site/](site/) (estático, com a pixel art e o vídeo da capivara).
+**Site:** [qyrex.vercel.app](https://qyrex.vercel.app) (código em [site/](site/), com a pixel art e o vídeo da capivara).
 
 **Download:** o instalador para Windows fica nas
 [releases](https://github.com/PQueirozDev/QrzSpace-releases/releases/latest).

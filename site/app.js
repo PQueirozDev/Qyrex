@@ -3,8 +3,9 @@
 // Endereços num lugar só: trocar aqui se o repositório mudar de nome.
 const LINKS = {
   repo: "https://github.com/PQueirozDev/Qyrex",
-  releases: "https://github.com/PQueirozDev/Qyrex/releases",
-  download: "https://github.com/PQueirozDev/Qyrex/releases/latest",
+  // Os instaladores ficam em QrzSpace-releases: é o feed de atualização dos apps já instalados.
+  releases: "https://github.com/PQueirozDev/QrzSpace-releases/releases",
+  download: "https://github.com/PQueirozDev/QrzSpace-releases/releases/latest",
 };
 document.querySelectorAll("[data-link]").forEach((a) => {
   const href = LINKS[a.dataset.link];
