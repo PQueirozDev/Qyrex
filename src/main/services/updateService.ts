@@ -40,7 +40,7 @@ export function attachUpdateListener(target: WebContents): void {
 }
 
 function isSupported(): { ok: true } | { ok: false; reason: string } {
-  if (!app.isPackaged && !process.env.QRZ_UPDATE_TEST_URL) {
+  if (!app.isPackaged && !process.env.QYREX_UPDATE_TEST_URL) {
     return { ok: false, reason: tm("Atualizações só funcionam no app instalado.") };
   }
   if (process.platform !== "win32" && !process.env.APPIMAGE) {
@@ -68,7 +68,7 @@ function init(): void {
 
   // Somente para testar o fluxo localmente: feed num servidor em 127.0.0.1.
   // Qualquer outro endereço é ignorado — a origem de produção é fixa no app.
-  const testUrl = process.env.QRZ_UPDATE_TEST_URL;
+  const testUrl = process.env.QYREX_UPDATE_TEST_URL;
   if (testUrl && /^http:\/\/127\.0\.0\.1:\d+\/?/.test(testUrl)) {
     autoUpdater.forceDevUpdateConfig = !app.isPackaged;
     autoUpdater.setFeedURL({ provider: "generic", url: testUrl });

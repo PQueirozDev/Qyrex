@@ -1,14 +1,20 @@
-# QrzSpace
+<p align="center"><img src="site/assets/capy.png" width="240" alt="Capivara em pixel art com uma laranja na cabeça, mascote do Qyrex"></p>
 
-Central de trabalho desktop de Pedro Queiroz: um app Electron para Windows que
+# Qyrex
+
+Central de trabalho desktop open source: um app Electron para Windows que
 reúne projetos, tarefas, arquivos, IA, clientes, marketing, agenda e
 integrações num lugar só. Ele **orquestra** VS Code, terminal, Explorer,
 WhatsApp e Spotify, sem tentar substituir nenhum deles.
 
-**Download:** a versão mais recente fica em
-[PQueirozDev/QrzSpace-releases](https://github.com/PQueirozDev/QrzSpace-releases/releases/latest)
-(repositório público só com os instaladores; o código é privado). Depois de
-instalado, o app se atualiza sozinho.
+**Site:** [site/](site/) (estático, com a pixel art e o vídeo da capivara).
+
+**Download:** o instalador para Windows fica nas
+[releases](https://github.com/PQueirozDev/QrzSpace-releases/releases/latest).
+Depois de instalado, o app se atualiza sozinho.
+
+> O app se chamava **QrzSpace** até a 1.6.2. Na primeira abertura da 1.7.0, os
+> dados de `%APPDATA%/QrzSpace` são copiados para `%APPDATA%/Qyrex`.
 
 ## Funcionalidades
 
@@ -59,7 +65,7 @@ instalado, o app se atualiza sozinho.
 - **Idioma**: português ou inglês (interface, notificações, menu da bandeja e
   respostas da IA).
 - **Discord Rich Presence** (opcional): mostra no seu perfil do Discord a área
-  do QrzSpace em uso. O nome do projeto só aparece se você ligar essa opção.
+  do Qyrex em uso. O nome do projeto só aparece se você ligar essa opção.
 - **Atualização automática**: ao abrir, o app procura, baixa, confere o SHA-512
   e instala novas versões, com contagem para reiniciar e opção de adiar. Pode
   ser desligada em Configurações.
@@ -96,13 +102,14 @@ npm run typecheck    # tsconfig.main.json + tsconfig.renderer.json
 npm run lint         # eslint, sem nenhum warning permitido
 npm test             # vitest rodando dentro do Electron (mesmo ABI dos módulos nativos)
 npm run check        # typecheck + lint + test
-npm run icons        # regenera build/icon.png e build/icon.ico
+npm run icons        # regenera build/icon.png e build/icon.ico a partir de build/icon.svg
+node site/pixel/pixel.mjs   # redesenha a pixel art: ícone, sprites e vídeo do site (precisa do ffmpeg)
 ```
 
 ## Build e instalador
 
 ```bash
-npm run dist         # gera release/QrzSpace-Setup-<versão>.exe
+npm run dist         # gera release/Qyrex-Setup-<versão>.exe
 ```
 
 O instalador NSIS (x64) é gerado pelo `electron-builder` (config em
@@ -125,7 +132,7 @@ Nunca há downgrade nem pré-release.
 ## Configuração inicial
 
 Na primeira execução, o onboarding pede seu nome e as pastas onde ficam seus
-projetos (ex.: `C:\Projetos`). O QrzSpace **só** lê, lista ou altera arquivos
+projetos (ex.: `C:\Projetos`). O Qyrex **só** lê, lista ou altera arquivos
 dentro dessas pastas. Você gerencia a lista em **Configurações → Pastas
 autorizadas**.
 
@@ -143,7 +150,7 @@ do sistema e aparece na tela só mascarado.
 | Google Agenda | No Google Cloud Console: ative a Google Calendar API e crie um OAuth Client do tipo **App para computador**. Informe o Client ID e o Client Secret. |
 | Spotify | No [Spotify Developer Dashboard](https://developer.spotify.com/dashboard), crie um app com o Redirect URI `http://127.0.0.1:43821/callback`. Só o Client ID é necessário (PKCE). |
 | WhatsApp | Nada: usa os links oficiais (`wa.me` e o app desktop). |
-| Discord (em Configurações) | Em [discord.com/developers](https://discord.com/developers/applications), crie um aplicativo chamado **QrzSpace**, envie `build/icon.png` em Rich Presence → Art Assets com o nome `qrzspace` e cole o Application ID. Precisa do app do Discord aberto no PC. |
+| Discord (em Configurações) | Em [discord.com/developers](https://discord.com/developers/applications), crie um aplicativo chamado **Qyrex**, envie `build/icon.png` em Rich Presence → Art Assets com o nome `qyrex` e cole o Application ID. Precisa do app do Discord aberto no PC. |
 
 ## Segurança
 
@@ -185,6 +192,8 @@ src/
 tests/           # vitest: segurança, banco, IPC, arquivos e integrações
 scripts/         # testes dentro do Electron, cópia das migrations e geração de ícones
 build/           # ícones do app e do instalador
+site/            # site estático (index.html, styles.css, app.js) e assets
+site/pixel/      # pixel art desenhada em código: capivara, cena do onsen, ícone
 ```
 
 ## Roadmap
@@ -196,9 +205,29 @@ build/           # ícones do app e do instalador
 - ✅ Terminal integrado, GitHub, Spotify, WhatsApp (links oficiais),
   notificações
 - ✅ AI Council com síntese
-- ✅ QrzSpace 1.0: temas, idioma PT/EN, Discord Rich Presence, atualização
+- ✅ 1.0 (ainda como QrzSpace): temas, idioma PT/EN, Discord Rich Presence, atualização
   automática e patch notes
+- ✅ 1.7: nome novo (Qyrex), ícone em pixel art e código aberto
 - ⏳ WhatsApp Cloud API oficial (lembretes de cobrança e confirmações)
 - ⏳ Criar e editar eventos no Google Agenda direto pelo app
 - ⏳ Automações entre módulos (ex.: tarefa ao publicar conteúdo, lembrete de
   cobrança)
+
+## Pixel art
+
+Toda a arte é desenhada em código, pixel a pixel, em `site/pixel/pixel.mjs`: a
+capivara (com a laranja na cabeça), a cena do onsen noturno do vídeo do site
+(96 quadros a 12 fps, recortados e ampliados 5× sem suavização), a folha de
+sprites do topo do site e o ícone 32×32 do app. Para mudar algo, edite o script
+e rode `node site/pixel/pixel.mjs` e depois `npm run icons`.
+
+## Contribuir
+
+Issues e pull requests são bem-vindos. Antes de abrir um PR, rode
+`npm run check`. Textos novos na interface usam `tr()` com a tradução em
+`src/shared/locales/en.ts` (o teste de i18n confere). As regras de segurança do
+`CLAUDE.md` valem para qualquer contribuição.
+
+## Licença
+
+[MIT](LICENSE) © Pedro Queiroz

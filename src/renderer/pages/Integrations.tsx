@@ -182,7 +182,7 @@ function AIProviderCard({
     if (
       !(await confirmAction({
         title: tr("Desconectar {name}?", { name: META[id].label }),
-        description: viaSubscription ? tr("O QrzSpace para de usar a sua assinatura. Seu login no {cli} continua.", { cli: sub?.cli ?? "" }) : tr("A chave é apagada do cofre do sistema."),
+        description: viaSubscription ? tr("O Qyrex para de usar a sua assinatura. Seu login no {cli} continua.", { cli: sub?.cli ?? "" }) : tr("A chave é apagada do cofre do sistema."),
         confirmLabel: tr("Desconectar"),
       }))
     )
@@ -302,7 +302,7 @@ function NotionCard({ status, reload }: { status: IntegrationStatus | undefined;
       ) : (
         <>
           <SecretInput value={token} onChange={setToken} placeholder="ntn_..." onEnter={() => void connect()} />
-          <p className="text-[11px] leading-relaxed text-text-faint">{tr("Crie uma integração interna em notion.so/profile/integrations, copie o token e cole aqui. Depois, em cada página que o QrzSpace pode ver: ••• → Conexões → adicione a integração.")}</p>
+          <p className="text-[11px] leading-relaxed text-text-faint">{tr("Crie uma integração interna em notion.so/profile/integrations, copie o token e cole aqui. Depois, em cada página que o Qyrex pode ver: ••• → Conexões → adicione a integração.")}</p>
         </>
       )}
     </IntegrationCard>

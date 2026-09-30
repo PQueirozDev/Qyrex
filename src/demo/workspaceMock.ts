@@ -1,5 +1,5 @@
 /**
- * Implementação SIMULADA de `window.workspace` para a demo web do QrzSpace
+ * Implementação SIMULADA de `window.workspace` para a demo web do Qyrex
  * (portfólio). Roda a interface real do app no navegador, com dados fictícios
  * guardados só no sessionStorage: nada acessa disco, rede, IA ou Windows.
  */
@@ -206,7 +206,7 @@ function answerFor(provider: AIProviderId, prompt: string, kind: "chat" | "counc
     return takes[provider];
   }
   if (/comando|terminal|rodar|instalar|git/.test(p)) {
-    return `Claro! No terminal do projeto:\n\n\`\`\`powershell\ngit status\n\`\`\`\n\nE para subir o ambiente de desenvolvimento:\n\n\`\`\`powershell\nnpm run dev\n\`\`\`\n\nClique em **Executar** em qualquer bloco: o QrzSpace avalia o risco e pede sua permissão antes de rodar.`;
+    return `Claro! No terminal do projeto:\n\n\`\`\`powershell\ngit status\n\`\`\`\n\nE para subir o ambiente de desenvolvimento:\n\n\`\`\`powershell\nnpm run dev\n\`\`\`\n\nClique em **Executar** em qualquer bloco: o Qyrex avalia o risco e pede sua permissão antes de rodar.`;
   }
   if (/post|instagram|marketing|legenda/.test(p)) {
     return "Três ideias de post:\n\n1. **Antes e depois** em carrossel, com o passo a passo no último slide.\n2. **Bastidores** em reel curto (15 s) com música em alta.\n3. **Pergunta da semana** nos stories, respondida no feed na sexta.\n\nQuer que eu escreva as legendas?";
@@ -214,7 +214,7 @@ function answerFor(provider: AIProviderId, prompt: string, kind: "chat" | "counc
   if (/orçamento|preço|cobrar|valor/.test(p)) {
     return "Uma forma simples de montar o orçamento:\n\n| Item | Horas | Valor |\n|---|---|---|\n| Layout | 8 | R$ 800 |\n| Desenvolvimento | 20 | R$ 2.000 |\n| Publicação | 2 | R$ 200 |\n\n**Total: R$ 3.000**, com manutenção mensal opcional de R$ 250.";
   }
-  return `Aqui é o ${who} na demo do QrzSpace. 👋\n\nNo app de verdade eu respondo pela sua **assinatura** (Claude Code / Codex) ou por API key, com o contexto do projeto e dos arquivos que você anexar.\n\nExperimente pedir: *"me passe um comando para rodar o projeto"*, *"ideias de post"* ou *"monte um orçamento"*.`;
+  return `Aqui é o ${who} na demo do Qyrex. 👋\n\nNo app de verdade eu respondo pela sua **assinatura** (Claude Code / Codex) ou por API key, com o contexto do projeto e dos arquivos que você anexar.\n\nExperimente pedir: *"me passe um comando para rodar o projeto"*, *"ideias de post"* ou *"monte um orçamento"*.`;
 }
 
 async function runStream(requestId: string, provider: AIProviderId, model: string, text: string, source: AIUsageRecord["source"], onDone?: (full: string) => void) {
@@ -501,7 +501,7 @@ export const workspaceMock: WorkspaceApi = {
     preview: (p) => {
       if (p.endsWith(".png") || p.endsWith(".ico")) return ok({ kind: "image" as const, dataUrl: cover("#6f5cff", "#2ed3ee", "☕") });
       if (p.endsWith("package.json")) return ok({ kind: "text" as const, language: "json", truncated: false, content: '{\n  "name": "cafe-aurora",\n  "scripts": { "dev": "next dev", "build": "next build" },\n  "dependencies": { "next": "^15.0.0", "react": "^19.0.0" }\n}' });
-      return ok({ kind: "text" as const, language: p.endsWith(".md") ? "markdown" : "typescript", truncated: false, content: p.endsWith(".md") ? "# Projeto de exemplo\n\nArquivo fictício da demo do QrzSpace." : "export function hello() {\n  return 'Olá da demo do QrzSpace';\n}\n" });
+      return ok({ kind: "text" as const, language: p.endsWith(".md") ? "markdown" : "typescript", truncated: false, content: p.endsWith(".md") ? "# Projeto de exemplo\n\nArquivo fictício da demo do Qyrex." : "export function hello() {\n  return 'Olá da demo do Qyrex';\n}\n" });
     },
     search: (query) => ok(allFiles().filter((f) => f.name.toLowerCase().includes(query.toLowerCase())).slice(0, 30)),
     isAllowed: (p) => ok(p.toLowerCase().startsWith(ROOT.toLowerCase())),
@@ -702,7 +702,7 @@ export const workspaceMock: WorkspaceApi = {
     create: async (input) => {
       const id = uid();
       terms.set(id, { cwd: input.cwd, line: "" });
-      setTimeout(() => termData.emit({ id, data: `\x1b[38;5;141mQrzSpace\x1b[0m · terminal de demonstração\r\nNo app desktop este é um PowerShell de verdade.\r\nTente: \x1b[36mdir\x1b[0m, \x1b[36mgit status\x1b[0m, \x1b[36mnpm run dev\x1b[0m${prompt(input.cwd)}` }), 150);
+      setTimeout(() => termData.emit({ id, data: `\x1b[38;5;141mQyrex\x1b[0m · terminal de demonstração\r\nNo app desktop este é um PowerShell de verdade.\r\nTente: \x1b[36mdir\x1b[0m, \x1b[36mgit status\x1b[0m, \x1b[36mnpm run dev\x1b[0m${prompt(input.cwd)}` }), 150);
       return ok({ id, shell: "powershell", cwd: input.cwd });
     },
     write: async (id, data) => {

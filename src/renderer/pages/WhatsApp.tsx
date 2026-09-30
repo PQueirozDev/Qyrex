@@ -147,7 +147,7 @@ export function WhatsApp() {
           <Card>
             <CardHeader title={tr("Sobre a integração")} icon={<Info size={12} />} />
             <CardContent className="space-y-2 text-xs leading-relaxed text-text-muted">
-              <p>{tr("O QrzSpace abre conversas pelos links oficiais (")}<code className="text-text">{tr("wa.me")}</code>{" "}{tr("e o app desktop). Nenhuma mensagem é enviada sem você clicar em enviar no próprio WhatsApp.")}</p>
+              <p>{tr("O Qyrex abre conversas pelos links oficiais (")}<code className="text-text">{tr("wa.me")}</code>{" "}{tr("e o app desktop). Nenhuma mensagem é enviada sem você clicar em enviar no próprio WhatsApp.")}</p>
               <p>{tr("No futuro, o envio automático (lembretes de cobrança, confirmações) será feito pela")}{" "}<span className="text-text">{tr("WhatsApp Cloud API")}</span>{" "}{tr("oficial da Meta — nunca por bibliotecas não oficiais, que colocam o número em risco de banimento.")}</p>
             </CardContent>
           </Card>

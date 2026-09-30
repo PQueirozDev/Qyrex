@@ -1,6 +1,6 @@
 {
   "appId": "com.pedroqueiroz.qrzspace",
-  "productName": "QrzSpace",
+  "productName": "Qyrex",
   "copyright": "Copyright © Pedro Queiroz",
   "directories": {
     "output": "release",
@@ -40,7 +40,7 @@
       }
     ],
     "icon": "build/icon.ico",
-    "artifactName": "QrzSpace-Setup-${version}.${ext}"
+    "artifactName": "Qyrex-Setup-${version}.${ext}"
   },
   "nsis": {
     "oneClick": false,
@@ -48,8 +48,8 @@
     "allowToChangeInstallationDirectory": true,
     "createDesktopShortcut": true,
     "createStartMenuShortcut": true,
-    "shortcutName": "QrzSpace",
-    "uninstallDisplayName": "QrzSpace",
+    "shortcutName": "Qyrex",
+    "uninstallDisplayName": "Qyrex",
     "installerIcon": "build/icon.ico",
     "uninstallerIcon": "build/icon.ico",
     "deleteAppDataOnUninstall": false,

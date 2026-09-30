@@ -128,7 +128,7 @@ async function codexLimits(exe: string): Promise<CodexRateLimitsResponse> {
     cwd: scratchDir(),
     env: childEnv(),
     timeoutMs: 30_000,
-    start: (write) => write(JSON.stringify({ id: 1, method: "initialize", params: { clientInfo: { name: "qrzspace", title: "QrzSpace", version: "1" } } })),
+    start: (write) => write(JSON.stringify({ id: 1, method: "initialize", params: { clientInfo: { name: "qyrex", title: "Qyrex", version: "1" } } })),
     onLine: (line, write) => {
       let msg: { id?: number; result?: unknown; error?: { message?: string } };
       try {

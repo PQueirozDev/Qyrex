@@ -40,7 +40,7 @@ import { PAGE_ICONS } from "@/lib/pageIcons";
 async function confirmDeleteProject(project: ProjectWithGit): Promise<boolean> {
   const ok = await confirmAction({
     title: tr("Excluir o projeto \"{name}\"?", { name: project.name }),
-    description: tr("Só o cadastro é apagado do QrzSpace. Nenhum arquivo da pasta é excluído."),
+    description: tr("Só o cadastro é apagado do Qyrex. Nenhum arquivo da pasta é excluído."),
     detail: project.localPath,
     danger: true,
     confirmLabel: tr("Excluir"),
@@ -680,7 +680,7 @@ export function Projects() {
       <PageHeader
         title={tr("Projetos")}
         icon={PAGE_ICONS.projetos}
-        description={trn(projects.length, "{n} projeto no QrzSpace", "{n} projetos no QrzSpace")}
+        description={trn(projects.length, "{n} projeto no Qyrex", "{n} projetos no Qyrex")}
         actions={
           <>
             <input className="input w-56 py-1 text-xs" placeholder={tr("Filtrar projetos...")} value={search} onChange={(e) => setSearch(e.target.value)} />

@@ -184,7 +184,7 @@ export function Notion() {
         className="mt-10"
         icon={Plug}
         title={tr("Conecte o seu Notion")}
-        description={tr("Em Integrações, cole o token de uma integração interna do Notion. Depois compartilhe as páginas que o QrzSpace pode ver (••• → Conexões).")}
+        description={tr("Em Integrações, cole o token de uma integração interna do Notion. Depois compartilhe as páginas que o Qyrex pode ver (••• → Conexões).")}
         action={<Button size="sm" onClick={() => navigate("integracoes")}>{tr("Abrir Integrações")}</Button>}
       />
     );

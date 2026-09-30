@@ -8,12 +8,12 @@ import type { AIModelInfo } from "../../../shared/types.js";
 import type { ProviderMessage, ProviderUsage, StreamCallbacks } from "../providers/types.js";
 
 /**
- * "Usar minha assinatura": em vez de API key, o QrzSpace conversa através das
+ * "Usar minha assinatura": em vez de API key, o Qyrex conversa através das
  * CLIs oficiais que o usuário já instalou e logou no PC:
  *   - Claude Code (`claude`), logado com a conta do Claude (Pro/Max);
  *   - Codex CLI (`codex`), logado com a conta do ChatGPT.
  *
- * O QrzSpace nunca lê nem guarda o login dessas contas: só executa o binário
+ * O Qyrex nunca lê nem guarda o login dessas contas: só executa o binário
  * oficial, que usa a própria sessão. Regras de segurança:
  *   - spawn do .exe real com argumentos em array (sem shell);
  *   - TODAS as ferramentas desligadas (a IA não lê arquivos, não roda
@@ -78,7 +78,7 @@ export function childEnv(): NodeJS.ProcessEnv {
 
 /** Pasta vazia onde a CLI roda (ela não tem ferramentas, mas nem o cwd tem nada). */
 export function scratchDir(): string {
-  const dir = path.join(os.tmpdir(), "qrzspace-ai");
+  const dir = path.join(os.tmpdir(), "qyrex-ai");
   fs.mkdirSync(dir, { recursive: true });
   return dir;
 }

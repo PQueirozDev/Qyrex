@@ -1,9 +1,9 @@
 import { app } from "electron";
 
 /**
- * Endereços de todas as APIs externas usadas pelo QrzSpace.
+ * Endereços de todas as APIs externas usadas pelo Qyrex.
  *
- * Para os testes E2E (scripts/e2e), a variável QRZ_TEST_API pode apontar
+ * Para os testes E2E (scripts/e2e), a variável QYREX_TEST_API pode apontar
  * todas elas para um servidor de simulação local. O desvio só é aceito:
  *   - fora do app instalado (app.isPackaged === false), e
  *   - para http://127.0.0.1:<porta>.
@@ -18,7 +18,7 @@ export function testApiBase(): string | null {
     packaged = true;
   }
   if (packaged) return null;
-  const url = process.env.QRZ_TEST_API;
+  const url = process.env.QYREX_TEST_API;
   return url && /^http:\/\/127\.0\.0\.1:\d{2,5}$/.test(url) ? url : null;
 }
 

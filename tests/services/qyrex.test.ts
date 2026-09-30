@@ -47,7 +47,7 @@ describe("Discord Rich Presence (protocolo IPC)", () => {
     expect(buildActivity("inicio", null, false, "pt", 0, "1552906629085794356").assets.large_image).toMatch(
       /^https:\/\/raw\.githubusercontent\.com\/PQueirozDev\/QrzSpace-releases\/main\/icon\.png$/
     );
-    expect(buildActivity("inicio", null, false, "pt", 0, "123456789012345678").assets.large_image).toBe("qrzspace");
+    expect(buildActivity("inicio", null, false, "pt", 0, "123456789012345678").assets.large_image).toBe("qyrex");
   });
 });
 
@@ -67,7 +67,7 @@ describe("configurações novas (idioma, tema, Discord, atualização)", () => {
     const s = getSettings();
     expect(s.language).toBe("pt");
     expect(s.autoUpdate).toBe(true);
-    // App oficial "QrzSpace" no Discord já vem configurado; nome do projeto fica oculto.
+    // App oficial "Qyrex" no Discord já vem configurado; nome do projeto fica oculto.
     expect(s.discord).toEqual({ enabled: true, clientId: "1552906629085794356", showProject: false });
     expect(s.lastSeenVersion).toBeNull();
   });

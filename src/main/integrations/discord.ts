@@ -9,7 +9,7 @@ import { testApiBase } from "./endpoints.js";
 const log = createLogger("discord");
 
 /**
- * Discord Rich Presence ("Jogando QrzSpace") via o protocolo IPC local do
+ * Discord Rich Presence ("Jogando Qyrex") via o protocolo IPC local do
  * próprio app do Discord: um named pipe `\\?\pipe\discord-ipc-N` com frames
  * [opcode int32 LE][tamanho int32 LE][JSON]. Nada sai para a internet a partir
  * do Workspace; quem publica o status é o cliente do Discord do usuário.
@@ -122,17 +122,17 @@ const PAGE_LABEL: Record<string, string> = {
 };
 
 /** Monta a atividade exibida no perfil. Exportado para testes. */
-/** Aplicativo oficial "QrzSpace" no Discord Developer Portal (ID público). */
+/** Aplicativo oficial "Qyrex" no Discord Developer Portal (ID público). */
 export const OFFICIAL_DISCORD_APP_ID = "1552906629085794356";
 /**
  * Com o app oficial, a imagem vai como URL direta (o Discord aceita URLs https
  * externas): aparece mesmo sem o cache de recursos do app e acompanha o ícone
- * publicado no repositório público de releases. Com um Client ID próprio, usa a chave "qrzspace".
+ * publicado no repositório público de releases. Com um Client ID próprio, usa a chave "qyrex".
  */
 const OFFICIAL_LARGE_IMAGE = "https://raw.githubusercontent.com/PQueirozDev/QrzSpace-releases/main/icon.png";
 
 export function largeImageFor(clientId: string | null): string {
-  return clientId === OFFICIAL_DISCORD_APP_ID ? OFFICIAL_LARGE_IMAGE : "qrzspace";
+  return clientId === OFFICIAL_DISCORD_APP_ID ? OFFICIAL_LARGE_IMAGE : "qyrex";
 }
 
 export function buildActivity(
@@ -149,7 +149,7 @@ export function buildActivity(
     details,
     ...(state ? { state } : {}),
     timestamps: { start: Math.floor(start / 1000) },
-    assets: { large_image: largeImageFor(clientId), large_text: "QrzSpace" },
+    assets: { large_image: largeImageFor(clientId), large_text: "Qyrex" },
     instance: false,
   };
 }

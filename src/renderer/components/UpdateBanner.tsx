@@ -80,8 +80,8 @@ export function UpdateBanner() {
       <Sparkles size={14} className="shrink-0 text-accent" />
       <span className="min-w-0 flex-1 text-text">
         {autoUpdate
-          ? tr("QrzSpace {version} está pronto. Reiniciando para atualizar em {s}s...", { version: status.version, s: seconds })
-          : tr("QrzSpace {version} está pronto para instalar.", { version: status.version })}
+          ? tr("Qyrex {version} está pronto. Reiniciando para atualizar em {s}s...", { version: status.version, s: seconds })
+          : tr("Qyrex {version} está pronto para instalar.", { version: status.version })}
       </span>
       <Button size="xs" onClick={() => void attempt(window.workspace.updates.install())}>
         <RotateCw size={12} /> {tr("Reiniciar agora")}
@@ -126,7 +126,7 @@ export function WhatsNewDialog() {
       open={open}
       onClose={close}
       size="md"
-      title={tr("Novidades do QrzSpace {version}", { version: entry.version })}
+      title={tr("Novidades do Qyrex {version}", { version: entry.version })}
       footer={
         <>
           <Button

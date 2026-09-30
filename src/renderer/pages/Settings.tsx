@@ -189,7 +189,7 @@ function DiscordSection() {
       id="discord"
       title={tr("Discord")}
       description={tr(
-        "Mostra no seu perfil do Discord que você está usando o QrzSpace e em qual área. Funciona pelo app do Discord instalado no PC; nada é enviado para a internet pelo QrzSpace."
+        "Mostra no seu perfil do Discord que você está usando o Qyrex e em qual área. Funciona pelo app do Discord instalado no PC; nada é enviado para a internet pelo Qyrex."
       )}
     >
       <Row label={tr("Mostrar atividade no Discord")} hint={<Badge tone={st.tone}>{st.label}</Badge>}>
@@ -215,7 +215,7 @@ function DiscordSection() {
         </div>
         <ol className="mt-2 list-decimal space-y-0.5 pl-4 text-[11px] leading-relaxed text-text-faint">
           <li>
-            {tr("Crie um aplicativo chamado QrzSpace em")}{" "}
+            {tr("Crie um aplicativo chamado Qyrex em")}{" "}
             <button
               className="inline-flex items-center gap-0.5 text-accent hover:underline"
               onClick={() => void window.workspace.system.openExternalUrl("https://discord.com/developers/applications")}
@@ -223,7 +223,7 @@ function DiscordSection() {
               discord.com/developers <ExternalLink size={10} />
             </button>
           </li>
-          <li>{tr("Em Rich Presence → Art Assets, envie o ícone do app com o nome qrzspace.")}</li>
+          <li>{tr("Em Rich Presence → Art Assets, envie o ícone do app com o nome qyrex.")}</li>
           <li>{tr("Copie o Application ID e cole aqui.")}</li>
         </ol>
       </div>
@@ -278,7 +278,7 @@ export function Settings() {
   async function removeDir(dir: string) {
     const ok = await confirmAction({
       title: tr("Remover autorização desta pasta?"),
-      description: tr("O QrzSpace deixa de acessar arquivos dela. Nada é apagado do disco."),
+      description: tr("O Qyrex deixa de acessar arquivos dela. Nada é apagado do disco."),
       detail: dir,
       confirmLabel: tr("Remover"),
     });
@@ -320,7 +320,7 @@ export function Settings() {
       <div className="min-w-0 flex-1 space-y-4 pb-10">
         <h1 className="text-xl font-semibold tracking-tight text-text lg:hidden">{tr("Configurações")}</h1>
 
-        <Section id="aparencia" title={tr("Aparência")} description={tr("Escolha o tema do QrzSpace. A mudança é aplicada na hora.")}>
+        <Section id="aparencia" title={tr("Aparência")} description={tr("Escolha o tema do Qyrex. A mudança é aplicada na hora.")}>
           <ThemePicker value={settings.theme} onChange={(theme) => void update({ theme })} />
         </Section>
 
@@ -365,7 +365,7 @@ export function Settings() {
               onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
             />
           </Row>
-          <Row label={tr("Iniciar com o Windows")} hint={tr("Abre o QrzSpace ao entrar no sistema.")}>
+          <Row label={tr("Iniciar com o Windows")} hint={tr("Abre o Qyrex ao entrar no sistema.")}>
             <Switch checked={settings.startWithSystem} onChange={(v) => void update({ startWithSystem: v })} />
           </Row>
           <Row label={tr("Minimizar para a bandeja")} hint={tr("Fechar a janela mantém o app rodando na bandeja do sistema.")}>
@@ -377,7 +377,7 @@ export function Settings() {
           id="pastas"
           title={tr("Pastas autorizadas")}
           description={tr(
-            "O QrzSpace só lê, lista ou altera arquivos dentro destas pastas. Raízes de disco, pastas do sistema e a pasta do usuário inteira não são aceitas."
+            "O Qyrex só lê, lista ou altera arquivos dentro destas pastas. Raízes de disco, pastas do sistema e a pasta do usuário inteira não são aceitas."
           )}
         >
           {settings.allowedProjectDirs.length === 0 ? (
@@ -525,7 +525,7 @@ export function Settings() {
               Q
             </div>
             <div>
-              <p className="text-sm font-medium text-text">QrzSpace {system ? `v${system.appVersion}` : ""}</p>
+              <p className="text-sm font-medium text-text">Qyrex {system ? `v${system.appVersion}` : ""}</p>
               <p className="text-xs text-text-muted">{tr("Central de trabalho: projetos, tarefas, arquivos, IA, clientes, marketing e integrações.")}</p>
             </div>
           </div>

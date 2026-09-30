@@ -34,13 +34,13 @@ export interface LoopbackResult {
 
 function page(title: string, body: string): string {
   const lang = getSettings().language;
-  return `<!doctype html><html lang="${lang === "en" ? "en" : "pt-BR"}"><meta charset="utf-8"><title>QrzSpace</title>
+  return `<!doctype html><html lang="${lang === "en" ? "en" : "pt-BR"}"><meta charset="utf-8"><title>Qyrex</title>
 <body style="font-family:system-ui;background:#0b0d10;color:#e6e8eb;display:grid;place-items:center;height:100vh;margin:0">
 <div style="text-align:center"><h2>${title}</h2><p>${body}</p></div></body></html>`;
 }
 
 const tr = (text: string) => translate(getSettings().language, text);
-const SUCCESS_HTML = () => page(tr("Conectado ✔"), tr("Você já pode fechar esta aba e voltar ao QrzSpace."));
+const SUCCESS_HTML = () => page(tr("Conectado ✔"), tr("Você já pode fechar esta aba e voltar ao Qyrex."));
 const ERROR_HTML = (msg: string) => page(tr("Não foi possível conectar"), msg.replace(/[<>&"]/g, ""));
 
 /**

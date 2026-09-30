@@ -1,8 +1,8 @@
 {
-  "name": "qrzspace",
-  "productName": "QrzSpace",
-  "version": "1.6.2",
-  "description": "Central de trabalho desktop de Pedro Queiroz — projetos, tarefas, arquivos, IA, clientes, marketing e integrações.",
+  "name": "qyrex",
+  "productName": "Qyrex",
+  "version": "1.7.0",
+  "description": "Central de trabalho desktop open source para devs e freelancers: projetos, tarefas, arquivos, IA, clientes, marketing e integrações num lugar só.",
   "author": "Pedro Queiroz",
   "private": true,
   "main": "dist-electron/main/index.js",

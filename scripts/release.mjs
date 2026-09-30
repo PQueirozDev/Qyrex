@@ -45,14 +45,14 @@ const notes = [
   `## ${entry.title.en}`,
   section("en"),
   "---",
-  "Baixe `QrzSpace-Setup-" + pkg.version + ".exe`. Quem já tem o app instalado recebe a atualização automaticamente.",
+  "Baixe `Qyrex-Setup-" + pkg.version + ".exe`. Quem já tem o app instalado recebe a atualização automaticamente.",
 ].join("\n\n");
 
 console.log(`Gerando o instalador ${tag}...`);
 const build = run(process.execPath, ["node_modules/electron-builder/cli.js", "--win", "--x64", "--publish", "never"], { stdio: "inherit" });
 if (build.status !== 0) process.exit(build.status ?? 1);
 
-const files = [`QrzSpace-Setup-${pkg.version}.exe`, `QrzSpace-Setup-${pkg.version}.exe.blockmap`, "latest.yml"].map((f) => path.join("release", f));
+const files = [`Qyrex-Setup-${pkg.version}.exe`, `Qyrex-Setup-${pkg.version}.exe.blockmap`, "latest.yml"].map((f) => path.join("release", f));
 for (const f of files) {
   if (!fs.existsSync(f)) {
     console.error(`Arquivo esperado não foi gerado: ${f}`);
@@ -65,7 +65,7 @@ const notesFile = path.join("release", "release-notes.md");
 fs.writeFileSync(notesFile, notes);
 const created = run(
   "gh",
-  ["release", "create", tag, ...files, "--repo", REPO, "--title", `QrzSpace ${pkg.version}`, "--notes-file", notesFile, "--latest"],
+  ["release", "create", tag, ...files, "--repo", REPO, "--title", `Qyrex ${pkg.version}`, "--notes-file", notesFile, "--latest"],
   { stdio: "inherit" }
 );
 process.exit(created.status ?? 1);

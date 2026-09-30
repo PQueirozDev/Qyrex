@@ -271,7 +271,7 @@ export function AILimitsIndicator() {
         </button>
       )}
       {memory !== null && (
-        <span className="flex items-center gap-1.5 font-mono text-[12px] tabular-nums text-text-muted" title={tr("Memória usada pelo QrzSpace")}>
+        <span className="flex items-center gap-1.5 font-mono text-[12px] tabular-nums text-text-muted" title={tr("Memória usada pelo Qyrex")}>
           <MemoryStick size={13} className="text-text-faint" />
           {memory} MB
         </span>

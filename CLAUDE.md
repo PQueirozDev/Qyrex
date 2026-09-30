@@ -1,14 +1,17 @@
 # CLAUDE.md
 
-Guia para o Claude Code continuar o **QrzSpace**: um app desktop (Electron + React + TypeScript + SQLite) que funciona como central de trabalho de um dev/freelancer. Ele reúne projetos, tarefas, arquivos, IA, clientes, marketing, agenda, WhatsApp, Spotify e GitHub. O app **orquestra** os programas externos (VS Code, terminal, Explorer) e não recria nenhum deles.
+Guia para o Claude Code continuar o **Qyrex**: um app desktop (Electron + React + TypeScript + SQLite) que funciona como central de trabalho de um dev/freelancer. Ele reúne projetos, tarefas, arquivos, IA, clientes, marketing, agenda, WhatsApp, Spotify e GitHub. O app **orquestra** os programas externos (VS Code, terminal, Explorer) e não recria nenhum deles.
 
 Sempre responda e comente o código em **português do Brasil**, com acentuação correta.
 
-## Estado atual (v1.6.2)
+## Estado atual (v1.7.0)
 
-App completo e publicado. `npm run check` passa (typecheck, lint sem warnings e 205 testes; 3 testes de caminho do Windows são pulados fora do Windows). `npm run e2e` passa (26 etapas pela interface, com as APIs simuladas).
+App completo e publicado. `npm run check` passa (typecheck, lint sem warnings e 208 testes; 3 testes de caminho do Windows são pulados fora do Windows). `npm run e2e` passa (26 etapas pela interface, com as APIs simuladas).
 
 ### Feito
+- **Nome e marca (1.7.0)**: o app se chamava QrzSpace e virou **Qyrex** (open source, licença MIT). O `appId` continua `com.pedroqueiroz.qrzspace` de propósito (o instalador novo substitui o antigo e o atalho fixado continua valendo). A pasta de dados mudou com o nome: `src/main/legacyData.ts` copia `%APPDATA%/QrzSpace` para `%APPDATA%/Qyrex` na primeira abertura (nunca sobrescreve um banco existente; a pasta antiga fica como backup).
+- **Pixel art**: `site/pixel/pixel.mjs` desenha em código a capivara com a laranja, a cena do onsen (vídeo do site, precisa do ffmpeg), a folha de sprites e o ícone 32×32 (`build/icon.svg` + `src/renderer/assets/logo.svg`). Depois de mudar o ícone, rode `npm run icons`. O logo da sidebar fica em 32 px com `image-rendering: pixelated` (tamanho inteiro, senão borra).
+- **Site**: `site/` é estático (index.html, styles.css, app.js, assets/). Links do repositório/download ficam em `LINKS` no topo de `site/app.js`. O screenshot `site/assets/app-inicio.webp` sai da demo (`npm run build:demo`).
 - `src/main/**`: ipc/handlers com validação zod e checagem de remetente, services, integrações (Claude via `@anthropic-ai/sdk`, OpenAI e Gemini via REST, GitHub com PAT, Spotify com PKCE, Google Calendar com OAuth loopback, Discord Rich Presence via named pipe), segurança (paths, commands, exec, secrets, validation), logger com redaction (inclusive cookies), notificações, terminal node-pty, tray, CSP e atualização automática (`services/updateService.ts`, electron-updater).
 - `src/preload/index.ts`: API completa em `window.workspace` (fonte da verdade dos canais IPC).
 - Renderer: todas as páginas, incluindo **Novidades** (`pages/PatchNotes.tsx`) e **Configurações** com seletor visual de temas, idioma, Discord e atualizações.
@@ -24,14 +27,14 @@ App completo e publicado. `npm run check` passa (typecheck, lint sem warnings e 
 - **Notion**: `integrations/notion.ts` (token de integração interna no cofre, `Notion-Version: 2022-06-28`, URL em `endpoints.notion()`). Busca, leitura (blocos → Markdown, até ~400 blocos), criação de página em página ou banco (acha a propriedade de título). Aba `pages/Notion.tsx`; "Perguntar à IA" usa `useAIStore.pendingDraft` (amarrado à conversa, idempotente).
 - **Demo web (portfólio)**: `npm run build:demo` gera `dist-demo/` com a interface REAL do renderer e `window.workspace` simulado (`src/demo/workspaceMock.ts`, tipado como `WorkspaceApi`: se um canal novo entrar no preload, o typecheck obriga a simular). Dados fictícios em sessionStorage. Publicar = copiar `dist-demo/` para `pq-portfolio/qrzspace-demo/`.
 - **Patch notes**: `src/shared/changelog.ts` (pt/en). O teste exige que a versão do `package.json` seja a primeira entrada.
-- **Atualizações**: publicadas em **PQueirozDev/QrzSpace-releases** (repositório público só com instaladores; este repositório de código é privado). `npm run release` gera o instalador e cria a release com o `gh` (patch notes do changelog em pt e en).
+- **Atualizações**: publicadas em **PQueirozDev/QrzSpace-releases** (repositório público com os instaladores; o feed de atualização dos apps já instalados aponta para ele). `npm run release` gera o instalador e cria a release com o `gh` (patch notes do changelog em pt e en).
 
 ### Validado no Windows (2026-09-25)
 - Instalador NSIS com `npmRebuild: false` (módulos nativos N-API com prebuilds).
 - **E2E automatizado (`npm run e2e`, só Windows com display)**: `scripts/e2e/run.mjs` sobe `scripts/e2e/mock-server.mjs` (simula Anthropic, OpenAI, Gemini, GitHub, Spotify e Google OAuth/Calendar no formato real), o Vite e o Electron com perfil temporário e DevTools na porta 9223, e percorre pela UI: conectar as 6 integrações (OAuth com PKCE + loopback), chat com streaming, comando sugerido com diálogo de permissão e execução real, regenerar, interromper, anexo, Council com 3 providers + síntese, aba Uso, issues/PRs do GitHub, commit com confirmação, mini player do Spotify, eventos do Google na Agenda, CRUDs, terminal e a interface inteira em inglês. `E2E_SHOTS=<pasta>` salva screenshots; `E2E_KEEP=1` deixa o app aberto no fim. Precisa das portas 5173, 9223 e 43821 livres.
-  - Desvio das APIs: `src/main/integrations/endpoints.ts` centraliza todas as URLs externas; `QRZ_TEST_API` só é aceito com `app.isPackaged === false` e para `http://127.0.0.1:<porta>`. Nesse modo o OAuth não abre o navegador e o Discord fica desligado.
+  - Desvio das APIs: `src/main/integrations/endpoints.ts` centraliza todas as URLs externas; `QYREX_TEST_API` só é aceito com `app.isPackaged === false` e para `http://127.0.0.1:<porta>`. Nesse modo o OAuth não abre o navegador e o Discord fica desligado.
 - E2E via DevTools Protocol: 12+ páginas sem erros de console; os 5 temas; interface inteira em inglês sem texto em português; Discord com o app do Discord aberto (Client ID inválido → status "erro"); diálogo de novidades pós-atualização.
-- Atualização automática de ponta a ponta com feed local (`QRZ_UPDATE_TEST_URL=http://127.0.0.1:<porta>/`, aceito só em localhost): app instalado 1.0.0 baixou, verificou, instalou e reabriu como 1.0.1. Instalador adulterado foi recusado (`sha512 checksum mismatch`).
+- Atualização automática de ponta a ponta com feed local (`QYREX_UPDATE_TEST_URL=http://127.0.0.1:<porta>/`, aceito só em localhost): app instalado 1.0.0 baixou, verificou, instalou e reabriu como 1.0.1. Instalador adulterado foi recusado (`sha512 checksum mismatch`).
 
 ### Falta (depende do usuário)
 - Credenciais que ainda dependem do usuário: API key do Gemini (opcional) e OAuth do Google Agenda (Client ID/Secret do Google Cloud).

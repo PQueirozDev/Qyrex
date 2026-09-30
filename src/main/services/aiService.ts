@@ -292,7 +292,7 @@ export function buildFileContext(files: AttachedFileRef[]): string {
 
 function systemPrompt(projectId: string | null): string {
   const lines = [
-    "Você é um assistente dentro do QrzSpace, a central de trabalho de um desenvolvedor que cria sites, automações, bots e marketing para Instagram.",
+    "Você é um assistente dentro do Qyrex, a central de trabalho de um desenvolvedor que cria sites, automações, bots e marketing para Instagram.",
     getSettings().language === "en"
       ? "Answer in English unless the user writes in or asks for another language."
       : "Responda em português do Brasil, a menos que o usuário peça outro idioma.",

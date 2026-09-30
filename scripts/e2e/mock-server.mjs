@@ -35,7 +35,7 @@ function lastUserText(messages) {
 /** Resposta simulada: ecoa o pedido e inclui comandos quando pedido. */
 function answerFor(provider, text) {
   if (/comando/i.test(text)) {
-    return `Resposta do ${provider}. Rode isto:\n\n\`\`\`powershell\nWrite-Output 'qrzspace-ok'\n\`\`\`\n`;
+    return `Resposta do ${provider}. Rode isto:\n\n\`\`\`powershell\nWrite-Output 'qyrex-ok'\n\`\`\`\n`;
   }
   if (/sintetiz|síntese|synthes/i.test(text)) return `Síntese do ${provider}: todos concordam.`;
   return `Resposta do ${provider} para: ${text.slice(0, 60).replace(/\n/g, " ")}`;
@@ -261,7 +261,7 @@ async function route(req, res) {
     const txt = (t) => [{ plain_text: t, annotations: {}, href: null }];
     const pageObj = { object: "page", id: PAGE, url: "https://www.notion.so/briefing", last_edited_time: now(), icon: { type: "emoji", emoji: "☕" }, properties: { title: { type: "title", title: txt("Briefing E2E") } } };
     const dbObj = { object: "database", id: DB, url: "https://www.notion.so/db", last_edited_time: now(), icon: null, title: txt("Tarefas E2E") };
-    if (np === "/users/me") return json(res, 200, { object: "user", name: "QrzSpace", bot: { workspace_name: "Workspace E2E" } });
+    if (np === "/users/me") return json(res, 200, { object: "user", name: "Qyrex", bot: { workspace_name: "Workspace E2E" } });
     if (np === "/search") {
       const q = (body.query ?? "").toLowerCase();
       const kind = body.filter?.value;

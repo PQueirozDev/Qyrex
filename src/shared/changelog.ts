@@ -22,6 +22,35 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.7.0",
+    date: "2026-09-29",
+    title: { pt: "Agora é Qyrex", en: "Now it's Qyrex" },
+    sections: [
+      {
+        kind: "new",
+        items: [
+          {
+            pt: "O QrzSpace agora se chama Qyrex, com ícone novo em pixel art: uma capivara no onsen com uma laranja na cabeça.",
+            en: "The app is now called Qyrex, with a new pixel art icon: a capybara in a hot spring with an orange on its head.",
+          },
+          {
+            pt: "O código virou open source, com site próprio.",
+            en: "The source code is now open source, with its own website.",
+          },
+        ],
+      },
+      {
+        kind: "improved",
+        items: [
+          {
+            pt: "Seus dados (projetos, tarefas, integrações e preferências) são trazidos automaticamente da pasta antiga na primeira abertura. A pasta antiga fica como backup.",
+            en: "Your data (projects, tasks, integrations and preferences) is carried over from the old folder automatically on first launch. The old folder is kept as a backup.",
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: "1.6.2",
     date: "2026-09-28",
     title: { pt: "Excluir projetos", en: "Delete projects" },

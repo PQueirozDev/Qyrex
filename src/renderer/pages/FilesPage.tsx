@@ -345,7 +345,7 @@ export function FilesPage() {
           <EmptyState
             icon={FolderOpen}
             title={tr("Nenhuma pasta autorizada")}
-            description={tr("O QrzSpace só acessa pastas que você autorizar. Adicione a pasta dos seus projetos para começar.")}
+            description={tr("O Qyrex só acessa pastas que você autorizar. Adicione a pasta dos seus projetos para começar.")}
             action={
               <Button size="sm" onClick={() => void useSettingsStore.getState().addAllowedDir()}>
                 <FolderPlus size={14} />{" "}{tr("Autorizar pasta")}</Button>

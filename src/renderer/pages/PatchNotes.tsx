@@ -72,7 +72,7 @@ export function UpdateCard() {
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-bg-hover">{icon}</div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-text">QrzSpace {system ? `v${system.appVersion}` : ""}</p>
+          <p className="text-sm font-medium text-text">Qyrex {system ? `v${system.appVersion}` : ""}</p>
           <p className="text-xs text-text-muted">{text}</p>
           {status.state === "downloading" && (
             <div className="mt-2 h-1 overflow-hidden rounded-full bg-border">
@@ -104,7 +104,7 @@ export function PatchNotes() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <PageHeader title={tr("Novidades")} icon={PAGE_ICONS.novidades} description={tr("O que mudou em cada versão do QrzSpace.")} />
+      <PageHeader title={tr("Novidades")} icon={PAGE_ICONS.novidades} description={tr("O que mudou em cada versão do Qyrex.")} />
       <div className="space-y-4">
         <UpdateCard />
         <div className="relative space-y-4">

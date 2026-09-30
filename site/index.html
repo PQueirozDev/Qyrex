@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Qyrex</title>
+  <meta name="description" content="Qyrex é uma central de trabalho desktop open source: projetos, terminal, IA pela sua assinatura, tarefas, clientes, marketing e agenda num app só, local e sem conta." />
+  <meta property="og:title" content="Qyrex: sua central de trabalho, sem pressa" />
+  <meta property="og:description" content="Projetos, terminal, IA, tarefas, clientes e marketing num app desktop open source. Local-first, sem conta, sem nuvem." />
+  <meta property="og:image" content="assets/og-cover.png" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="theme-color" content="#0d1020" />
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Silkscreen:wght@400;700&display=swap" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="page">
+  <div class="frame">
+    <span class="corner bl"></span><span class="corner br"></span>
+
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="Qyrex, início">
+        <img src="assets/icon.svg" alt="" width="24" height="24" class="px" />
+        <span>QYREX</span>
+      </a>
+      <nav class="nav" aria-label="Seções">
+        <a href="#orquestra">orquestra</a>
+        <a href="#recursos">recursos</a>
+        <a href="#temas">temas</a>
+        <a href="#seguranca">segurança</a>
+        <a href="#codigo">código</a>
+      </nav>
+      <div class="actions">
+        <a class="btn-ghost" data-link="repo" href="#" target="_blank" rel="noopener noreferrer">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+          <span>GitHub</span>
+        </a>
+        <a class="btn" href="#download">Download</a>
+      </div>
+    </header>
+
+    <main>
+      <!-- Hero: o nome atrás, a capivara no meio, o contorno na frente -->
+      <section id="top" class="hero">
+        <span class="brk"></span>
+        <div class="stage">
+          <div class="text-col">
+            <p class="kicker"><span class="dot"></span> v<span data-version>1.7.0</span> · open source · Windows</p>
+            <h1 class="word word-back">QYREX</h1>
+            <span class="word word-front" aria-hidden="true">QYREX</span>
+          </div>
+          <div class="capy" aria-hidden="true"><img src="assets/capy-sheet.png" alt="" class="px" /></div>
+          <p class="hero-lede">Projetos, terminal, IA, tarefas, clientes e marketing num app desktop que roda no seu PC. Sem conta, sem nuvem, no ritmo de uma capivara no onsen.</p>
+        </div>
+
+        <figure class="hero-shot">
+          <div class="win-bar">
+            <span class="lights"><i></i><i></i><i></i></span>
+            <span class="win-title">qyrex — onsen noturno</span>
+            <span class="win-meta">320×180 · 12 fps</span>
+          </div>
+          <video class="px" autoplay muted loop playsinline preload="auto" poster="assets/qyrex-onsen-poster.png" aria-label="Pixel art animada: uma capivara com uma laranja na cabeça relaxa num onsen à noite enquanto um notebook numa bandeja de madeira digita código sozinho.">
+            <source src="assets/qyrex-onsen.webm" type="video/webm" />
+            <source src="assets/qyrex-onsen.mp4" type="video/mp4" />
+          </video>
+        </figure>
+      </section>
+
+      <!-- Orquestra: o Qyrex no centro, os programas em volta -->
+      <section id="orquestra" class="section orch-sec">
+        <div class="sec-head">
+          <p class="eyebrow">orquestra</p>
+          <h2>Ele abre o que você já usa.</h2>
+          <p class="sub">O Qyrex não recria o VS Code, o terminal nem o WhatsApp. Ele sabe onde cada projeto está e chama o programa certo, com a pasta certa, na hora certa.</p>
+        </div>
+        <div class="orch">
+          <span class="brk"></span>
+          <div class="orch-grid"></div>
+          <svg class="wires" aria-hidden="true"></svg>
+          <div class="hub" data-node="hub">
+            <img src="assets/icon.svg" alt="" class="px" width="28" height="28" />
+            <div><b>qyrex</b><span data-hub-status>esperando</span></div>
+            <i class="led"></i>
+          </div>
+          <!-- Cartões posicionados em % (script liga os fios) -->
+          <div class="node" data-node="vscode" style="--x:14%;--y:22%"><span class="n-ico">{ }</span><span class="n-name">VS Code</span><span class="n-task">abrir projeto</span></div>
+          <div class="node" data-node="terminal" style="--x:14%;--y:52%"><span class="n-ico">&gt;_</span><span class="n-name">Terminal</span><span class="n-task">PowerShell na pasta</span></div>
+          <div class="node" data-node="github" style="--x:14%;--y:82%"><span class="n-ico">⑂</span><span class="n-name">GitHub</span><span class="n-task">issues e PRs</span></div>
+          <div class="node" data-node="claude" style="--x:50%;--y:14%"><span class="n-ico">✳</span><span class="n-name">Claude Code</span><span class="n-task">pela assinatura</span></div>
+          <div class="node" data-node="codex" style="--x:50%;--y:88%"><span class="n-ico">◎</span><span class="n-name">Codex</span><span class="n-task">pela assinatura</span></div>
+          <div class="node" data-node="whatsapp" style="--x:86%;--y:22%"><span class="n-ico">☏</span><span class="n-name">WhatsApp</span><span class="n-task">link oficial</span></div>
+          <div class="node" data-node="agenda" style="--x:86%;--y:52%"><span class="n-ico">▦</span><span class="n-name">Agenda</span><span class="n-task">Google Agenda</span></div>
+          <div class="node" data-node="spotify" style="--x:86%;--y:82%"><span class="n-ico">♫</span><span class="n-name">Mídia</span><span class="n-task">mini player</span></div>
+          <div class="orch-log" aria-live="polite">
+            <div class="log-head"><span>registro</span><span data-log-scene>freelance</span></div>
+            <ol data-log></ol>
+          </div>
+          <div class="scenes" role="group" aria-label="Cenários">
+            <span class="sc-label">um dia de</span>
+            <button type="button" class="chip on" data-scene="freelance" aria-pressed="true">freelance</button>
+            <button type="button" class="chip" data-scene="bug" aria-pressed="false">caçar bug</button>
+            <button type="button" class="chip" data-scene="release" aria-pressed="false">release</button>
+            <button type="button" class="chip" data-scene="conteudo" aria-pressed="false">conteúdo</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- A interface de verdade -->
+      <section id="interface" class="section shot-sec">
+        <div class="sec-head">
+          <p class="eyebrow">por dentro</p>
+          <h2>Abre no que importa hoje.</h2>
+          <p class="sub">Tarefas em foco, compromissos, cobranças da semana, commits recentes e atalhos para o que você mais abre. A tela abaixo é o app de verdade, com dados de exemplo.</p>
+        </div>
+        <figure class="app-shot">
+          <div class="win-bar"><span class="lights"><i></i><i></i><i></i></span><span class="win-title">Qyrex · Início</span><span class="win-meta">dados de exemplo</span></div>
+          <img src="assets/app-inicio.webp" width="1440" height="804" loading="lazy" alt="Tela Início do Qyrex: saudação, cartões de tarefas em foco, compromissos, projetos e manutenção mensal, agenda do dia, tarefas, atividade recente, projetos recentes e cobranças da semana." />
+        </figure>
+      </section>
+
+      <!-- Recursos -->
+      <section id="recursos" class="section flush">
+        <div class="sec-head pad">
+          <p class="eyebrow">recursos</p>
+          <h2>Um dia inteiro de trabalho, numa janela.</h2>
+        </div>
+        <div class="grid">
+          <article class="cell">
+            <p class="ck"><span class="i">▣</span> projetos</p>
+            <h3>Projetos com git</h3>
+            <p class="cp">Cards com tecnologias lidas do <code>package.json</code>, status do git, commit, pull e push sempre com confirmação.</p>
+            <div class="mock">
+              <div class="m-win">
+                <div class="m-bar"><span class="m-sw" style="--c:#ff9a3c"></span><b>barbearia-site</b><span class="pill">main</span><span class="st ok"></span></div>
+                <div class="m-body mono">
+                  <div class="dim">3 alterações · 2 commits à frente</div>
+                  <div><span class="add">M</span> src/pages/Agenda.tsx</div>
+                  <div><span class="add">A</span> src/lib/horarios.ts</div>
+                  <div class="row-btns"><span class="mbtn">Commit</span><span class="mbtn">Push</span><span class="mbtn ghost">VS Code</span></div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="cell">
+            <p class="ck"><span class="i">&gt;_</span> terminal</p>
+            <h3>Terminal de verdade</h3>
+            <p class="cp">xterm.js com node-pty, abas, PowerShell ou CMD, já aberto na pasta do projeto. Troque de aba e ele continua rodando.</p>
+            <div class="mock">
+              <div class="m-win">
+                <div class="m-bar"><span class="tab on">loja-online</span><span class="tab">bot-discord</span><span class="tab">+</span></div>
+                <div class="m-body mono">
+                  <div><span class="dim">PS C:\Projetos\loja-online&gt;</span> npm run dev</div>
+                  <div class="ok-t">✓ ready in 412 ms</div>
+                  <div class="dim">➜ Local: http://localhost:5173/</div>
+                  <div><span class="dim">PS&gt;</span> <span class="cur"></span></div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="cell">
+            <p class="ck"><span class="i">✳</span> ia</p>
+            <h3>IA pela sua assinatura</h3>
+            <p class="cp">Usa o Claude Code e o Codex já logados no seu PC, sem API key. Comandos sugeridos só rodam depois da sua permissão.</p>
+            <div class="mock">
+              <div class="m-win">
+                <div class="m-body">
+                  <div class="bubble me">Como subo o ambiente desse projeto?</div>
+                  <div class="bubble ai">No terminal do projeto:
+                    <div class="code mono"><span>npm run dev</span><span class="mbtn run">Executar</span></div>
+                  </div>
+                  <div class="perm mono">risco baixo · permitir uma vez?</div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="cell">
+            <p class="ck"><span class="i">⚖</span> council</p>
+            <h3>AI Council</h3>
+            <p class="cp">A mesma pergunta para vários modelos, respostas lado a lado e uma síntese no fim. Ele avisa quantos providers vai usar antes de enviar.</p>
+            <div class="mock">
+              <div class="council">
+                <div class="cc"><b>Claude</b><i></i><i class="w70"></i><i class="w50"></i></div>
+                <div class="cc"><b>OpenAI</b><i class="w80"></i><i></i><i class="w40"></i></div>
+                <div class="cc"><b>Gemini</b><i class="w60"></i><i class="w90"></i><i class="w30"></i></div>
+                <div class="cc syn"><b>síntese</b><i></i><i class="w80"></i></div>
+              </div>
+            </div>
+          </article>
+
+          <article class="cell">
+            <p class="ck"><span class="i">☑</span> tarefas</p>
+            <h3>Tarefas e kanban</h3>
+            <p class="cp">Hoje, Próximas e Concluídas, ou em colunas. Prioridade, prazo, projeto e cliente. <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>T</kbd> cria de qualquer lugar.</p>
+            <div class="mock">
+              <div class="kanban">
+                <div class="kc"><span class="kh">a fazer</span><span class="kt"><i class="pr hi"></i>Orçamento Bravus</span><span class="kt"><i class="pr"></i>Revisar textos</span></div>
+                <div class="kc"><span class="kh">fazendo</span><span class="kt hot"><i class="pr md"></i>Tela de agenda</span></div>
+                <div class="kc"><span class="kh">feito</span><span class="kt done">Deploy Lúmina</span><span class="kt done">Logo v2</span></div>
+              </div>
+            </div>
+          </article>
+
+          <article class="cell">
+            <p class="ck"><span class="i">☺</span> clientes</p>
+            <h3>Clientes e cobranças</h3>
+            <p class="cp">Status, manutenção mensal, próxima cobrança, pasta de arquivos e atalhos para WhatsApp, Instagram e email.</p>
+            <div class="mock">
+              <div class="clients">
+                <div class="cl"><span class="av" style="--c:#ff9a3c">AT</span><span><b>Atelier 31</b><em>ativo · R$ 180/mês</em></span><span class="due">05/10</span></div>
+                <div class="cl"><span class="av" style="--c:#7fd4d8">BV</span><span><b>Bravus Barbearia</b><em>ativo · R$ 120/mês</em></span><span class="due soon">hoje</span></div>
+                <div class="cl"><span class="av" style="--c:#c792ea">LU</span><span><b>Lúmina Estética</b><em>prospecto</em></span><span class="due off">—</span></div>
+              </div>
+            </div>
+          </article>
+
+          <article class="cell">
+            <p class="ck"><span class="i">✦</span> marketing</p>
+            <h3>Quadro de conteúdo</h3>
+            <p class="cp">Ideia, Produzindo, Pronto e Publicado, com arrastar e soltar, calendário semanal e legenda de posts, stories e reels.</p>
+            <div class="mock">
+              <div class="flow">
+                <span class="fc">ideia<b>4</b></span><span class="arrow">→</span><span class="fc">produzindo<b>2</b></span><span class="arrow">→</span><span class="fc">pronto<b>1</b></span><span class="arrow">→</span><span class="fc on">publicado<b>9</b></span>
+              </div>
+              <div class="post"><span class="thumb"></span><span><b>Reels · antes e depois</b><em>qui 19:00 · legenda pronta</em></span></div>
+            </div>
+          </article>
+
+          <article class="cell">
+            <p class="ck"><span class="i">▦</span> agenda</p>
+            <h3>Agenda e mini player</h3>
+            <p class="cp">Dia, semana e mês com seus eventos e os do Google Agenda. O mini player lê a mídia que estiver tocando no Windows.</p>
+            <div class="mock">
+              <div class="week">
+                <span class="d">seg<i class="ev" style="--h:40%"></i></span><span class="d">ter</span><span class="d today">qua<i class="ev" style="--h:70%"></i><i class="ev t" style="--h:25%"></i></span><span class="d">qui<i class="ev" style="--h:30%"></i></span><span class="d">sex</span>
+              </div>
+              <div class="player"><span class="cover"></span><span><b>Lo-fi para onsen</b><em>tocando no Windows</em></span><span class="pbar"><i></i></span></div>
+            </div>
+          </article>
+
+          <article class="cell">
+            <p class="ck"><span class="i">⌘</span> palette</p>
+            <h3>Tudo pelo teclado</h3>
+            <p class="cp"><kbd>Ctrl</kbd> <kbd>K</kbd> abre a palette com busca fuzzy em projetos, tarefas, clientes e ações. Fica na bandeja e avisa por notificação.</p>
+            <div class="mock">
+              <div class="palette">
+                <div class="pq mono"><span class="dim">›</span> barb<span class="cur"></span></div>
+                <div class="pi on"><span>▣</span> barbearia-site <em>projeto</em></div>
+                <div class="pi"><span>☺</span> Bravus Barbearia <em>cliente</em></div>
+                <div class="pi"><span>&gt;_</span> Abrir terminal em barbearia-site <em>ação</em></div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Temas: recolore a página -->
+      <section id="temas" class="section themes-sec">
+        <div class="themes-copy">
+          <p class="eyebrow">temas</p>
+          <h2>Do jeito que você trabalha.</h2>
+          <p class="sub">São os temas do app. Escolha um para recolorir esta página inteira. Português ou inglês na interface, nas notificações e nas respostas da IA.</p>
+          <div class="theme-list" role="radiogroup" aria-label="Tema da página">
+            <button type="button" class="tchip on" role="radio" aria-checked="true" data-theme-id="onsen"><i style="--a:#ff9a3c;--b:#0d1020"></i>Onsen</button>
+            <button type="button" class="tchip" role="radio" aria-checked="false" data-theme-id="dark"><i style="--a:#688cff;--b:#0b0d10"></i>Escuro</button>
+            <button type="button" class="tchip" role="radio" aria-checked="false" data-theme-id="light"><i style="--a:#4c6ef5;--b:#f6f7f9"></i>Claro</button>
+            <button type="button" class="tchip" role="radio" aria-checked="false" data-theme-id="midnight"><i style="--a:#22d3ee;--b:#070b16"></i>Meia-noite</button>
+            <button type="button" class="tchip" role="radio" aria-checked="false" data-theme-id="violet"><i style="--a:#a78bfa;--b:#0d0b14"></i>Violeta</button>
+            <button type="button" class="tchip" role="radio" aria-checked="false" data-theme-id="sand"><i style="--a:#c95a26;--b:#f7f3ec"></i>Areia</button>
+          </div>
+          <p class="theme-desc mono" data-theme-desc>Noite azul e laranja de yuzu. O tema deste site.</p>
+        </div>
+        <div class="theme-preview" aria-hidden="true">
+          <div class="tp-side">
+            <div class="tp-brand"><img src="assets/icon.svg" alt="" class="px" width="16" height="16" /> Qyrex</div>
+            <span class="tp-item on">Início</span><span class="tp-item">Projetos</span><span class="tp-item">Terminal</span><span class="tp-item">IA</span><span class="tp-item">Tarefas</span><span class="tp-item">Clientes</span>
+          </div>
+          <div class="tp-main">
+            <div class="tp-hello">Boa noite, Pedro</div>
+            <div class="tp-cards">
+              <div class="tp-card"><em>tarefas em foco</em><b>3</b></div>
+              <div class="tp-card"><em>cobranças da semana</em><b>R$ 300</b></div>
+              <div class="tp-card"><em>commits hoje</em><b>7</b></div>
+            </div>
+            <div class="tp-list"><span><i class="pr hi"></i>Tela de agenda · barbearia-site</span><span><i class="pr md"></i>Orçamento · Bravus</span><span><i class="pr"></i>Post de quinta · Lúmina</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Segurança -->
+      <section id="seguranca" class="section">
+        <div class="sec-head">
+          <p class="eyebrow">segurança</p>
+          <h2>Seu PC, suas regras.</h2>
+          <p class="sub">Tudo roda local. O que é sensível pede confirmação, e a IA nunca executa nada sozinha.</p>
+        </div>
+        <dl class="spec">
+          <div><dt>pastas</dt><dd>Só lê e altera arquivos nas pastas que você autorizar. Raiz de disco, pastas do sistema e a sua home inteira são recusadas.</dd></div>
+          <div><dt>segredos</dt><dd>Chaves e tokens ficam no cofre do Windows (DPAPI). Nunca vão para o banco, para a interface nem para os logs.</dd></div>
+          <div><dt>comandos</dt><dd>Processos rodam com <code>spawn</code>, argumentos em lista e sem shell. Comando perigoso nunca pode ser "permitido sempre".</dd></div>
+          <div><dt>git</dt><dd>Commit, pull e push só depois do diálogo. Push nunca é automático e nunca usa <code>--force</code>.</dd></div>
+          <div><dt>janela</dt><dd><code>contextIsolation</code>, <code>sandbox</code> e CSP restritiva. Cada canal IPC confere a origem e valida a entrada com zod.</dd></div>
+          <div><dt>updates</dt><dd>Atualização automática pelo GitHub Releases, com SHA-512 conferido. Instalador adulterado é descartado e nunca há downgrade.</dd></div>
+        </dl>
+      </section>
+
+      <!-- Código aberto -->
+      <section id="codigo" class="section code-sec">
+        <div class="code-copy">
+          <p class="eyebrow">código aberto</p>
+          <h2>Leia, rode, mude.</h2>
+          <p class="sub">O Qyrex é open source. Electron, React e TypeScript strict, com banco SQLite local, mais de 200 testes e um E2E que percorre a interface inteira.</p>
+          <ul class="stack mono">
+            <li>Electron</li><li>React 18</li><li>TypeScript</li><li>Vite</li><li>Tailwind</li><li>Zustand</li><li>better-sqlite3</li><li>zod</li><li>xterm.js</li><li>Vitest</li>
+          </ul>
+          <p class="sub small">Achou um bug ou tem uma ideia? Abra uma issue ou mande um pull request.</p>
+        </div>
+        <div class="term">
+          <div class="win-bar"><span class="lights"><i></i><i></i><i></i></span><span class="win-title">PowerShell</span><button type="button" class="copy" data-copy>copiar</button></div>
+<pre class="mono" data-copy-src><span class="dim"># Node.js 20+ no Windows</span>
+git clone <span data-repo-url>https://github.com/PQueirozDev/Qyrex</span>
+cd Qyrex
+npm install
+npm run dev:app   <span class="dim"># Vite + Electron com hot reload</span>
+npm run check     <span class="dim"># typecheck + lint + testes</span></pre>
+        </div>
+      </section>
+
+      <!-- Download -->
+      <section id="download" class="section dl-sec">
+        <span class="brk"></span>
+        <div class="dl-capy" aria-hidden="true"><img src="assets/capy-sheet.png" alt="" class="px" /></div>
+        <p class="eyebrow">download · v<span data-version>1.7.0</span></p>
+        <h2 class="dl-title">Entre na água.</h2>
+        <p class="sub">Instalador para Windows 10 e 11 (x64). Depois de instalado, o Qyrex se atualiza sozinho.</p>
+        <div class="dl-btns">
+          <a class="btn big" data-link="download" href="#" target="_blank" rel="noopener noreferrer">Baixar para Windows <span class="mono">.exe</span></a>
+          <a class="btn-ghost big" data-link="releases" href="#" target="_blank" rel="noopener noreferrer">Todas as versões</a>
+        </div>
+        <p class="fine mono">sem conta · sem nuvem · macOS e Linux: compile a partir do código</p>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <span class="brand small"><img src="assets/icon.svg" alt="" width="18" height="18" class="px" /> QYREX</span>
+      <span class="mono dim">© 2026 Pedro Queiroz · código aberto · feito com calma</span>
+      <a class="mono" data-link="repo" href="#" target="_blank" rel="noopener noreferrer">github</a>
+    </footer>
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-// Demo web do QrzSpace (portfólio): a interface REAL do app, com `window.workspace`
+// Demo web do Qyrex (portfólio): a interface REAL do app, com `window.workspace`
 // simulado. A simulação é instalada antes de importar o app.
 import { resetDemo, workspaceMock } from "./workspaceMock";
 

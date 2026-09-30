@@ -1,4 +1,4 @@
-// E2E do QrzSpace: sobe o servidor de simulação das APIs, o Vite e o Electron
+// E2E do Qyrex: sobe o servidor de simulação das APIs, o Vite e o Electron
 // (perfil temporário, DevTools Protocol na porta 9223) e percorre os fluxos
 // reais pela interface: integrações, chat, Council, uso, GitHub, Spotify,
 // Google Agenda, git, terminal, CRUDs e a interface em inglês.
@@ -68,8 +68,8 @@ fs.mkdirSync(PROJECT, { recursive: true });
 fs.writeFileSync(path.join(PROJECT, "README.md"), "# Demo E2E\n\nConteúdo secreto-e2e para anexo.\n");
 const git = (...args) => execFileSync("git", args, { cwd: PROJECT, encoding: "utf8" }).trim();
 git("init", "-q", "-b", "main");
-git("config", "user.email", "e2e@qrzspace.local");
-git("config", "user.name", "QrzSpace E2E");
+git("config", "user.email", "e2e@qyrex.local");
+git("config", "user.name", "Qyrex E2E");
 git("add", "-A");
 git("commit", "-q", "-m", "Primeiro commit");
 
@@ -97,7 +97,7 @@ children.push(vite);
 await waitTcp(5173);
 
 const electronExe = (await import("electron")).default;
-const appEnv = { ...process.env, QRZ_TEST_API: API };
+const appEnv = { ...process.env, QYREX_TEST_API: API };
 delete appEnv.ELECTRON_RUN_AS_NODE;
 const app = spawn(electronExe, [".", `--user-data-dir=${PROFILE}`, `--remote-debugging-port=${CDP_PORT}`], {
   cwd: ROOT,
@@ -373,12 +373,12 @@ await step("comando sugerido pela IA: diálogo de permissão e execução", asyn
   await type(chatBox, "me passe um comando", { enter: true });
   await waitFor(`findButton("Executar")`, { timeout: 15_000, label: "botão Executar" });
   await click("Executar");
-  await waitFor(`dialog() && textOf(dialog()).includes("Write-Output 'qrzspace-ok'")`, { label: "diálogo de permissão" });
+  await waitFor(`dialog() && textOf(dialog()).includes("Write-Output 'qyrex-ok'")`, { label: "diálogo de permissão" });
   const risk = await ev(`return textOf(dialog())`);
   await click("Permitir uma vez", `dialog()`);
   await waitFor(`textOf(document.querySelector("section")).includes("Código de saída 0")`, { timeout: 20_000, label: "saída do comando" });
   const out = await ev(`return textOf(document.querySelector("section"))`);
-  if (!out.includes("qrzspace-ok")) throw new Error("saída do comando não apareceu");
+  if (!out.includes("qyrex-ok")) throw new Error("saída do comando não apareceu");
   return risk.match(/Risco: \S+/)?.[0] ?? "";
 });
 

@@ -96,9 +96,9 @@ export function Sidebar() {
   return (
     <aside className="flex h-full w-[224px] shrink-0 flex-col border-r border-border-subtle bg-bg-elevated">
       <div className="drag-region flex items-center gap-2.5 px-4 pb-2 pt-4">
-        <img src={logoUrl} alt="" className="h-9 w-9 shrink-0 drop-shadow-[0_4px_10px_rgb(111_125_255/0.35)]" draggable={false} />
+        <img src={logoUrl} alt="" className="h-8 w-8 shrink-0 [image-rendering:pixelated] drop-shadow-[0_4px_10px_rgb(255_154_60/0.25)]" draggable={false} />
         <div className="min-w-0 leading-tight">
-          <div className="text-[14px] font-semibold tracking-tight text-text">QrzSpace</div>
+          <div className="text-[14px] font-semibold tracking-tight text-text">Qyrex</div>
           <div className="text-[11px] text-text-faint">{system ? `v${system.appVersion}` : tr("Central de trabalho")}</div>
         </div>
       </div>

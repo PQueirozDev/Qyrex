@@ -15,6 +15,7 @@ import { applyDiscordSettings, onDiscordStatus, stopDiscord } from "./integratio
 import { stopLocalMedia } from "./integrations/media/localMedia.js";
 import { attachUpdateListener, startAutoUpdate } from "./services/updateService.js";
 import { translate } from "../shared/i18n.js";
+import { copyLegacyUserData, LEGACY_PRODUCT_NAME } from "./legacyData.js";
 import type { AppCommand, AppSettings } from "../shared/types.js";
 
 /** Cor de fundo da janela antes do React carregar (evita "flash" branco/preto). */
@@ -41,18 +42,27 @@ let tray: Tray | null = null;
 // Sinaliza que o app está realmente saindo (vs. apenas fechando a janela para a bandeja).
 let isQuitting = false;
 
+// Antes de qualquer coisa ler a pasta de dados: traz os dados da época do QrzSpace.
+// Só no app instalado: em desenvolvimento e no E2E (perfil temporário) nunca
+// copiar os dados reais do usuário.
+const migratedLegacyData = app.isPackaged && copyLegacyUserData(path.join(app.getPath("appData"), LEGACY_PRODUCT_NAME), app.getPath("userData"));
+
 initLogger(path.join(app.getPath("userData"), "logs"));
 const log = createLogger("main");
+if (migratedLegacyData) log.info("Dados do QrzSpace copiados para a pasta do Qyrex");
 
 // Uma única instância: abrir o atalho de novo só traz a janela existente.
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 }
 
+// O appId continua "com.pedroqueiroz.qrzspace" depois da troca de nome para Qyrex:
+// assim o instalador novo substitui o antigo (mesmo GUID no NSIS) e o app
+// fixado na barra de tarefas continua valendo.
 // ID do app no Windows (barra de tarefas, busca do Iniciar, notificações). Tem que
 // ser o mesmo `appId` do electron-builder no app instalado. Em desenvolvimento usa
 // outro: o Electron cria sozinho um atalho "Electron" no menu Iniciar para mostrar
-// notificações, e com o mesmo ID ele tomava o lugar do QrzSpace instalado
+// notificações, e com o mesmo ID ele tomava o lugar do Qyrex instalado
 // (a busca por "qrz" sumia e o app fixado virava "Electron").
 app.setAppUserModelId(app.isPackaged ? "com.pedroqueiroz.qrzspace" : "com.pedroqueiroz.qrzspace.dev");
 
@@ -91,7 +101,7 @@ function createWindow(): void {
     minWidth: 980,
     minHeight: 640,
     show: false,
-    title: "QrzSpace",
+    title: "Qyrex",
     backgroundColor: WINDOW_BG[getSettings().theme] ?? "#0b0d10",
     autoHideMenuBar: true,
     // Sem a barra de título do Windows: a HUD do app vai até o topo e os botões
@@ -164,9 +174,9 @@ function buildTrayMenu(): Menu {
     .filter((p) => p.lastOpenedAt)
     .slice(0, 5);
   return Menu.buildFromTemplate([
-    { label: "QrzSpace", enabled: false },
+    { label: "Qyrex", enabled: false },
     { type: "separator" },
-    { label: tr("Abrir QrzSpace"), click: showWindow },
+    { label: tr("Abrir Qyrex"), click: showWindow },
     { label: tr("Nova tarefa"), click: () => sendCommand("new-task") },
     {
       label: tr("Abrir VS Code"),
@@ -197,7 +207,7 @@ function buildTrayMenu(): Menu {
 function createTray(): void {
   const icon = nativeImage.createFromPath(resourcePath("icon.png")).resize({ width: 16, height: 16 });
   tray = new Tray(icon);
-  tray.setToolTip("QrzSpace");
+  tray.setToolTip("Qyrex");
   tray.setContextMenu(buildTrayMenu());
   tray.on("click", showWindow);
   // Recria o menu ao abrir, para a lista de projetos recentes estar atualizada.
@@ -276,7 +286,7 @@ app.whenReady().then(() => {
   applyDiscordSettings();
   startAutoUpdate();
   startNotifications(navigate);
-  log.info(`QrzSpace ${app.getVersion()} iniciado${isDev ? " (dev)" : ""}`);
+  log.info(`Qyrex ${app.getVersion()} iniciado${isDev ? " (dev)" : ""}`);
 
   // Sincronização do Google Calendar sob demanda: só se estiver conectado, e
   // depois do startup, para não atrasar a abertura do app.

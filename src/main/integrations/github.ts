@@ -20,7 +20,7 @@ function headers(token: string | null): Record<string, string> {
   return {
     Accept: "application/vnd.github+json",
     "X-GitHub-Api-Version": "2022-11-28",
-    "User-Agent": "QrzSpace",
+    "User-Agent": "Qyrex",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 }
