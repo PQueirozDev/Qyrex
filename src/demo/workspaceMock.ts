@@ -827,6 +827,8 @@ export const workspaceMock: WorkspaceApi = {
     },
     // No navegador a demo não lê a área de transferência sem pedir permissão: cola nada.
     readClipboard: () => ok({ text: "", hasImage: false }, 0),
+    agents: () => ok({ claude: true, codex: true }, 0),
+    notifyDone: () => ok(undefined, 0),
     onData: (cb) => termData.on(cb),
     onExit: (cb) => termExit.on(cb),
   },

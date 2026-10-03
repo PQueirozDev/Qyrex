@@ -257,8 +257,12 @@ const api = {
   },
   terminal: {
     available: () => invoke<boolean>("terminal:available"),
-    create: (input: { cwd: string; shell?: "powershell" | "cmd"; cols: number; rows: number }) =>
+    create: (input: { cwd: string; shell?: "powershell" | "cmd" | "claude" | "codex"; cols: number; rows: number }) =>
       invoke<{ id: string; shell: string; cwd: string }>("terminal:create", input),
+    /** Agentes instalados que podem abrir no terminal. */
+    agents: () => invoke<{ claude: boolean; codex: boolean }>("terminal:agents"),
+    /** Aviso do Windows: o terminal terminou o trabalho fora da vista do usuário. */
+    notifyDone: (id: string) => invoke<void>("terminal:notifyDone", id),
     write: (id: string, data: string) => invoke<void>("terminal:write", id, data),
     resize: (id: string, cols: number, rows: number) => invoke<void>("terminal:resize", id, cols, rows),
     kill: (id: string) => invoke<void>("terminal:kill", id),

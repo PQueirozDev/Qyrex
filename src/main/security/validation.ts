@@ -251,7 +251,7 @@ export const commandRun = z.object({
 
 export const terminalCreate = z.object({
   cwd: filePath,
-  shell: z.enum(["powershell", "cmd"]).optional(),
+  shell: z.enum(["powershell", "cmd", "claude", "codex"]).optional(),
   cols: z.number().int().min(10).max(500),
   rows: z.number().int().min(5).max(300),
 });

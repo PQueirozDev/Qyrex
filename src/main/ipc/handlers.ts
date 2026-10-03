@@ -368,6 +368,8 @@ export function registerIpcHandlers(): void {
     )
   );
   handle("terminal:kill", (e, id) => terminalService.kill(e.sender, v.parse(v.id, id)));
+  handle("terminal:agents", () => terminalService.listAgents());
+  handle("terminal:notifyDone", (e, id) => terminalService.notifyDone(e.sender, v.parse(v.id, id)));
   // A UI não tem permissão de ler a área de transferência; o terminal pede aqui ao colar.
   // `hasImage` sem texto: o terminal repassa o Ctrl+V para o programa (ex.: Claude Code) ler a imagem.
   handle("terminal:clipboard", async () => ({

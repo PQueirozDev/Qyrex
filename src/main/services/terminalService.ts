@@ -1,9 +1,13 @@
 import { randomUUID } from "node:crypto";
 import fs from "node:fs";
+import path from "node:path";
 import type { WebContents } from "electron";
 import { assertPathAllowedAndExists } from "../security/paths.js";
 import { EXTERNAL_COMMANDS } from "../security/commands.js";
 import { getSettings } from "../database/db.js";
+import { childEnv, find } from "../integrations/cli/subscriptions.js";
+import { showNotification } from "./notificationService.js";
+import { tt } from "../i18n.js";
 import { createLogger } from "../logger.js";
 
 const log = createLogger("terminal");
@@ -11,10 +15,15 @@ const log = createLogger("terminal");
 /**
  * Terminal integrado (xterm.js no renderer ↔ node-pty aqui).
  * - Só abre em pastas autorizadas.
- * - Só PowerShell ou CMD (shell fixo, sem argumentos vindos do renderer).
+ * - PowerShell, CMD ou um agente (Claude Code / Codex): o executável é fixo e
+ *   achado aqui; o renderer só escolhe o tipo, nunca manda caminho nem argumento.
  * - O que o USUÁRIO digita vai direto para o pty, como num terminal comum;
- *   comandos vindos da IA NUNCA são escritos aqui automaticamente.
+ *   comandos vindos da IA do Qyrex NUNCA são escritos aqui automaticamente.
+ *   O agente aberto aqui é o mesmo que o usuário abriria digitando `claude`
+ *   no PowerShell: ele pede as próprias permissões na tela.
  */
+
+export type TerminalKind = "powershell" | "cmd" | "claude" | "codex";
 
 type Pty = {
   onData: (cb: (data: string) => void) => { dispose: () => void };
@@ -46,9 +55,26 @@ export function isTerminalAvailable(): boolean {
   return process.platform === "win32" && loadPty() !== null;
 }
 
+/** Quais agentes dá para abrir no terminal (o binário oficial está instalado). */
+export function listAgents(): { claude: boolean; codex: boolean } {
+  return { claude: find("claude") !== null, codex: find("codex") !== null };
+}
+
+const KIND_LABEL: Record<TerminalKind, string> = { powershell: "PowerShell", cmd: "CMD", claude: "Claude Code", codex: "Codex" };
+
+function resolveCommand(kind: TerminalKind): { file: string; args: string[] } {
+  if (kind === "cmd") return { file: EXTERNAL_COMMANDS.cmd, args: [] };
+  if (kind === "powershell") return { file: EXTERNAL_COMMANDS.powershell, args: ["-NoLogo"] };
+  const exe = find(kind);
+  if (!exe) throw new Error(kind === "claude" ? tt("Claude Code não encontrado neste PC.") : tt("Codex CLI não encontrado neste PC."));
+  return { file: exe, args: [] };
+}
+
 interface Session {
   pty: Pty;
   owner: WebContents;
+  kind: TerminalKind;
+  cwd: string;
 }
 
 const sessions = new Map<string, Session>();
@@ -56,7 +82,7 @@ const MAX_SESSIONS = 8;
 
 export function createSession(
   owner: WebContents,
-  input: { cwd: string; shell?: "powershell" | "cmd"; cols: number; rows: number }
+  input: { cwd: string; shell?: TerminalKind; cols: number; rows: number }
 ): { id: string; shell: string; cwd: string } {
   const pty = loadPty();
   if (!pty) throw new Error("Terminal integrado indisponível neste sistema.");
@@ -64,16 +90,12 @@ export function createSession(
 
   const cwd = assertPathAllowedAndExists(input.cwd);
   if (!fs.statSync(cwd).isDirectory()) throw new Error("Selecione uma pasta.");
-  const shell = input.shell ?? getSettings().defaultTerminal;
-  const file = shell === "cmd" ? EXTERNAL_COMMANDS.cmd : EXTERNAL_COMMANDS.powershell;
-  const args = shell === "cmd" ? [] : ["-NoLogo"];
+  const kind = input.shell ?? getSettings().defaultTerminal;
+  const { file, args } = resolveCommand(kind);
 
-  const env = { ...process.env };
-  delete env.ELECTRON_RUN_AS_NODE;
-
-  const proc = pty.spawn(file, args, { name: "xterm-256color", cols: input.cols, rows: input.rows, cwd, env });
+  const proc = pty.spawn(file, args, { name: "xterm-256color", cols: input.cols, rows: input.rows, cwd, env: childEnv() });
   const id = randomUUID();
-  sessions.set(id, { pty: proc, owner });
+  sessions.set(id, { pty: proc, owner, kind, cwd });
 
   proc.onData((data) => {
     if (!owner.isDestroyed()) owner.send("terminal:data", { id, data });
@@ -83,8 +105,8 @@ export function createSession(
     if (!owner.isDestroyed()) owner.send("terminal:exit", { id, exitCode });
   });
 
-  log.info(`Terminal ${shell} aberto`);
-  return { id, shell, cwd };
+  log.info(`Terminal ${kind} aberto`);
+  return { id, shell: kind, cwd };
 }
 
 function getOwned(owner: WebContents, id: string): Session {
@@ -100,6 +122,15 @@ export function write(owner: WebContents, id: string, data: string): void {
 
 export function resize(owner: WebContents, id: string, cols: number, rows: number): void {
   getOwned(owner, id).pty.resize(cols, rows);
+}
+
+/**
+ * Aviso do Windows de que um terminal terminou o trabalho (o renderer decide
+ * quando: a aba não está na tela). O texto é montado aqui, a partir da sessão.
+ */
+export function notifyDone(owner: WebContents, id: string): void {
+  const session = getOwned(owner, id);
+  showNotification(KIND_LABEL[session.kind], tt("Terminou e está esperando você em {folder}.", { folder: path.basename(session.cwd) || session.cwd }), "terminal");
 }
 
 export function kill(owner: WebContents, id: string): void {

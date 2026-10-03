@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
-import { ExternalLink, Plus, SquareTerminal, X } from "lucide-react";
+import { ExternalLink, LayoutGrid, Plus, Rows2, SquareTerminal, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState, Spinner } from "@/components/ui/primitives";
@@ -10,10 +10,32 @@ import { basename } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { useProjectsStore } from "@/stores/useProjectsStore";
 import { useSettingsStore } from "@/stores/useSettingsStore";
-import { useUIStore } from "@/stores/useUIStore";
+import { toast, useUIStore } from "@/stores/useUIStore";
 
 import { tr } from "@/lib/i18n";
-type Shell = "powershell" | "cmd";
+type Shell = "powershell" | "cmd" | "claude" | "codex";
+/** starting: abrindo; busy: produzindo saída; idle: parado esperando o usuário; ended: processo encerrado. */
+type Status = "starting" | "busy" | "idle" | "ended";
+type Layout = "tabs" | "grid";
+
+const SHELL_LABEL: Record<Shell, string> = { powershell: "PowerShell", cmd: "CMD", claude: "Claude Code", codex: "Codex" };
+const SHELL_BADGE: Record<Shell, string> = { powershell: "PS", cmd: "CMD", claude: "Claude", codex: "Codex" };
+
+/** Saída que chega até este tempo depois de uma tecla é eco do que o usuário digitou, não trabalho. */
+const ECHO_MS = 400;
+/** Sem saída por este tempo: o terminal parou e está esperando. */
+const IDLE_MS = 2500;
+/** Só avisa "terminou" se o trabalho durou pelo menos isto (evita aviso a cada `dir`). */
+const NOTIFY_MIN_MS = 8000;
+
+const LAYOUT_KEY = "qrz.terminalLayout";
+function loadLayout(): Layout {
+  try {
+    return localStorage.getItem(LAYOUT_KEY) === "grid" ? "grid" : "tabs";
+  } catch {
+    return "tabs";
+  }
+}
 
 /**
  * Um único listener de `terminal:data`/`terminal:exit` para o app. Os dados que
@@ -50,7 +72,43 @@ interface Tab {
   title: string;
 }
 
-function TerminalView({ tab, active, onExit }: { tab: Tab; active: boolean; onExit: () => void }) {
+function StatusDot({ status }: { status: Status | undefined }) {
+  const label = status === "busy" ? tr("Trabalhando") : status === "idle" ? tr("Esperando você") : status === "ended" ? tr("Encerrado") : tr("Abrindo");
+  return (
+    <span
+      title={label}
+      aria-label={label}
+      className={cn(
+        "inline-block h-1.5 w-1.5 shrink-0 rounded-full",
+        status === "busy" && "animate-pulse bg-accent",
+        status === "idle" && "bg-success",
+        status === "ended" && "bg-text-faint",
+        (status === undefined || status === "starting") && "bg-warning"
+      )}
+    />
+  );
+}
+
+function TerminalView({
+  tab,
+  layout,
+  shown,
+  focused,
+  status,
+  onFocus,
+  onStatus,
+  onExit,
+}: {
+  tab: Tab;
+  layout: Layout;
+  /** O painel está na tela (página aberta e, no modo abas, é a aba ativa). */
+  shown: boolean;
+  focused: boolean;
+  status: Status | undefined;
+  onFocus: () => void;
+  onStatus: (status: Status) => void;
+  onExit: () => void;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
   const fitRef = useRef<FitAddon | null>(null);
@@ -58,6 +116,10 @@ function TerminalView({ tab, active, onExit }: { tab: Tab; active: boolean; onEx
   const [exited, setExited] = useState<number | null>(null);
   const onExitRef = useRef(onExit);
   onExitRef.current = onExit;
+  const onStatusRef = useRef(onStatus);
+  onStatusRef.current = onStatus;
+  const shownRef = useRef(shown);
+  shownRef.current = shown;
 
   useEffect(() => {
     ensureSubscribed();
@@ -85,8 +147,40 @@ function TerminalView({ tab, active, onExit }: { tab: Tab; active: boolean; onEx
     let sessionId: string | null = null;
     let disposed = false;
 
+    // Estado da sessão, deduzido da saída: saída contínua = trabalhando; silêncio = esperando.
+    let status: Status = "starting";
+    let lastInput = 0;
+    let lastOutput = 0;
+    let busySince = 0;
+    const setStatus = (next: Status) => {
+      if (status === next) return;
+      status = next;
+      onStatusRef.current(next);
+    };
+    function finished() {
+      if (!sessionId) return;
+      if (document.hidden || !document.hasFocus()) void attempt(window.workspace.terminal.notifyDone(sessionId));
+      else if (!shownRef.current) toast.info(tr("{name} terminou em {folder}.", { name: SHELL_LABEL[tab.shell], folder: tab.title }));
+    }
+    const idleTimer = setInterval(() => {
+      if (status !== "busy" || Date.now() - lastOutput < IDLE_MS) return;
+      const worked = lastOutput - busySince;
+      setStatus("idle");
+      if (worked >= NOTIFY_MIN_MS) finished();
+    }, 1000);
+    function onOutput() {
+      const now = Date.now();
+      if (now - lastInput < ECHO_MS) return;
+      lastOutput = now;
+      if (status !== "busy") {
+        busySince = now;
+        setStatus("busy");
+      }
+    }
+
     const inputSub = term.onData((data) => {
       if (!sessionId) return;
+      lastInput = Date.now();
       // O canal aceita até 100 mil caracteres por chamada; colagens grandes vão em pedaços (a ordem do IPC é mantida).
       for (let i = 0; i < data.length; i += 50_000) void window.workspace.terminal.write(sessionId, data.slice(i, i + 50_000));
     });
@@ -142,9 +236,13 @@ function TerminalView({ tab, active, onExit }: { tab: Tab; active: boolean; onEx
           return;
         }
         sessionId = session.id;
-        dataHandlers.set(session.id, (data) => term.write(data));
+        dataHandlers.set(session.id, (data) => {
+          term.write(data);
+          onOutput();
+        });
         exitHandlers.set(session.id, (code) => {
           setExited(code);
+          setStatus("ended");
           sessionId = null;
           term.write(`\r\n\x1b[90m[${tr("processo encerrado com código {code}", { code })}]\x1b[0m\r\n`);
         });
@@ -152,15 +250,20 @@ function TerminalView({ tab, active, onExit }: { tab: Tab; active: boolean; onEx
         if (buffered) {
           term.write(buffered);
           pendingData.delete(session.id);
+          onOutput();
         }
         term.focus();
       } catch (err) {
-        if (!disposed) setError(errorMessage(err));
+        if (!disposed) {
+          setError(errorMessage(err));
+          setStatus("ended");
+        }
       }
     })();
 
     return () => {
       disposed = true;
+      clearInterval(idleTimer);
       inputSub.dispose();
       resizeSub.dispose();
       container.removeEventListener("contextmenu", onContextMenu);
@@ -173,9 +276,10 @@ function TerminalView({ tab, active, onExit }: { tab: Tab; active: boolean; onEx
       termRef.current = null;
       fitRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab.cwd, tab.shell]);
 
-  // Reajusta ao redimensionar a janela ou ao trocar de aba.
+  // Reajusta ao redimensionar a janela, ao trocar de aba ou de layout.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -187,16 +291,35 @@ function TerminalView({ tab, active, onExit }: { tab: Tab; active: boolean; onEx
   }, []);
 
   useEffect(() => {
-    if (!active) return;
+    if (!shown || !focused) return;
     const t = setTimeout(() => {
       fitRef.current?.fit();
       termRef.current?.focus();
     }, 10);
     return () => clearTimeout(t);
-  }, [active]);
+  }, [shown, focused]);
 
+  const grid = layout === "grid";
   return (
-    <div className={cn("absolute inset-0 flex-col", active ? "flex" : "hidden")}>
+    <div
+      onMouseDownCapture={onFocus}
+      className={cn(
+        "min-h-0 min-w-0 flex-col bg-bg",
+        grid ? "relative flex" : cn("absolute inset-0", shown ? "flex" : "hidden"),
+        grid && "ring-1 ring-inset",
+        grid && (focused ? "ring-accent/60" : "ring-transparent")
+      )}
+    >
+      {grid && (
+        <div className="flex items-center gap-1.5 border-b border-border-subtle px-3 py-1 text-[11px] text-text-muted">
+          <StatusDot status={status} />
+          <span className="truncate" title={tab.cwd}>{tab.title}</span>
+          <span className="text-[10px] text-text-faint">{SHELL_BADGE[tab.shell]}</span>
+          <button onClick={() => onExitRef.current()} className="ml-auto rounded p-0.5 text-text-faint hover:text-text" aria-label={tr("Fechar terminal")}>
+            <X size={11} />
+          </button>
+        </div>
+      )}
       {error && (
         <div className="flex items-center justify-between gap-2 border-b border-danger/30 bg-danger/5 px-4 py-2 text-sm text-danger">
           <span>{error}</span>
@@ -222,16 +345,31 @@ export function TerminalPage({ visible = true }: { visible?: boolean }) {
   const settings = useSettingsStore((s) => s.settings);
 
   const [available, setAvailable] = useState<boolean | null>(null);
+  const [agents, setAgents] = useState<{ claude: boolean; codex: boolean }>({ claude: false, codex: false });
   const [tabs, setTabs] = useState<Tab[]>([]);
+  const [statuses, setStatuses] = useState<Record<string, Status>>({});
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [target, setTarget] = useState("");
   const [shell, setShell] = useState<Shell>(settings?.defaultTerminal ?? "powershell");
+  const [layout, setLayout] = useState<Layout>(loadLayout);
   const handledParam = useRef<string | null>(null);
 
   useEffect(() => {
     if (!loaded) void load();
-    void attempt(window.workspace.terminal.available()).then((ok) => setAvailable(ok ?? false));
+    void attempt(window.workspace.terminal.available()).then((ok) => {
+      setAvailable(ok ?? false);
+      if (ok) void attempt(window.workspace.terminal.agents()).then((found) => found && setAgents(found));
+    });
   }, [loaded, load]);
+
+  function changeLayout(next: Layout) {
+    setLayout(next);
+    try {
+      localStorage.setItem(LAYOUT_KEY, next);
+    } catch {
+      // armazenamento indisponível: vale só nesta sessão
+    }
+  }
 
   // Pastas possíveis: projetos + diretórios autorizados.
   const locations = useMemo(() => {
@@ -246,7 +384,7 @@ export function TerminalPage({ visible = true }: { visible?: boolean }) {
 
   function openTab(cwd: string, title: string, sh: Shell = shell) {
     if (available === false) {
-      void attempt(window.workspace.system.openTerminal(cwd, sh));
+      void attempt(window.workspace.system.openTerminal(cwd, sh === "cmd" ? "cmd" : "powershell"));
       return;
     }
     const key = crypto.randomUUID();
@@ -260,6 +398,7 @@ export function TerminalPage({ visible = true }: { visible?: boolean }) {
       if (activeKey === key) setActiveKey(next.length ? next[next.length - 1].key : null);
       return next;
     });
+    setStatuses((current) => Object.fromEntries(Object.entries(current).filter(([k]) => k !== key)));
   }
 
   // `pageParam` = id do projeto: abre um terminal nele assim que der.
@@ -283,6 +422,9 @@ export function TerminalPage({ visible = true }: { visible?: boolean }) {
   }, [pageParam, available, loaded, projects, visible]);
 
   const targetLabel = locations.find((l) => l.value === target)?.label ?? basename(target);
+  const grid = layout === "grid" && tabs.length > 0;
+  const columns = Math.ceil(Math.sqrt(tabs.length));
+  const rows = Math.ceil(tabs.length / Math.max(1, columns));
 
   const toolbar = (
     <div className="flex flex-wrap items-center gap-2">
@@ -301,14 +443,43 @@ export function TerminalPage({ visible = true }: { visible?: boolean }) {
           ) : null;
         })}
       </select>
-      <select className="input w-32 py-1 text-xs" value={shell} onChange={(e) => setShell(e.target.value as Shell)}>
-        <option value="powershell">{tr("PowerShell")}</option>
-        <option value="cmd">{tr("CMD")}</option>
+      <select className="input w-36 py-1 text-xs" value={shell} onChange={(e) => setShell(e.target.value as Shell)}>
+        <optgroup label={tr("Terminal")}>
+          <option value="powershell">{tr("PowerShell")}</option>
+          <option value="cmd">{tr("CMD")}</option>
+        </optgroup>
+        {available && (agents.claude || agents.codex) && (
+          <optgroup label={tr("Agentes")}>
+            {agents.claude && <option value="claude">{SHELL_LABEL.claude}</option>}
+            {agents.codex && <option value="codex">{SHELL_LABEL.codex}</option>}
+          </optgroup>
+        )}
       </select>
       <Button size="sm" onClick={() => target && openTab(target, targetLabel)} disabled={!target}>
         {available === false ? <ExternalLink size={13} /> : <Plus size={13} />}
         {available === false ? tr("Abrir terminal externo") : tr("Novo terminal")}
       </Button>
+      {available && (
+        <div className="flex rounded-md border border-border-subtle p-0.5">
+          {(
+            [
+              ["tabs", Rows2, tr("Um terminal por vez")],
+              ["grid", LayoutGrid, tr("Todos os terminais lado a lado")],
+            ] as const
+          ).map(([value, Icon, label]) => (
+            <button
+              key={value}
+              onClick={() => changeLayout(value)}
+              title={label}
+              aria-label={label}
+              aria-pressed={layout === value}
+              className={cn("rounded p-1 transition-colors", layout === value ? "bg-bg-hover text-text" : "text-text-faint hover:text-text")}
+            >
+              <Icon size={13} />
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 
@@ -353,9 +524,9 @@ export function TerminalPage({ visible = true }: { visible?: boolean }) {
               )}
             >
               <button onClick={() => setActiveKey(t.key)} className="flex items-center gap-1.5" title={t.cwd}>
-                <SquareTerminal size={12} className="text-text-faint" />
+                <StatusDot status={statuses[t.key]} />
                 {t.title}
-                <span className="text-[10px] text-text-faint">{t.shell === "cmd" ? tr("CMD") : tr("PS")}</span>
+                <span className="text-[10px] text-text-faint">{SHELL_BADGE[t.shell]}</span>
               </button>
               <button onClick={() => closeTab(t.key)} className="rounded p-0.5 text-text-faint hover:text-text" aria-label={tr("Fechar terminal")}>
                 <X size={11} />
@@ -366,9 +537,23 @@ export function TerminalPage({ visible = true }: { visible?: boolean }) {
         {toolbar}
       </div>
 
-      <div className="relative min-h-0 flex-1 bg-bg">
+      {/* Os painéis ficam sempre no mesmo pai: trocar de layout não remonta (nem mata) os terminais. */}
+      <div
+        className={cn("min-h-0 flex-1 bg-bg", grid ? "grid gap-px bg-border-subtle" : "relative")}
+        style={grid ? { gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))` } : undefined}
+      >
         {tabs.map((t) => (
-          <TerminalView key={t.key} tab={t} active={visible && t.key === activeKey} onExit={() => closeTab(t.key)} />
+          <TerminalView
+            key={t.key}
+            tab={t}
+            layout={grid ? "grid" : "tabs"}
+            shown={visible && (grid || t.key === activeKey)}
+            focused={t.key === activeKey}
+            status={statuses[t.key]}
+            onFocus={() => setActiveKey(t.key)}
+            onStatus={(s) => setStatuses((current) => ({ ...current, [t.key]: s }))}
+            onExit={() => closeTab(t.key)}
+          />
         ))}
         {tabs.length === 0 && (
           <EmptyState

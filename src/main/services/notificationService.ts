@@ -34,6 +34,11 @@ function markNotified(key: string): void {
 function notify(key: string, title: string, body: string, page: string): void {
   if (alreadyNotified(key)) return;
   markNotified(key);
+  showNotification(title, body, page);
+}
+
+/** Notificação avulsa (sem registro de "já avisado"); o clique abre `page`. */
+export function showNotification(title: string, body: string, page: string): void {
   if (!Notification.isSupported()) return;
   const n = new Notification({ title, body, silent: false });
   n.on("click", () => onClick?.(page));
