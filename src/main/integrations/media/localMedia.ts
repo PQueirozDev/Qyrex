@@ -1,5 +1,7 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
+import fs from "node:fs";
 import path from "node:path";
+import { app } from "electron";
 import { createLogger } from "../../logger.js";
 import type { LocalMediaState, MediaAction } from "../../../shared/types.js";
 import { MEDIA_SESSION_SCRIPT } from "./mediaScript.js";
@@ -23,10 +25,27 @@ let buffer = "";
 const waiting: ((line: string | null) => void)[] = [];
 let queue: Promise<unknown> = Promise.resolve();
 
+/**
+ * Grava o script fixo em <userData>/media-bridge.ps1 (reescrito a cada abertura,
+ * sempre com o conteúdo embutido) e devolve o caminho. Não usamos -EncodedCommand:
+ * o antivírus inspeciona comandos codificados na criação do processo e o spawn
+ * (síncrono no Windows) travava o processo principal por 3–5 s, atrasando a
+ * janela na abertura do app.
+ */
+let scriptPath: string | null = null;
+function bridgeScript(): string {
+  if (!scriptPath) {
+    const target = path.join(app.getPath("userData"), "media-bridge.ps1");
+    // BOM: o PowerShell 5.1 lê .ps1 sem BOM como ANSI.
+    fs.writeFileSync(target, "﻿" + MEDIA_SESSION_SCRIPT, "utf8");
+    scriptPath = target;
+  }
+  return scriptPath;
+}
+
 function start(): ChildProcessWithoutNullStreams {
   if (child && !child.killed && child.exitCode === null) return child;
-  const encoded = Buffer.from(MEDIA_SESSION_SCRIPT, "utf16le").toString("base64");
-  const proc = spawn(POWERSHELL, ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-EncodedCommand", encoded], {
+  const proc = spawn(POWERSHELL, ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", bridgeScript()], {
     shell: false,
     windowsHide: true,
   });
