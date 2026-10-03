@@ -536,7 +536,6 @@ async function renderSprite() {
   // Quadro único ampliado (favicon grande, README).
   const one = capybara({ breathe: 0.5 });
   await ffmpeg(["-f", "rawvideo", "-pix_fmt", "rgba", "-s", `${CAPY_W}x${CAPY_H}`, "-i", "-", "-vf", `scale=${CAPY_W * 8}:${CAPY_H * 8}:flags=neighbor`, "-frames:v", "1", path.join(ASSETS, "capy.png")], [one.d]);
-  fs.writeFileSync(path.join(ASSETS, "capy-sheet.json"), JSON.stringify({ frames: N, w: CAPY_W, h: CAPY_H, fps: 8 }));
   console.log(`sprite: site/assets/capy-sheet.png (${N} quadros de ${CAPY_W}×${CAPY_H})`);
 }
 

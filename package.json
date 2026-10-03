@@ -25,7 +25,8 @@
     "dist": "npm run build && electron-builder --win --x64 --publish never",
     "release": "npm run check && npm run build && node scripts/release.mjs",
     "e2e": "node scripts/e2e/run.mjs",
-    "build:demo": "vite build --config vite.demo.config.ts"
+    "build:demo": "vite build --config vite.demo.config.ts",
+    "screenshots": "node scripts/generate-screenshots.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",

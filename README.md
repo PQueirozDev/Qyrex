@@ -1,232 +1,215 @@
-<p align="center"><img src="site/assets/capy.png" width="240" alt="Capivara em pixel art com uma laranja na cabeça, mascote do Qyrex"></p>
+<div align="center">
+
+<img src="site/assets/capy.png" width="168" alt="Capivara em pixel art com uma laranja na cabeça, mascote do Qyrex">
 
 # Qyrex
 
-Central de trabalho desktop open source: um app Electron para Windows que
-reúne projetos, tarefas, arquivos, IA, clientes, marketing, agenda e
-integrações num lugar só. Ele **orquestra** VS Code, terminal, Explorer,
-WhatsApp e Spotify, sem tentar substituir nenhum deles.
+**A central de trabalho para devs e freelancers.**<br>
+Projetos, tarefas, arquivos, IA, clientes, marketing e agenda num app desktop só.
 
-**Site:** [qyrexapp.vercel.app](https://qyrexapp.vercel.app) (código em [site/](site/), com a pixel art e o vídeo da capivara).
+[![Versão](https://img.shields.io/github/v/release/PQueirozDev/QrzSpace-releases?label=vers%C3%A3o&color=ff9a3c&style=flat-square)](https://github.com/PQueirozDev/QrzSpace-releases/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/PQueirozDev/QrzSpace-releases/total?label=downloads&color=3fa3a8&style=flat-square)](https://github.com/PQueirozDev/QrzSpace-releases/releases)
+[![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-0078d4?style=flat-square&logo=windows)](https://github.com/PQueirozDev/QrzSpace-releases/releases/latest/download/Qyrex-Setup.exe)
+[![Licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-6b7280?style=flat-square)](LICENSE)
 
-**Download:** o instalador para Windows fica nas
-[releases](https://github.com/PQueirozDev/QrzSpace-releases/releases/latest).
-Depois de instalado, o app se atualiza sozinho.
+[**⬇ Baixar para Windows**](https://github.com/PQueirozDev/QrzSpace-releases/releases/latest/download/Qyrex-Setup.exe) ·
+[Site](https://qyrexapp.vercel.app) ·
+[Novidades](https://github.com/PQueirozDev/QrzSpace-releases/releases)
 
-> O app se chamava **QrzSpace** até a 1.6.2. Na primeira abertura da 1.7.0, os
-> dados de `%APPDATA%/QrzSpace` são copiados para `%APPDATA%/Qyrex`.
+<br>
+
+<img src="docs/screenshots/inicio.png" alt="Tela Início do Qyrex: tarefas em foco, compromissos, projetos, manutenção mensal, agenda do dia, atividade recente e cobranças da semana" width="100%">
+
+</div>
+
+<br>
+
+O Qyrex **orquestra** as ferramentas que você já usa (VS Code, terminal,
+Explorer, GitHub, WhatsApp, Spotify) em vez de tentar substituí-las. Tudo fica
+no seu PC: banco SQLite local, chaves no cofre do Windows e nenhuma conta
+para criar.
+
+## Telas
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/ia.png" alt="Chat com IA"><p align="center"><b>IA</b> · Claude, OpenAI e Gemini, com comandos executáveis</p></td>
+    <td width="50%"><img src="docs/screenshots/projetos.png" alt="Projetos"><p align="center"><b>Projetos</b> · status do git, VS Code e terminal num clique</p></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/tarefas.png" alt="Tarefas"><p align="center"><b>Tarefas</b> · lista ou kanban, com prazo e prioridade</p></td>
+    <td><img src="docs/screenshots/agenda.png" alt="Agenda"><p align="center"><b>Agenda</b> · eventos locais e do Google Agenda</p></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/clientes.png" alt="Clientes"><p align="center"><b>Clientes</b> · manutenção mensal e cobranças</p></td>
+    <td><img src="docs/screenshots/marketing.png" alt="Marketing"><p align="center"><b>Marketing</b> · da ideia ao post publicado</p></td>
+  </tr>
+</table>
+
+### Temas
+
+<table>
+  <tr>
+    <td width="33%"><img src="docs/screenshots/tema-onsen.png" alt="Tema Onsen"><p align="center">Onsen</p></td>
+    <td width="33%"><img src="docs/screenshots/tema-violeta.png" alt="Tema Violeta"><p align="center">Violeta</p></td>
+    <td width="33%"><img src="docs/screenshots/tema-claro.png" alt="Tema Claro"><p align="center">Claro</p></td>
+  </tr>
+</table>
+
+Também tem Escuro, Meia-noite, Areia e Sistema, escolhidos por prévia em
+**Configurações → Aparência**.
 
 ## Funcionalidades
 
-- **Início**: saudação, tarefas em foco, compromissos do dia, cobranças da
-  semana, projetos recentes, commits recentes e ações rápidas.
-- **Projetos**: cards com favoritos, tecnologias detectadas pelo `package.json`
-  e status git. Abre no VS Code, no terminal, no Explorer ou no GitHub. O
-  painel de detalhes mostra alterações, commits recentes, commit/pull/push
-  (sempre com confirmação, push nunca com `--force`), issues e PRs do GitHub e
-  as tarefas do projeto.
-- **Terminal**: terminal integrado (xterm.js + node-pty) com abas, PowerShell
-  ou CMD, aberto na pasta de um projeto ou de um diretório autorizado. Se o
-  terminal integrado não estiver disponível, abre um terminal externo.
-- **Arquivos**: navegação só dentro das pastas autorizadas, busca por nome,
-  nova pasta, renomear, copiar, mover e excluir (com confirmação), copiar
-  caminho, abrir no Explorer ou no VS Code e preview de imagem, código (com
-  destaque de sintaxe) e Markdown.
-- **Agenda**: visões de dia, semana e mês, com eventos locais e do Google
-  Agenda (esses em modo somente leitura).
-- **Tarefas**: lista (Hoje / Próximas / Todas / Concluídas) ou kanban, com
-  prioridade, prazo, horário, tags, projeto e cliente. `Ctrl+Shift+T` cria uma
-  tarefa de qualquer lugar.
-- **Clientes**: status (ativo, prospecto, inativo), manutenção mensal, próxima
-  cobrança, pasta de arquivos, projetos, tarefas e conteúdos vinculados, e
-  atalhos para WhatsApp, Instagram, email e telefone.
-- **Marketing**: quadro Ideia → Produzindo → Pronto → Publicado (arrastar e
-  soltar), calendário semanal, captura rápida de ideias e posts, stories e
-  reels com legenda, data e arquivos relacionados.
-- **WhatsApp**: abre o app desktop ou o WhatsApp Web, conversas com clientes e
-  números avulsos, com mensagem inicial opcional. Usa só links oficiais.
-- **IA**:
-  - Chat com Claude, OpenAI e Gemini, com streaming, interromper, regenerar,
-    troca de modelo e histórico salvo.
-  - Anexo explícito de arquivos do projeto: você vê exatamente o que será
-    enviado.
-  - Blocos de comando (PowerShell/bash/cmd) nas respostas têm o botão
-    **Executar**. Ele avalia o risco e pede sua permissão (uma vez ou sempre).
-    Comandos perigosos só aceitam confirmação pontual.
-  - **AI Council**: a mesma pergunta para vários modelos, respostas lado a
-    lado e uma síntese final. Antes de enviar, o app mostra quantos providers
-    vão ser usados.
-- **Integrações**: Claude, OpenAI, Gemini, GitHub, Google Agenda, Spotify
-  (mini player na barra lateral) e WhatsApp, com status, testar e desconectar.
-- **Command Palette** (`Ctrl+K`) com busca fuzzy, busca global no topo,
-  bandeja do sistema e notificações desktop.
-- **Temas**: Escuro, Claro, Meia-noite, Violeta, Areia ou Sistema, escolhidos
-  por prévia em **Configurações → Aparência**.
-- **Idioma**: português ou inglês (interface, notificações, menu da bandeja e
-  respostas da IA).
-- **Discord Rich Presence** (opcional): mostra no seu perfil do Discord a área
-  do Qyrex em uso. O nome do projeto só aparece se você ligar essa opção.
-- **Atualização automática**: ao abrir, o app procura, baixa, confere o SHA-512
-  e instala novas versões, com contagem para reiniciar e opção de adiar. Pode
-  ser desligada em Configurações.
-- **Novidades**: aba com as patch notes de cada versão e um resumo mostrado uma
-  vez depois de cada atualização.
+| | |
+| --- | --- |
+| 🏠 **Início** | Tarefas em foco, compromissos do dia, cobranças da semana, projetos e commits recentes, tempo de uso do app e ações rápidas. |
+| 🧩 **Projetos** | Tecnologias detectadas pelo `package.json`, status do git, commit/pull/push com confirmação (push nunca com `--force`), issues e PRs do GitHub. |
+| 💻 **Terminal** | xterm.js + node-pty com abas, PowerShell ou CMD, aberto na pasta do projeto. |
+| 📁 **Arquivos** | Navegação só nas pastas autorizadas, busca, renomear/copiar/mover/excluir e preview de imagem, código e Markdown. |
+| ✅ **Tarefas** | Lista (Hoje, Próximas, Todas, Concluídas) ou kanban, com prioridade, prazo, tags, projeto e cliente. `Ctrl+Shift+T` de qualquer lugar. |
+| 📅 **Agenda** | Dia, semana e mês, com eventos locais e do Google Agenda. |
+| 📝 **Notion** | Busca, leitura e criação de páginas, com "Perguntar à IA" sobre o conteúdo. |
+| 🤝 **Clientes** | Status, manutenção mensal, próxima cobrança, pasta de arquivos e atalhos para WhatsApp, Instagram, email e telefone. |
+| 📣 **Marketing** | Quadro Ideia → Produzindo → Pronto → Publicado, calendário semanal e captura rápida de ideias. |
+| 💬 **WhatsApp** | Abre conversas pelo app desktop ou pelo WhatsApp Web, só com links oficiais. |
+| 🤖 **IA** | Chat com Claude, OpenAI e Gemini (por API key ou pela sua assinatura do Claude Code/Codex), anexos explícitos, comandos com botão **Executar** e permissão, **AI Council** (vários modelos e uma síntese) e aba de uso de tokens. |
+| 🎵 **Mini player** | Mostra e controla o que está tocando no Windows (Spotify, navegador etc.), com capa. |
 
-Atalhos: `Ctrl+K` palette · `Ctrl+Shift+T` nova tarefa · `Ctrl+Shift+P`
-projetos · `Ctrl+Shift+A` IA.
+E mais: Command Palette (`Ctrl+K`), bandeja do sistema, notificações,
+interface em **português ou inglês**, foto de perfil, Discord Rich Presence
+opcional, animação de abertura e **atualização automática** com conferência
+de SHA-512.
 
-## Tecnologias
+## Download
 
-Electron · React 18 · TypeScript (strict) · Vite · Tailwind CSS · Zustand ·
-better-sqlite3 · zod · xterm.js + @lydell/node-pty · react-markdown +
-rehype-highlight · @anthropic-ai/sdk · electron-updater · Inter · Vitest
+Baixe o [**Qyrex-Setup.exe**](https://github.com/PQueirozDev/QrzSpace-releases/releases/latest/download/Qyrex-Setup.exe)
+e siga o assistente. Não precisa de administrador, e depois de instalado o app
+se atualiza sozinho.
 
-## Instalação (desenvolvimento)
+<img src="docs/screenshots/instalador.png" width="420" alt="Assistente de instalação do Qyrex">
 
-Pré-requisito: Node.js 20+ no Windows. `better-sqlite3` e `@lydell/node-pty`
-vêm com binários prontos, então não é preciso instalar o Visual Studio Build
-Tools.
-
-```bash
-npm install
-npm run dev:app      # compila o main e sobe Vite (5173) + Electron com hot reload
-```
-
-Se o binário do Electron não for baixado no `npm install`, rode
-`node node_modules/electron/install.js`.
-
-Comandos úteis:
-
-```bash
-npm run typecheck    # tsconfig.main.json + tsconfig.renderer.json
-npm run lint         # eslint, sem nenhum warning permitido
-npm test             # vitest rodando dentro do Electron (mesmo ABI dos módulos nativos)
-npm run check        # typecheck + lint + test
-npm run icons        # regenera build/icon.png e build/icon.ico a partir de build/icon.svg
-node site/pixel/pixel.mjs   # redesenha a pixel art: ícone, sprites e vídeo do site (precisa do ffmpeg)
-```
-
-## Build e instalador
-
-```bash
-npm run dist         # gera release/Qyrex-Setup-<versão>.exe
-```
-
-O instalador NSIS (x64) é gerado pelo `electron-builder` (config em
-`electron-builder.json`). Ele deixa escolher a pasta de instalação, cria
-atalhos na área de trabalho e no menu Iniciar e inclui o desinstalador. O build
-precisa rodar **no Windows**.
-
-### Publicar uma nova versão (atualização automática)
-
-1. Suba a versão no `package.json` (ex.: `1.0.1`) e adicione a entrada em
-   `src/shared/changelog.ts` (pt e en). O teste falha se o changelog não
-   tiver a versão atual.
-2. `npm run release`: roda `check`, gera o instalador e publica a release
-   `v<versão>` em **PQueirozDev/QrzSpace-releases** com o `gh`, usando as patch notes do changelog.
-
-Os apps instalados encontram a versão nova ao abrir, baixam, conferem o
-SHA-512 do `latest.yml` e instalam. Um download adulterado é descartado.
-Nunca há downgrade nem pré-release.
+> O instalador ainda não é assinado digitalmente, então o SmartScreen pode
+> avisar na primeira execução: clique em **Mais informações → Executar assim mesmo**.
+>
+> O app se chamava **QrzSpace** até a 1.6.2. Na primeira abertura da 1.7.0 em
+> diante, os dados de `%APPDATA%/QrzSpace` são copiados para `%APPDATA%/Qyrex`.
 
 ## Configuração inicial
 
 Na primeira execução, o onboarding pede seu nome e as pastas onde ficam seus
 projetos (ex.: `C:\Projetos`). O Qyrex **só** lê, lista ou altera arquivos
-dentro dessas pastas. Você gerencia a lista em **Configurações → Pastas
-autorizadas**.
+dentro dessas pastas, e a lista fica em **Configurações → Pastas autorizadas**.
 
-## Integrações
+<details>
+<summary><b>Integrações</b>: o que cada uma precisa</summary>
+
+<br>
 
 Tudo fica em **Integrações**. Cada chave ou token é guardado cifrado no cofre
 do sistema e aparece na tela só mascarado.
 
 | Integração | O que você precisa |
 | --- | --- |
-| Claude (Anthropic) | API key de [console.anthropic.com](https://console.anthropic.com/settings/keys) |
-| OpenAI | API key de [platform.openai.com](https://platform.openai.com/api-keys) |
+| Claude (Anthropic) | API key de [console.anthropic.com](https://console.anthropic.com/settings/keys) ou o [Claude Code](https://claude.com/claude-code) já logado no PC |
+| OpenAI | API key de [platform.openai.com](https://platform.openai.com/api-keys) ou o Codex CLI já logado no PC |
 | Gemini (Google) | API key do [Google AI Studio](https://aistudio.google.com/app/apikey) |
-| GitHub | Fine-grained personal access token com leitura de Metadata, Issues e Pull requests |
+| GitHub | Fine-grained personal access token com leitura de Metadata, Issues e Pull requests, ou o `gh` já logado |
+| Notion | Token de uma integração interna, com as páginas compartilhadas com ela |
 | Google Agenda | No Google Cloud Console: ative a Google Calendar API e crie um OAuth Client do tipo **App para computador**. Informe o Client ID e o Client Secret. |
-| Spotify | No [Spotify Developer Dashboard](https://developer.spotify.com/dashboard), crie um app com o Redirect URI `http://127.0.0.1:43821/callback`. Só o Client ID é necessário (PKCE). |
+| Spotify (opcional) | No [Spotify Developer Dashboard](https://developer.spotify.com/dashboard), crie um app com o Redirect URI `http://127.0.0.1:43821/callback`. Só o Client ID é necessário (PKCE). |
 | WhatsApp | Nada: usa os links oficiais (`wa.me` e o app desktop). |
-| Discord (em Configurações) | Em [discord.com/developers](https://discord.com/developers/applications), crie um aplicativo chamado **Qyrex**, envie `build/icon.png` em Rich Presence → Art Assets com o nome `qyrex` e cole o Application ID. Precisa do app do Discord aberto no PC. |
+| Discord (em Configurações) | Em [discord.com/developers](https://discord.com/developers/applications), crie um aplicativo chamado **Qyrex**, envie `build/icon.png` em Rich Presence → Art Assets com o nome `qyrex` e cole o Application ID. Precisa do app do Discord aberto. |
+
+</details>
 
 ## Segurança
 
-- Janela com `contextIsolation: true`, `nodeIntegration: false` e
-  `sandbox: true`. O renderer só fala com o main process pela API exposta em
-  `window.workspace` (`src/preload/index.ts`).
-- Todo canal IPC confere a origem da chamada, valida a entrada com zod e
-  devolve `IpcResult`, sem vazar stack trace.
-- Todo acesso a arquivo passa pela allowlist de diretórios autorizados, com
-  resolução de `..`, symlinks e junctions. Raiz de disco, pastas do sistema e
-  a pasta do usuário inteira não podem ser autorizadas.
-- Processos externos rodam via `spawn` com argumentos em array e
-  `shell: false`. Input do usuário nunca é concatenado num comando.
-- Ações sensíveis (excluir ou mover arquivo, commit/pull/push, executar
-  comando) só acontecem depois de um diálogo de confirmação.
-- A IA nunca executa nada sozinha. Comandos sugeridos só rodam depois da sua
-  permissão, e comandos perigosos nunca podem ser "permitidos sempre".
-- API keys e tokens ficam só no cofre do sistema (`safeStorage`/DPAPI). Nunca
-  vão para o SQLite, para o renderer ou para os logs, que têm redação
-  automática.
-- CSP restritiva e links externos limitados a http, https, mailto e tel.
-  Executáveis nunca são abertos, só mostrados no Explorer.
-- AI Council: nunca dispara para mais providers do que você confirmou.
-- WhatsApp: nenhuma biblioteca não oficial.
-- Atualizações: origem fixa no app (GitHub Releases via HTTPS), integridade
-  por SHA-512, sem downgrade. Os logs do atualizador guardam só a primeira
-  linha dos erros, e cookies também são redigidos.
-- Discord: comunicação só com o app do Discord local (named pipe). Nomes de
-  projeto ficam ocultos por padrão.
+O Qyrex mexe em arquivos, roda comandos e guarda tokens, então a segurança é
+regra, não detalhe:
 
-## Estrutura
+- **Renderer isolado** (`contextIsolation`, `sandbox`, sem `nodeIntegration`). A interface só fala com o processo principal pela API de `src/preload/index.ts`.
+- **Todo canal IPC** confere a origem e valida a entrada com zod.
+- **Arquivos só nas pastas autorizadas**, com resolução de `..`, symlinks e junctions. Raiz de disco, pastas do sistema e a home inteira não podem ser autorizadas.
+- **Processos** rodam com `spawn` (argumentos em array, `shell: false`). Input do usuário nunca vira pedaço de comando.
+- **A IA nunca executa nada sozinha.** Comandos sugeridos pedem permissão, e os perigosos nunca podem ser "permitidos sempre".
+- **Segredos só no cofre do Windows** (`safeStorage`/DPAPI): nunca no banco, na interface ou nos logs, que têm redação automática.
+- **Ações sensíveis** (excluir, mover, commit, pull, push, executar) passam por um diálogo de confirmação.
+- **Atualizações** vêm de origem fixa por HTTPS, com SHA-512 conferido e sem downgrade.
+
+## Desenvolvimento
+
+Pré-requisito: Node.js 20+ no Windows. `better-sqlite3` e `@lydell/node-pty`
+vêm com binários prontos, sem Visual Studio Build Tools.
+
+```bash
+npm install
+npm run dev:app      # Vite (5173) + Electron com hot reload
+```
+
+| Comando | O que faz |
+| --- | --- |
+| `npm run check` | typecheck + lint (sem warnings) + testes (vitest dentro do Electron) |
+| `npm run e2e` | percorre o app inteiro pela interface, com as APIs simuladas |
+| `npm run dist` | gera `release/Qyrex-Setup-<versão>.exe` (NSIS x64) |
+| `npm run release` | `check` + build + publica a versão em [QrzSpace-releases](https://github.com/PQueirozDev/QrzSpace-releases) |
+| `npm run build:demo` | demo web com a interface real e dados fictícios (`dist-demo/`) |
+| `npm run screenshots` | refaz as imagens de `docs/screenshots/` a partir da demo |
+| `npm run icons` | regenera ícones e artes do instalador a partir de `build/icon.svg` |
+
+Se o binário do Electron não baixar no `npm install`, rode
+`node node_modules/electron/install.js`.
+
+**Nova versão:** suba a versão no `package.json`, adicione a entrada em
+`src/shared/changelog.ts` (pt e en; o teste exige) e rode `npm run release`.
+Os apps instalados encontram a versão nova ao abrir.
+
+<details>
+<summary><b>Estrutura do projeto</b></summary>
 
 ```
 src/
   main/          # processo Electron: ipc, services, integrations, security, database
-  preload/       # única ponte exposta ao renderer via contextBridge
-  renderer/      # React (pages, components, stores, lib)
-  shared/        # tipos compartilhados (contrato main ↔ renderer)
+  preload/       # única ponte exposta ao renderer (contextBridge)
+  renderer/      # React 18 + Tailwind: pages, components, stores, lib
+  shared/        # tipos, i18n e changelog compartilhados
+  demo/          # demo web com window.workspace simulado
 tests/           # vitest: segurança, banco, IPC, arquivos e integrações
-scripts/         # testes dentro do Electron, cópia das migrations e geração de ícones
-build/           # ícones do app e do instalador
-site/            # site estático (index.html, styles.css, app.js) e assets
-site/pixel/      # pixel art desenhada em código: capivara, cena do onsen, ícone
+scripts/         # testes no Electron, E2E, release, ícones e screenshots
+build/           # ícone e artes do instalador
+site/            # site estático (qyrexapp.vercel.app)
+docs/            # imagens do README
 ```
 
-## Roadmap
+**Stack:** Electron · React 18 · TypeScript strict · Vite · Tailwind CSS ·
+Zustand · motion · better-sqlite3 · zod · xterm.js + node-pty ·
+@anthropic-ai/sdk · electron-updater · Vitest
 
-- ✅ Fundação: projetos, tarefas, arquivos, palette, SQLite, bandeja
-- ✅ Central de IA: Claude / OpenAI / Gemini, anexos explícitos, execução de
-  comandos com permissão
-- ✅ Clientes, Marketing e Agenda com Google Agenda (leitura)
-- ✅ Terminal integrado, GitHub, Spotify, WhatsApp (links oficiais),
-  notificações
-- ✅ AI Council com síntese
-- ✅ 1.0 (ainda como QrzSpace): temas, idioma PT/EN, Discord Rich Presence, atualização
-  automática e patch notes
-- ✅ 1.7: nome novo (Qyrex), ícone em pixel art e código aberto
-- ⏳ WhatsApp Cloud API oficial (lembretes de cobrança e confirmações)
-- ⏳ Criar e editar eventos no Google Agenda direto pelo app
-- ⏳ Automações entre módulos (ex.: tarefa ao publicar conteúdo, lembrete de
-  cobrança)
+</details>
 
 ## Pixel art
 
-Toda a arte é desenhada em código, pixel a pixel, em `site/pixel/pixel.mjs`: a
-capivara (com a laranja na cabeça), a cena do onsen noturno do vídeo do site
-(96 quadros a 12 fps, recortados e ampliados 5× sem suavização), a folha de
-sprites do topo do site e o ícone 32×32 do app. Para mudar algo, edite o script
-e rode `node site/pixel/pixel.mjs` e depois `npm run icons`.
+A capivara, o ícone, a cena do onsen do site e as artes do instalador são
+desenhados em código, pixel a pixel, em
+[`site/pixel/pixel.mjs`](site/pixel/pixel.mjs). Para mudar algo, edite o
+script e rode `node site/pixel/pixel.mjs` e depois `npm run icons`.
+
+## Roadmap
+
+- [x] Projetos, tarefas, arquivos, palette, terminal e bandeja
+- [x] IA com Claude, OpenAI e Gemini, AI Council e execução com permissão
+- [x] Clientes, Marketing, Agenda, GitHub, Notion, WhatsApp e mini player
+- [x] Temas, português/inglês, Discord e atualização automática
+- [ ] WhatsApp Cloud API oficial (lembretes de cobrança e confirmações)
+- [ ] Criar e editar eventos do Google Agenda pelo app
+- [ ] Automações entre módulos (ex.: tarefa ao publicar conteúdo)
 
 ## Contribuir
 
 Issues e pull requests são bem-vindos. Antes de abrir um PR, rode
 `npm run check`. Textos novos na interface usam `tr()` com a tradução em
-`src/shared/locales/en.ts` (o teste de i18n confere). As regras de segurança do
-`CLAUDE.md` valem para qualquer contribuição.
+`src/shared/locales/en.ts` (o teste de i18n confere), e as regras de segurança
+acima valem para qualquer mudança.
 
 ## Licença
 

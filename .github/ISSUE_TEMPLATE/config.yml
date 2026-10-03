@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: ⬇ Baixar o Qyrex
+    url: https://github.com/PQueirozDev/QrzSpace-releases/releases/latest
+    about: O instalador para Windows e as notas de cada versão.
