@@ -6,7 +6,8 @@ import { tt } from "../i18n.js";
 /**
  * Todo acesso a arquivos do sistema passa por aqui.
  * O Workspace NUNCA acessa um diretório fora da allowlist configurada pelo usuário
- * em Configurações → "Diretórios autorizados".
+ * em Configurações → "Pastas autorizadas" — a não ser que ele ligue "Permitir
+ * todas as pastas do PC", quando as raízes passam a ser as unidades do disco.
  */
 
 export class PathNotAllowedError extends Error {
@@ -70,8 +71,22 @@ export function checkPathAgainstRoots(target: string, roots: string[]): string {
   return resolved;
 }
 
+/** Unidades existentes no PC (C:\, D:\...) ou "/" fora do Windows. */
+export function listDriveRoots(): string[] {
+  if (process.platform !== "win32") return ["/"];
+  const drives: string[] = [];
+  for (let code = 65; code <= 90; code++) {
+    const root = `${String.fromCharCode(code)}:\\`;
+    if (fs.existsSync(root)) drives.push(root);
+  }
+  return drives;
+}
+
 export function getAllowedDirs(): string[] {
-  return getSettings().allowedProjectDirs.map(normalize);
+  const settings = getSettings();
+  // "Permitir todas as pastas do PC": as raízes viram as unidades inteiras.
+  if (settings.allowAllDirs) return listDriveRoots();
+  return settings.allowedProjectDirs.map(normalize);
 }
 
 /**

@@ -400,6 +400,8 @@ export interface AppSettings {
   startWithSystem: boolean;
   minimizeToTray: boolean;
   allowedProjectDirs: string[];
+  /** Libera o acesso a todas as pastas do PC (as raízes passam a ser as unidades). */
+  allowAllDirs: boolean;
   defaultTerminal: "powershell" | "cmd";
   aiDefaultProvider: AIProviderId | null;
   aiDefaultModel: string | null;
@@ -416,6 +418,8 @@ export interface SystemInfo {
   vscodePath: string | null;
   logsDir: string | null;
   terminalAvailable: boolean;
+  /** Unidades do PC (C:\, D:\...), usadas como raízes quando todas as pastas estão liberadas. */
+  driveRoots: string[];
 }
 
 // Toda ação potencialmente sensível passa por essa confirmação antes de ser executada.

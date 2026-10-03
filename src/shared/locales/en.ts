@@ -483,7 +483,14 @@ export const EN: Record<string, string> = {
   "Copiar": "Copy",
   "Recortar (mover)": "Cut (move)",
   "Nenhuma pasta autorizada": "No authorized folders",
-  "O Qyrex só acessa pastas que você autorizar. Adicione a pasta dos seus projetos para começar.": "Qyrex only accesses folders you authorize. Add your projects folder to get started.",
+  "Libere o acesso a todas as pastas do PC ou autorize só uma pasta específica.": "Allow access to every folder on the PC or authorize just one specific folder.",
+  "Permitir todas as pastas do PC": "Allow all folders on the PC",
+  "Permitir todas as pastas do PC?": "Allow all folders on the PC?",
+  "O Qyrex poderá ler, listar e alterar arquivos em qualquer pasta de qualquer unidade, sem precisar autorizar uma por uma.":
+    "Qyrex will be able to read, list and change files in any folder on any drive, without authorizing them one by one.",
+  "Permitir tudo": "Allow everything",
+  "Todas as pastas do PC liberadas": "All folders on the PC allowed",
+  "Desfazer": "Undo",
   "Autorizar pasta": "Authorize folder",
   "Somente dentro das pastas autorizadas em Configurações.": "Only inside the folders authorized in Settings.",
   "Buscar por nome...": "Search by name...",
@@ -734,8 +741,10 @@ export const EN: Record<string, string> = {
   "Abre o Qyrex ao entrar no sistema.": "Opens Qyrex when you sign in.",
   "Minimizar para a bandeja": "Minimize to tray",
   "Fechar a janela mantém o app rodando na bandeja do sistema.": "Closing the window keeps the app running in the system tray.",
-  "O Qyrex só lê, lista ou altera arquivos dentro destas pastas. Raízes de disco, pastas do sistema e a pasta do usuário inteira não são aceitas.":
-    "Qyrex only reads, lists or changes files inside these folders. Drive roots, system folders and your whole user folder are not accepted.",
+  "Escolha se o Qyrex pode acessar o PC inteiro ou só as pastas que você autorizar.":
+    "Choose whether Qyrex can access the whole PC or only the folders you authorize.",
+  "O Qyrex lê, lista e altera arquivos em qualquer pasta, sem precisar autorizar uma por uma.":
+    "Qyrex reads, lists and changes files in any folder, without authorizing them one by one.",
   "Remover {name}": "Remove {name}",
   "Autorizar pasta...": "Authorize folder...",
   "Não encontrado automaticamente.": "Not found automatically.",

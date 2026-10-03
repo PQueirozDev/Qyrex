@@ -2,6 +2,8 @@ import { create } from "zustand";
 import type { AppSettings, SystemInfo } from "@shared/types";
 import { attempt } from "@/lib/api";
 import { getTheme } from "@/lib/themes";
+import { tr } from "@/lib/i18n";
+import { confirmAction } from "./useUIStore";
 
 type SettingsPatch = Parameters<typeof window.workspace.settings.update>[0];
 
@@ -19,9 +21,11 @@ interface SettingsState {
   update: (patch: SettingsPatch) => Promise<void>;
   addAllowedDir: (dir?: string) => Promise<boolean>;
   removeAllowedDir: (dir: string) => Promise<void>;
+  /** Liga/desliga "Permitir todas as pastas do PC" (ligar pede confirmação). */
+  setAllowAllDirs: (enabled: boolean) => Promise<void>;
 }
 
-export const useSettingsStore = create<SettingsState>((set) => ({
+export const useSettingsStore = create<SettingsState>((set, get) => ({
   settings: null,
   system: null,
   avatar: null,
@@ -62,6 +66,20 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   removeAllowedDir: async (dir) => {
     const data = await attempt(window.workspace.settings.removeAllowedDir(dir));
     if (data) set({ settings: data });
+  },
+  setAllowAllDirs: async (enabled) => {
+    if (enabled) {
+      const ok = await confirmAction({
+        title: tr("Permitir todas as pastas do PC?"),
+        description: tr("O Qyrex poderá ler, listar e alterar arquivos em qualquer pasta de qualquer unidade, sem precisar autorizar uma por uma."),
+        confirmLabel: tr("Permitir tudo"),
+        danger: true,
+      });
+      if (!ok) return;
+    }
+    const data = await attempt(window.workspace.settings.update({ allowAllDirs: enabled }));
+    if (data) set({ settings: data });
+    if (enabled && !get().system) await get().loadSystem();
   },
 }));
 

@@ -128,6 +128,7 @@ function seed() {
     startWithSystem: false,
     minimizeToTray: true,
     allowedProjectDirs: [ROOT],
+    allowAllDirs: false,
     defaultTerminal: "powershell",
     aiDefaultProvider: "anthropic",
     aiDefaultModel: null,
@@ -454,7 +455,7 @@ export const workspaceMock: WorkspaceApi = {
     summary: (days: number) => ok(appUsageSummary(days), 40),
   },
   system: {
-    info: () => ok({ platform: "win32", appVersion: APP_VERSION, vscodePath: db.settings.vscodePath, logsDir: null, terminalAvailable: true }, 20),
+    info: () => ok({ platform: "win32", appVersion: APP_VERSION, vscodePath: db.settings.vscodePath, logsDir: null, terminalAvailable: true, driveRoots: ["C:\\"] }, 20),
     memory: () => ok(412, 10),
     setTitleBarColors: () => ok(undefined, 0),
     openVSCode: () => fail(DEMO_ONLY),

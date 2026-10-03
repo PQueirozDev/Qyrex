@@ -23,7 +23,7 @@ import { getSubscriptionLimits } from "../integrations/cli/limits.js";
 import * as spotify from "../integrations/spotify.js";
 import * as googleCalendar from "../integrations/googleCalendar.js";
 import { getSettings, updateSettings } from "../database/db.js";
-import { assertAuthorizableDir, assertPathAllowed } from "../security/paths.js";
+import { assertAuthorizableDir, assertPathAllowed, listDriveRoots } from "../security/paths.js";
 import * as v from "../security/validation.js";
 import { createLogger, getLogDir } from "../logger.js";
 import { translate } from "../../shared/i18n.js";
@@ -137,6 +137,7 @@ export function registerIpcHandlers(): void {
     vscodePath: systemService.detectVSCode(),
     logsDir: getLogDir(),
     terminalAvailable: terminalService.isTerminalAvailable(),
+    driveRoots: listDriveRoots(),
   }));
   handle("system:memory", () => {
     // Memória real (working set) de todos os processos do app, em MB.

@@ -98,6 +98,7 @@ interface SettingsRow {
   auto_update: number;
   last_seen_version: string | null;
   splash_animation: number;
+  allow_all_dirs: number;
 }
 
 const DEFAULT_DISCORD: DiscordPrefs = { enabled: false, clientId: null, showProject: false };
@@ -120,6 +121,7 @@ export function getSettings(): AppSettings {
     startWithSystem: Boolean(row.start_with_system),
     minimizeToTray: Boolean(row.minimize_to_tray),
     allowedProjectDirs: parseJson<string[]>(row.allowed_project_dirs, []),
+    allowAllDirs: Boolean(row.allow_all_dirs),
     defaultTerminal: row.default_terminal as AppSettings["defaultTerminal"],
     aiDefaultProvider: row.ai_default_provider as AppSettings["aiDefaultProvider"],
     aiDefaultModel: row.ai_default_model,
@@ -145,7 +147,7 @@ export function updateSettings(partial: Partial<AppSettings>): AppSettings {
         ai_default_provider = ?, ai_default_model = ?,
         notifications = ?, onboarding_completed = ?, vscode_path = ?,
         language = ?, discord = ?, auto_update = ?, last_seen_version = ?,
-        splash_animation = ?
+        splash_animation = ?, allow_all_dirs = ?
        WHERE id = 1`
     )
     .run(
@@ -164,7 +166,8 @@ export function updateSettings(partial: Partial<AppSettings>): AppSettings {
       JSON.stringify(merged.discord),
       merged.autoUpdate ? 1 : 0,
       merged.lastSeenVersion,
-      merged.splashAnimation ? 1 : 0
+      merged.splashAnimation ? 1 : 0,
+      merged.allowAllDirs ? 1 : 0
     );
 
   return merged;

@@ -8,9 +8,12 @@ import {
   assertPathAllowedAndExists,
   assertSafeName,
   checkPathAgainstRoots,
+  getAllowedDirs,
   isWithin,
+  listDriveRoots,
   PathNotAllowedError,
 } from "../../src/main/security/paths";
+import { updateSettings } from "../../src/main/database/db";
 import { freshDb, removeDir, tempAllowedDir } from "../helpers";
 
 // Caminhos no formato do Windows só fazem sentido com o `path` do Windows.
@@ -117,6 +120,17 @@ describe("assertPathAllowed (com configurações do banco)", () => {
 
   it("exige que o caminho exista quando pedido", () => {
     expect(() => assertPathAllowedAndExists(path.join(dir, "nao-existe.txt"))).toThrow(/não encontrado/);
+  });
+
+  it("com 'Permitir todas as pastas do PC' aceita qualquer caminho das unidades", () => {
+    updateSettings({ allowAllDirs: true });
+    expect(getAllowedDirs()).toEqual(listDriveRoots());
+    expect(() => assertPathAllowed(os.homedir())).not.toThrow();
+    expect(() => assertPathAllowed(path.join(os.tmpdir(), "qualquer.txt"))).not.toThrow();
+    // Entradas malformadas continuam barradas.
+    expect(() => assertPathAllowed("\\\\.\\PhysicalDrive0")).toThrow();
+    updateSettings({ allowAllDirs: false });
+    expect(() => assertPathAllowed(os.homedir())).toThrow(PathNotAllowedError);
   });
 });
 

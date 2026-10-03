@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, CheckCircle2, Code2, FolderPlus, ImagePlus, Plug, SquareTerminal, Trash2, User, XCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CheckCircle2, Code2, FolderPlus, HardDrive, ImagePlus, Plug, SquareTerminal, Trash2, User, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import { attempt } from "@/lib/api";
@@ -19,7 +19,7 @@ const STEPS = [
 
 /** Primeira execução: nada é obrigatório além de concluir — integrações externas são opcionais. */
 export function Onboarding() {
-  const { settings, system, update, addAllowedDir, removeAllowedDir, loadSystem, avatar, pickAvatar, removeAvatar } = useSettingsStore();
+  const { settings, system, update, addAllowedDir, removeAllowedDir, setAllowAllDirs, loadSystem, avatar, pickAvatar, removeAvatar } = useSettingsStore();
   const [step, setStep] = useState(0);
   const [name, setName] = useState(settings?.userName ?? "");
   const [vscode, setVscode] = useState<string | null>(system?.vscodePath ?? null);
@@ -104,8 +104,22 @@ export function Onboarding() {
                   </button>
                 </div>
               ))}
-              <Button variant="secondary" onClick={() => void addAllowedDir()}>
-                <FolderPlus size={15} />{" "}{tr("Escolher pasta...")}</Button>
+              {settings.allowAllDirs ? (
+                <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg px-3 py-2.5">
+                  <CheckCircle2 size={16} className="text-success" />
+                  <span className="flex-1 text-xs text-text">{tr("Todas as pastas do PC liberadas")}</span>
+                  <button onClick={() => void setAllowAllDirs(false)} className="text-xs text-text-faint hover:text-danger">
+                    {tr("Desfazer")}
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={() => void setAllowAllDirs(true)}>
+                    <HardDrive size={15} />{" "}{tr("Permitir todas as pastas do PC")}</Button>
+                  <Button variant="secondary" onClick={() => void addAllowedDir()}>
+                    <FolderPlus size={15} />{" "}{tr("Escolher pasta...")}</Button>
+                </div>
+              )}
             </div>
           )}
 
@@ -211,7 +225,7 @@ export function Onboarding() {
                   <Button variant="secondary" size="sm" onClick={() => void finish(true)}>{tr("Conectar agora")}</Button>
                 )}
                 <Button size="sm" onClick={() => setStep((s) => s + 1)}>
-                  {step === 0 && settings.allowedProjectDirs.length === 0 ? tr("Pular") : tr("Continuar")} <ArrowRight size={14} />
+                  {step === 0 && !settings.allowAllDirs && settings.allowedProjectDirs.length === 0 ? tr("Pular") : tr("Continuar")} <ArrowRight size={14} />
                 </Button>
               </div>
             ) : (

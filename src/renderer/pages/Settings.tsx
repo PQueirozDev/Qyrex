@@ -246,7 +246,7 @@ function DiscordSection() {
 }
 
 export function Settings() {
-  const { settings, system, update, addAllowedDir, removeAllowedDir, loadSystem, avatar, pickAvatar, removeAvatar } = useSettingsStore();
+  const { settings, system, update, addAllowedDir, removeAllowedDir, setAllowAllDirs, loadSystem, avatar, pickAvatar, removeAvatar } = useSettingsStore();
   const { providers, loadProviders } = useAIStore();
   const [name, setName] = useState(settings?.userName ?? "");
   const [allowedCommands, setAllowedCommands] = useState<string[] | null>(null);
@@ -403,11 +403,15 @@ export function Settings() {
         <Section
           id="pastas"
           title={tr("Pastas autorizadas")}
-          description={tr(
-            "O Qyrex só lê, lista ou altera arquivos dentro destas pastas. Raízes de disco, pastas do sistema e a pasta do usuário inteira não são aceitas."
-          )}
+          description={tr("Escolha se o Qyrex pode acessar o PC inteiro ou só as pastas que você autorizar.")}
         >
-          {settings.allowedProjectDirs.length === 0 ? (
+          <Row
+            label={tr("Permitir todas as pastas do PC")}
+            hint={tr("O Qyrex lê, lista e altera arquivos em qualquer pasta, sem precisar autorizar uma por uma.")}
+          >
+            <Switch checked={settings.allowAllDirs} onChange={(v) => void setAllowAllDirs(v)} />
+          </Row>
+          {!settings.allowAllDirs && (settings.allowedProjectDirs.length === 0 ? (
             <EmptyState className="py-4" icon={FolderPlus} title={tr("Nenhuma pasta autorizada")} />
           ) : (
             <div className="divide-y divide-border-subtle rounded-lg border border-border-subtle">
@@ -420,10 +424,12 @@ export function Settings() {
                 </div>
               ))}
             </div>
+          ))}
+          {!settings.allowAllDirs && (
+            <Button size="sm" variant="secondary" onClick={() => void addAllowedDir()}>
+              <FolderPlus size={13} /> {tr("Autorizar pasta...")}
+            </Button>
           )}
-          <Button size="sm" variant="secondary" onClick={() => void addAllowedDir()}>
-            <FolderPlus size={13} /> {tr("Autorizar pasta...")}
-          </Button>
         </Section>
 
         <Section id="ferramentas" title={tr("VS Code e terminal")}>

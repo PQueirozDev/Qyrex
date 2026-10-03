@@ -13,6 +13,7 @@ import {
   Folder,
   FolderOpen,
   FolderPlus,
+  HardDrive,
   Link2,
   MoreHorizontal,
   Pencil,
@@ -143,7 +144,17 @@ export function FilesPage() {
   const settings = useSettingsStore((s) => s.settings);
   const pageParam = useUIStore((s) => s.pageParam);
   const navigate = useUIStore((s) => s.navigate);
-  const roots = useMemo(() => settings?.allowedProjectDirs ?? [], [settings?.allowedProjectDirs]);
+  const system = useSettingsStore((s) => s.system);
+  const allowAll = settings?.allowAllDirs ?? false;
+  const roots = useMemo(
+    () => (allowAll ? (system?.driveRoots ?? []) : (settings?.allowedProjectDirs ?? [])),
+    [allowAll, system?.driveRoots, settings?.allowedProjectDirs]
+  );
+
+  // Com todas as pastas liberadas, as raízes são as unidades (vêm do system:info).
+  useEffect(() => {
+    if (allowAll && !system) void useSettingsStore.getState().loadSystem();
+  }, [allowAll, system]);
 
   const [root, setRoot] = useState<string | null>(null);
   const [currentPath, setCurrentPath] = useState<string | null>(null);
@@ -337,6 +348,15 @@ export function FilesPage() {
     );
   }
 
+  if (allowAll && !system) {
+    return (
+      <div>
+        <PageHeader title={tr("Arquivos")} icon={PAGE_ICONS.arquivos} />
+        <LoadingRows />
+      </div>
+    );
+  }
+
   if (roots.length === 0) {
     return (
       <div>
@@ -345,10 +365,14 @@ export function FilesPage() {
           <EmptyState
             icon={FolderOpen}
             title={tr("Nenhuma pasta autorizada")}
-            description={tr("O Qyrex só acessa pastas que você autorizar. Adicione a pasta dos seus projetos para começar.")}
+            description={tr("Libere o acesso a todas as pastas do PC ou autorize só uma pasta específica.")}
             action={
-              <Button size="sm" onClick={() => void useSettingsStore.getState().addAllowedDir()}>
-                <FolderPlus size={14} />{" "}{tr("Autorizar pasta")}</Button>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={() => void useSettingsStore.getState().setAllowAllDirs(true)}>
+                  <HardDrive size={14} />{" "}{tr("Permitir todas as pastas do PC")}</Button>
+                <Button size="sm" variant="secondary" onClick={() => void useSettingsStore.getState().addAllowedDir()}>
+                  <FolderPlus size={14} />{" "}{tr("Autorizar pasta")}</Button>
+              </div>
             }
           />
         </Card>

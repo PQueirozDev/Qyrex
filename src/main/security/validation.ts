@@ -86,6 +86,7 @@ export const settingsPatch = z
     }),
     onboardingCompleted: z.boolean(),
     splashAnimation: z.boolean(),
+    allowAllDirs: z.boolean(),
   })
   .partial();
 
