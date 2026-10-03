@@ -22,6 +22,35 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.9.2",
+    date: "2026-10-03",
+    title: { pt: "Acesso a todas as pastas e abertura mais rápida", en: "Access to every folder and a faster opening" },
+    sections: [
+      {
+        kind: "new",
+        items: [
+          {
+            pt: "Nova opção \"Permitir todas as pastas do PC\" (Configurações → Pastas autorizadas, onboarding e Arquivos): libera o acesso a todas as unidades sem precisar autorizar pasta por pasta.",
+            en: "New \"Allow all folders on the PC\" option (Settings → Authorized folders, onboarding and Files): grants access to every drive without authorizing folders one by one.",
+          },
+        ],
+      },
+      {
+        kind: "improved",
+        items: [
+          {
+            pt: "O app abre mais rápido: o mini player não trava mais a janela por alguns segundos na abertura.",
+            en: "The app opens faster: the mini player no longer freezes the window for a few seconds on startup.",
+          },
+          {
+            pt: "A animação de abertura só começa quando a janela aparece, então ela é exibida inteira.",
+            en: "The opening animation only starts once the window appears, so it is shown in full.",
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: "1.9.1",
     date: "2026-09-30",
     title: { pt: "Abertura com mais calma", en: "A calmer opening" },
