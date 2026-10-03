@@ -22,6 +22,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.9.3",
+    date: "2026-10-03",
+    title: { pt: "Copiar e colar no terminal", en: "Copy and paste in the terminal" },
+    sections: [
+      {
+        kind: "fixed",
+        items: [
+          {
+            pt: "O terminal integrado agora copia e cola como o Windows Terminal: Ctrl+C com texto selecionado copia, Ctrl+V cola, e o botão direito copia ou cola.",
+            en: "The built-in terminal now copies and pastes like Windows Terminal: Ctrl+C with selected text copies, Ctrl+V pastes, and right-click copies or pastes.",
+          },
+          {
+            pt: "Colar uma imagem (print ou foto copiada) no terminal funciona em programas como o Claude Code.",
+            en: "Pasting an image (screenshot or copied photo) into the terminal works in programs like Claude Code.",
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: "1.9.2",
     date: "2026-10-03",
     title: { pt: "Acesso a todas as pastas e abertura mais rápida", en: "Access to every folder and a faster opening" },

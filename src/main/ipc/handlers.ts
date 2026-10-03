@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell, type IpcMainInvokeEvent } from "electron";
+import { app, BrowserWindow, clipboard, ipcMain, shell, type IpcMainInvokeEvent } from "electron";
 import fs from "node:fs";
 import { z } from "zod";
 import type { IpcResult } from "../../shared/types.js";
@@ -368,6 +368,12 @@ export function registerIpcHandlers(): void {
     )
   );
   handle("terminal:kill", (e, id) => terminalService.kill(e.sender, v.parse(v.id, id)));
+  // A UI não tem permissão de ler a área de transferência; o terminal pede aqui ao colar.
+  // `hasImage` sem texto: o terminal repassa o Ctrl+V para o programa (ex.: Claude Code) ler a imagem.
+  handle("terminal:clipboard", async () => ({
+    text: await clipboard.readText(),
+    hasImage: await clipboard.has("image/png"),
+  }));
 
   // --- Integrações ------------------------------------------------------------------------------------------
   handle("integrations:list", () => listIntegrationStatus());

@@ -825,6 +825,8 @@ export const workspaceMock: WorkspaceApi = {
       termExit.emit({ id, exitCode: 0 });
       return ok(undefined, 0);
     },
+    // No navegador a demo não lê a área de transferência sem pedir permissão: cola nada.
+    readClipboard: () => ok({ text: "", hasImage: false }, 0),
     onData: (cb) => termData.on(cb),
     onExit: (cb) => termExit.on(cb),
   },

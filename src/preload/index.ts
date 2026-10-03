@@ -262,6 +262,7 @@ const api = {
     write: (id: string, data: string) => invoke<void>("terminal:write", id, data),
     resize: (id: string, cols: number, rows: number) => invoke<void>("terminal:resize", id, cols, rows),
     kill: (id: string) => invoke<void>("terminal:kill", id),
+    readClipboard: () => invoke<{ text: string; hasImage: boolean }>("terminal:clipboard"),
     onData: (callback: (payload: { id: string; data: string }) => void) => subscribe("terminal:data", callback),
     onExit: (callback: (payload: { id: string; exitCode: number }) => void) => subscribe("terminal:exit", callback),
   },

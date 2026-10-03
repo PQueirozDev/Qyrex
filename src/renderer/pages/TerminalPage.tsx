@@ -86,8 +86,47 @@ function TerminalView({ tab, active, onExit }: { tab: Tab; active: boolean; onEx
     let disposed = false;
 
     const inputSub = term.onData((data) => {
-      if (sessionId) void window.workspace.terminal.write(sessionId, data);
+      if (!sessionId) return;
+      // O canal aceita até 100 mil caracteres por chamada; colagens grandes vão em pedaços (a ordem do IPC é mantida).
+      for (let i = 0; i < data.length; i += 50_000) void window.workspace.terminal.write(sessionId, data.slice(i, i + 50_000));
     });
+
+    // Copiar e colar como no Windows Terminal. O xterm não faz isso sozinho e a UI não pode
+    // ler a área de transferência, então o texto vem do main.
+    function copySelection() {
+      const text = term.getSelection();
+      if (text) void navigator.clipboard.writeText(text);
+      term.clearSelection();
+    }
+    async function pasteClipboard() {
+      const clip = await attempt(window.workspace.terminal.readClipboard());
+      if (!clip || !sessionId) return;
+      if (clip.text) term.paste(clip.text);
+      // Só imagem (print, foto copiada): manda o Ctrl+V cru para o programa ler a imagem ele mesmo.
+      else if (clip.hasImage) void window.workspace.terminal.write(sessionId, "\x16");
+    }
+    term.attachCustomKeyEventHandler((event) => {
+      const key = event.key.toLowerCase();
+      const ctrlOnly = event.ctrlKey && !event.altKey && !event.metaKey;
+      const isCopy = (ctrlOnly && key === "c" && (event.shiftKey || term.hasSelection())) || (ctrlOnly && !event.shiftKey && key === "insert");
+      const isPaste = (ctrlOnly && key === "v") || (event.shiftKey && !event.ctrlKey && !event.altKey && key === "insert");
+      if (!isCopy && !isPaste) return true;
+      // Bloqueia também o "paste" nativo do navegador, senão o texto entraria duas vezes.
+      event.preventDefault();
+      if (event.type === "keydown") {
+        if (isCopy) copySelection();
+        else void pasteClipboard();
+      }
+      return false;
+    });
+    // Botão direito: copia se houver seleção, senão cola.
+    const onContextMenu = (event: MouseEvent) => {
+      event.preventDefault();
+      if (term.hasSelection()) copySelection();
+      else void pasteClipboard();
+    };
+    const container = containerRef.current!;
+    container.addEventListener("contextmenu", onContextMenu);
     const resizeSub = term.onResize(({ cols, rows }) => {
       if (sessionId) void window.workspace.terminal.resize(sessionId, cols, rows);
     });
@@ -124,6 +163,7 @@ function TerminalView({ tab, active, onExit }: { tab: Tab; active: boolean; onEx
       disposed = true;
       inputSub.dispose();
       resizeSub.dispose();
+      container.removeEventListener("contextmenu", onContextMenu);
       if (sessionId) {
         dataHandlers.delete(sessionId);
         exitHandlers.delete(sessionId);
