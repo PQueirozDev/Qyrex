@@ -22,6 +22,34 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.10.0",
+    date: "2026-10-03",
+    title: { pt: "Agentes de IA no terminal", en: "AI agents in the terminal" },
+    sections: [
+      {
+        kind: "new",
+        items: [
+          {
+            pt: "Abra o Claude Code ou o Codex direto no terminal integrado, já na pasta do projeto (aparecem quando estão instalados no PC).",
+            en: "Open Claude Code or Codex right in the built-in terminal, already in the project folder (shown when they are installed on the PC).",
+          },
+          {
+            pt: "Cada aba do terminal mostra se está trabalhando, esperando você ou encerrada.",
+            en: "Each terminal tab shows whether it is working, waiting for you or ended.",
+          },
+          {
+            pt: "Aviso quando um terminal termina um trabalho longo enquanto você está em outra aba ou com o Qyrex minimizado.",
+            en: "A notice when a terminal finishes a long job while you are on another tab or have Qyrex minimized.",
+          },
+          {
+            pt: "Modo grade: veja todos os terminais lado a lado na mesma tela.",
+            en: "Grid mode: see every terminal side by side on the same screen.",
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: "1.9.3",
     date: "2026-10-03",
     title: { pt: "Copiar e colar no terminal", en: "Copy and paste in the terminal" },
