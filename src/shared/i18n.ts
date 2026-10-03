@@ -31,10 +31,6 @@ export function translatePlural(
   return translate(lang, n === 1 ? one : other, { n, ...vars });
 }
 
-export function hasTranslation(text: string): boolean {
-  return Object.prototype.hasOwnProperty.call(EN, text);
-}
-
 /**
  * Marca um texto para tradução sem traduzi-lo agora (ele é traduzido depois,
  * onde for exibido). Serve para o extrator de chaves (scripts/i18n-keys.cjs).

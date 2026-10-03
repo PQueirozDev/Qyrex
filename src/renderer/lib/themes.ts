@@ -60,8 +60,6 @@ export const THEMES: ThemeDefinition[] = [
   },
 ];
 
-export const THEME_IDS = THEMES.map((t) => t.id);
-
 export function getTheme(id: ThemeId | "system", prefersDark: boolean): ThemeDefinition {
   const resolved = id === "system" ? (prefersDark ? "dark" : "light") : id;
   return THEMES.find((t) => t.id === resolved) ?? THEMES[0];

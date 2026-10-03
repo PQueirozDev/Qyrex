@@ -13,7 +13,6 @@ const log = createLogger("spotify");
  * Developer Dashboard: http://127.0.0.1:43821/callback
  */
 export const SPOTIFY_REDIRECT_PORT = 43821;
-export const SPOTIFY_REDIRECT_URI = `http://127.0.0.1:${SPOTIFY_REDIRECT_PORT}/callback`;
 const SCOPES = ["user-read-playback-state", "user-modify-playback-state", "user-read-currently-playing"];
 
 function clientId(): string {
