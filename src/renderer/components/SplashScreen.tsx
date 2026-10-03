@@ -26,11 +26,22 @@ function storedEnabled(): boolean {
 export function SplashScreen() {
   const settings = useSettingsStore((s) => s.settings);
   const [enabled] = useState(storedEnabled);
+  const [started, setStarted] = useState(false);
   const [minElapsed, setMinElapsed] = useState(false);
 
+  // O relógio e as animações só começam no primeiro quadro desenhado de verdade
+  // (a janela nasce escondida e aparece no ready-to-show): se algo atrasar a
+  // janela, a animação não "corre" por trás e aparece inteira.
   useEffect(() => {
-    const id = window.setTimeout(() => setMinElapsed(true), MIN_MS);
-    return () => window.clearTimeout(id);
+    let timer = 0;
+    const raf = requestAnimationFrame(() => {
+      setStarted(true);
+      timer = window.setTimeout(() => setMinElapsed(true), MIN_MS);
+    });
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(timer);
+    };
   }, []);
 
   const pref = settings?.splashAnimation;
@@ -57,43 +68,51 @@ export function SplashScreen() {
           aria-hidden
           data-splash
         >
-          <motion.img
-            src={logoUrl}
-            alt=""
-            draggable={false}
-            className="h-20 w-20 [image-rendering:pixelated] drop-shadow-[0_8px_24px_rgb(255_154_60/0.35)]"
-            initial={{ opacity: 0, scale: 0.7, y: 12 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ type: "spring", stiffness: 120, damping: 12, mass: 1.2 }}
-          />
-          <div className="flex text-2xl font-semibold tracking-tight text-text">
-            {NAME.split("").map((letter, i) => (
-              <motion.span
-                key={i}
-                initial={{ opacity: 0, y: 10, filter: "blur(4px)" }}
-                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                transition={{ delay: 0.6 + i * 0.12, type: "spring", stiffness: 160, damping: 18 }}
-              >
-                {letter}
-              </motion.span>
-            ))}
-          </div>
-          {/* Barrinha que enche enquanto o app carrega por trás. */}
-          <motion.div
-            className="h-[3px] w-24 overflow-hidden rounded-full bg-bg-hover"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.1, duration: 0.3 }}
-          >
-            <motion.div
-              className="h-full rounded-full bg-accent"
-              initial={{ width: "0%" }}
-              animate={{ width: "100%" }}
-              transition={{ delay: 1.2, duration: 1.3, ease: [0.65, 0, 0.35, 1] }}
-            />
-          </motion.div>
+          {started && <SplashContent />}
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+function SplashContent() {
+  return (
+    <>
+      <motion.img
+        src={logoUrl}
+        alt=""
+        draggable={false}
+        className="h-20 w-20 [image-rendering:pixelated] drop-shadow-[0_8px_24px_rgb(255_154_60/0.35)]"
+        initial={{ opacity: 0, scale: 0.7, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 120, damping: 12, mass: 1.2 }}
+      />
+      <div className="flex text-2xl font-semibold tracking-tight text-text">
+        {NAME.split("").map((letter, i) => (
+          <motion.span
+            key={i}
+            initial={{ opacity: 0, y: 10, filter: "blur(4px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            transition={{ delay: 0.6 + i * 0.12, type: "spring", stiffness: 160, damping: 18 }}
+          >
+            {letter}
+          </motion.span>
+        ))}
+      </div>
+      {/* Barrinha que enche enquanto o app carrega por trás. */}
+      <motion.div
+        className="h-[3px] w-24 overflow-hidden rounded-full bg-bg-hover"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.1, duration: 0.3 }}
+      >
+        <motion.div
+          className="h-full rounded-full bg-accent"
+          initial={{ width: "0%" }}
+          animate={{ width: "100%" }}
+          transition={{ delay: 1.2, duration: 1.3, ease: [0.65, 0, 0.35, 1] }}
+        />
+      </motion.div>
+    </>
   );
 }
