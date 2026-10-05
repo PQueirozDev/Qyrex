@@ -13,9 +13,13 @@ export interface Project {
   githubUrl: string | null;
   clientId: string | null;
   favorite: boolean;
+  /** "auto": ícone/logo detectado na pasta; "custom": imagem escolhida; "none": só as iniciais. */
+  iconMode: ProjectIconMode;
   createdAt: string;
   lastOpenedAt: string | null;
 }
+
+export type ProjectIconMode = "auto" | "custom" | "none";
 
 export interface Task {
   id: string;
@@ -74,6 +78,8 @@ export interface GitChangedFile {
 
 export interface ProjectWithGit extends Project {
   git: GitStatusInfo | null;
+  /** Ícone já resolvido conforme `iconMode`, como data URL (null = usar as iniciais). */
+  icon: string | null;
 }
 
 export interface ProjectDetection {
@@ -82,6 +88,8 @@ export interface ProjectDetection {
   githubUrl: string | null;
   hasPackageJson: boolean;
   isGitRepo: boolean;
+  /** Ícone/logo do app encontrado na pasta (data URL). */
+  icon: string | null;
 }
 
 export interface DirEntry {

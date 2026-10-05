@@ -49,6 +49,22 @@ export function Avatar({ name, size = 32, className }: { name: string; size?: nu
   );
 }
 
+/** Ícone do projeto (detectado na pasta ou escolhido); sem ícone, cai nas iniciais do `Avatar`. */
+export function ProjectIcon({ name, icon, size = 32, className }: { name: string; icon: string | null | undefined; size?: number; className?: string }) {
+  // Imagem que o navegador não consegue desenhar (SVG inválido, por exemplo) volta para as iniciais.
+  const [failed, setFailed] = useState<string | null>(null);
+  if (!icon || failed === icon) return <Avatar name={name} size={size} className={cn("rounded-lg", className)} />;
+  return (
+    <span
+      aria-hidden
+      className={cn("flex shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border-subtle bg-bg-elevated", className)}
+      style={{ width: size, height: size }}
+    >
+      <img src={icon} alt="" draggable={false} onError={() => setFailed(icon)} className="h-full w-full object-contain" />
+    </span>
+  );
+}
+
 export function Kbd({ children }: { children: ReactNode }) {
   return (
     <kbd className="rounded border border-border bg-bg px-1.5 py-px font-sans text-[10px] font-medium text-text-faint">{children}</kbd>

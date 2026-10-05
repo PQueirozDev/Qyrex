@@ -121,6 +121,9 @@ export const projectUpdate = z
   })
   .partial();
 
+/** "custom" só é ligado pelo seletor nativo (projects:pickIcon), nunca direto pelo renderer. */
+export const projectIconMode = z.enum(["auto", "none"]);
+
 // --- Tasks ---
 export const taskCreate = z.object({
   title: nonEmpty(300),

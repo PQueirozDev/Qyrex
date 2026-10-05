@@ -22,6 +22,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.13.0",
+    date: "2026-10-05",
+    title: { pt: "Ícone dos projetos", en: "Project icons" },
+    sections: [
+      {
+        kind: "new",
+        items: [
+          {
+            pt: "Os projetos agora mostram o ícone ou logo do próprio app: o Qyrex encontra sozinho na pasta (Electron, Tauri, Expo, Next.js, Vite, Flutter e outros) e usa nos cards, no Início e nos detalhes.",
+            en: "Projects now show their own app icon or logo: Qyrex finds it in the folder by itself (Electron, Tauri, Expo, Next.js, Vite, Flutter and more) and uses it on the cards, on Home and in the details.",
+          },
+          {
+            pt: "Em Editar projeto dá para escolher outra imagem, voltar para a detecção automática ou usar as iniciais.",
+            en: "In Edit project you can pick another image, go back to automatic detection or use the initials.",
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: "1.12.0",
     date: "2026-10-05",
     title: { pt: "Editor de código no Qyrex", en: "Code editor in Qyrex" },

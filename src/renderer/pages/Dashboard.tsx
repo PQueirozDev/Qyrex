@@ -19,7 +19,7 @@ import {
 import type { CalendarEvent, GitCommit, RecentItem } from "@shared/types";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Avatar, Badge, EmptyState, LoadingRows } from "@/components/ui/primitives";
+import { Badge, EmptyState, LoadingRows, ProjectIcon } from "@/components/ui/primitives";
 import { useTasksStore } from "@/stores/useTasksStore";
 import { useProjectsStore } from "@/stores/useProjectsStore";
 import { useBusinessMode, useSettingsStore } from "@/stores/useSettingsStore";
@@ -435,7 +435,7 @@ export function Dashboard() {
                 {recentProjects.map((project) => (
                   <div key={project.id} className="card-interactive flex flex-col rounded-lg border border-border-subtle bg-bg-elevated/50 p-3">
                     <button className="flex items-center gap-2.5 text-left" onClick={() => navigate("projetos", project.id)}>
-                      <Avatar name={project.name} size={30} className="rounded-lg" />
+                      <ProjectIcon name={project.name} icon={project.icon} size={30} />
                       <span className="min-w-0">
                         <span className="block truncate text-sm font-semibold text-text">{project.name}</span>
                         <span className="mt-0.5 block truncate text-xs text-text-faint">{project.technologies.join(" • ") || "—"}</span>

@@ -85,9 +85,9 @@ function seed() {
     { id: "c4", name: "Doce Lar Confeitaria", company: null, phone: null, whatsapp: "11900000004", instagram: "@docelar", email: null, notes: null, status: "ativo", monthlyValue: 180, nextBillingDate: day(18), filesPath: null, createdAt: ago(60 * 24 * 120) },
   ];
   const projects: Project[] = [
-    { id: "p1", name: "Loja Café Aurora", description: "E-commerce com assinatura de cafés.", localPath: `${ROOT}\\cafe-aurora`, technologies: ["Next.js", "TypeScript", "Stripe"], githubUrl: "https://github.com/exemplo/cafe-aurora", clientId: "c1", favorite: true, createdAt: ago(60 * 24 * 40), lastOpenedAt: ago(35) },
-    { id: "p2", name: "App Nova Pilates", description: "Agendamento de aulas e planos.", localPath: `${ROOT}\\nova-pilates`, technologies: ["React", "Supabase"], githubUrl: "https://github.com/exemplo/nova-pilates", clientId: "c2", favorite: false, createdAt: ago(60 * 24 * 20), lastOpenedAt: ago(60 * 26) },
-    { id: "p3", name: "Bot de Orçamentos", description: "Bot de WhatsApp que monta orçamentos.", localPath: `${ROOT}\\bot-orcamentos`, technologies: ["Node.js", "Prisma"], githubUrl: null, clientId: null, favorite: false, createdAt: ago(60 * 24 * 10), lastOpenedAt: null },
+    { id: "p1", name: "Loja Café Aurora", description: "E-commerce com assinatura de cafés.", localPath: `${ROOT}\\cafe-aurora`, technologies: ["Next.js", "TypeScript", "Stripe"], githubUrl: "https://github.com/exemplo/cafe-aurora", clientId: "c1", favorite: true, iconMode: "auto", createdAt: ago(60 * 24 * 40), lastOpenedAt: ago(35) },
+    { id: "p2", name: "App Nova Pilates", description: "Agendamento de aulas e planos.", localPath: `${ROOT}\\nova-pilates`, technologies: ["React", "Supabase"], githubUrl: "https://github.com/exemplo/nova-pilates", clientId: "c2", favorite: false, iconMode: "auto", createdAt: ago(60 * 24 * 20), lastOpenedAt: ago(60 * 26) },
+    { id: "p3", name: "Bot de Orçamentos", description: "Bot de WhatsApp que monta orçamentos.", localPath: `${ROOT}\\bot-orcamentos`, technologies: ["Node.js", "Prisma"], githubUrl: null, clientId: null, favorite: false, iconMode: "auto", createdAt: ago(60 * 24 * 10), lastOpenedAt: null },
   ];
   const tasks: Task[] = [
     { id: "t1", title: "Publicar página de assinaturas", description: "Checkout com plano mensal e trimestral.", status: "em_andamento", priority: "urgente", projectId: "p1", clientId: "c1", dueDate: day(0), dueTime: "18:00", tags: ["site"], createdAt: ago(60 * 30), completedAt: null },
@@ -425,6 +425,8 @@ const notionItem = ({ markdown: _m, ...item }: (typeof notionPages)[number]): No
 
 const withGit = (p: Project): ProjectWithGit => ({
   ...p,
+  iconMode: p.iconMode ?? "auto",
+  icon: null,
   git: { branch: "main", modifiedCount: db.changes[p.id]?.length ?? 0, isRepo: true, ahead: p.id === "p1" ? 1 : 0, behind: 0, remoteUrl: p.githubUrl },
 });
 const projectByPath = (path: string) => db.projects.find((p) => path.toLowerCase().startsWith(p.localPath.toLowerCase()));
@@ -481,7 +483,7 @@ export const workspaceMock: WorkspaceApi = {
   },
   projects: {
     list: () => ok(db.projects.map(withGit)),
-    detect: (p) => ok({ name: p.split("\\").pop() ?? null, technologies: ["TypeScript"], githubUrl: null, hasPackageJson: true, isGitRepo: true }),
+    detect: (p) => ok({ name: p.split("\\").pop() ?? null, technologies: ["TypeScript"], githubUrl: null, hasPackageJson: true, isGitRepo: true, icon: null }),
     create: () => fail("Na demo não dá para adicionar pastas do seu PC. Explore os projetos de exemplo!"),
     update: async (id, patch) => {
       const p = db.projects.find((x) => x.id === id)!;
@@ -505,6 +507,13 @@ export const workspaceMock: WorkspaceApi = {
       db.projects = db.projects.filter((p) => p.id !== id);
       save();
       return ok(undefined);
+    },
+    pickIcon: () => fail(DEMO_ONLY),
+    setIconMode: async (id, mode) => {
+      const p = db.projects.find((x) => x.id === id);
+      if (p) p.iconMode = mode;
+      save();
+      return ok(null);
     },
   },
   git: {

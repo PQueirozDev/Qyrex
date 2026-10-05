@@ -5,7 +5,9 @@ import { getDb } from "../database/db.js";
 import { assertPathAllowed, assertPathAllowedAndExists } from "../security/paths.js";
 import { getGitStatus, getRemoteGithubUrl, isGitRepo } from "./gitService.js";
 import { recordActivity } from "./recentService.js";
-import type { Project, ProjectDetection, ProjectWithGit } from "../../shared/types.js";
+import { detectProjectIcon, pickCustomIcon, removeCustomIcon, resolveProjectIcon } from "./projectIconService.js";
+import type { BrowserWindow } from "electron";
+import type { Project, ProjectDetection, ProjectIconMode, ProjectWithGit } from "../../shared/types.js";
 import { tt } from "../i18n.js";
 
 interface ProjectRow {
@@ -17,6 +19,7 @@ interface ProjectRow {
   github_url: string | null;
   client_id: string | null;
   favorite: number;
+  icon_mode: string;
   created_at: string;
   last_opened_at: string | null;
 }
@@ -31,6 +34,7 @@ function rowToProject(row: ProjectRow): Project {
     githubUrl: row.github_url,
     clientId: row.client_id,
     favorite: Boolean(row.favorite),
+    iconMode: row.icon_mode === "custom" || row.icon_mode === "none" ? row.icon_mode : "auto",
     createdAt: row.created_at,
     lastOpenedAt: row.last_opened_at,
   };
@@ -135,6 +139,7 @@ export async function detectProject(projectPath: string): Promise<ProjectDetecti
     githubUrl: await getRemoteGithubUrl(resolved),
     hasPackageJson: fs.existsSync(pkgPath),
     isGitRepo: isGitRepo(resolved),
+    icon: detectProjectIcon(resolved),
   };
 }
 
@@ -197,9 +202,28 @@ export function touchLastOpened(id: string): void {
   recordActivity("project", id, project.name);
 }
 
-/** Remove só o cadastro — a pasta no disco nunca é apagada por aqui. */
+/** Remove só o cadastro — a pasta no disco nunca é apagada por aqui (só o ícone personalizado guardado pelo Qyrex). */
 export function deleteProject(id: string): void {
-  getDb().prepare("DELETE FROM projects WHERE id = ?").run(id);
+  const { changes } = getDb().prepare("DELETE FROM projects WHERE id = ?").run(id);
+  if (changes > 0) removeCustomIcon(id);
+}
+
+/** Volta para a detecção automática ou deixa só as iniciais. Devolve o ícone resultante. */
+export function setIconMode(id: string, mode: Exclude<ProjectIconMode, "custom">): string | null {
+  const project = getProject(id);
+  if (!project) throw new Error("Projeto não encontrado.");
+  getDb().prepare("UPDATE projects SET icon_mode = ? WHERE id = ?").run(mode, id);
+  removeCustomIcon(id);
+  return resolveProjectIcon({ ...project, iconMode: mode });
+}
+
+/** Escolhe uma imagem como ícone. Devolve `null` se o usuário cancelar; senão o ícone novo. */
+export async function pickIcon(win: BrowserWindow | null, id: string): Promise<{ icon: string | null } | null> {
+  const project = getProject(id);
+  if (!project) throw new Error("Projeto não encontrado.");
+  if (!(await pickCustomIcon(win, id, project.localPath))) return null;
+  getDb().prepare("UPDATE projects SET icon_mode = 'custom' WHERE id = ?").run(id);
+  return { icon: resolveProjectIcon({ ...project, iconMode: "custom" }) };
 }
 
 export async function listProjectsWithGit(): Promise<ProjectWithGit[]> {
@@ -213,7 +237,7 @@ export async function listProjectsWithGit(): Promise<ProjectWithGit[]> {
       } catch {
         git = null; // pasta removida ou fora da allowlist atual
       }
-      return { ...p, git };
+      return { ...p, git, icon: resolveProjectIcon(p) };
     })
   );
 }

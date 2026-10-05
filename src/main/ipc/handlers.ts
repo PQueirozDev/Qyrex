@@ -198,6 +198,10 @@ export function registerIpcHandlers(): void {
   handle("projects:toggleFavorite", (_e, id) => projectService.toggleFavorite(v.parse(v.id, id)));
   handle("projects:touchOpened", (_e, id) => projectService.touchLastOpened(v.parse(v.id, id)));
   handle("projects:delete", (_e, id) => projectService.deleteProject(v.parse(v.id, id)));
+  handle("projects:pickIcon", (e, id) => projectService.pickIcon(windowOf(e), v.parse(v.id, id)));
+  handle("projects:setIconMode", (_e, id, mode) =>
+    projectService.setIconMode(v.parse(v.id, id), v.parse(v.projectIconMode, mode))
+  );
 
   // --- Git / GitHub --------------------------------------------------------------------
   handle("git:status", (_e, p) => gitService.getGitStatus(v.parse(v.filePath, p)));

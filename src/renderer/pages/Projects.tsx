@@ -19,12 +19,15 @@ import {
   Star,
   Trash2,
   CircleDot,
+  CaseSensitive,
+  ImagePlus,
+  ScanSearch,
 } from "lucide-react";
-import type { GitChangedFile, GitCommit, GitHubOverview, ProjectWithGit } from "@shared/types";
+import type { GitChangedFile, GitCommit, GitHubOverview, ProjectIconMode, ProjectWithGit } from "@shared/types";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Dialog } from "@/components/ui/Dialog";
-import { Avatar, Badge, Drawer, EmptyState, ErrorState, Field, LoadingRows, Menu, PageHeader, Spinner } from "@/components/ui/primitives";
+import { Badge, Drawer, EmptyState, ErrorState, Field, LoadingRows, Menu, PageHeader, ProjectIcon, Spinner } from "@/components/ui/primitives";
 import { TaskFormDialog } from "@/components/TaskFormDialog";
 import { attempt, errorMessage, unwrap } from "@/lib/api";
 import { cn } from "@/lib/cn";
@@ -76,9 +79,14 @@ function ProjectFormDialog({
   const [clientId, setClientId] = useState("");
   const [detecting, setDetecting] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [icon, setIcon] = useState<string | null>(null);
+  const [iconMode, setIconMode] = useState<ProjectIconMode>("auto");
+  const [iconBusy, setIconBusy] = useState(false);
 
   useEffect(() => {
     if (!open) return;
+    setIcon(project?.icon ?? null);
+    setIconMode(project?.iconMode ?? "auto");
     setLocalPath(project?.localPath ?? "");
     setName(project?.name ?? "");
     setDescription(project?.description ?? "");
@@ -99,7 +107,42 @@ function ProjectFormDialog({
     if (detected.name) setName((v) => v || detected.name || "");
     if (detected.technologies.length > 0) setTechnologies(detected.technologies.join(", "));
     if (detected.githubUrl) setGithubUrl(detected.githubUrl);
+    setIcon(detected.icon);
   }
+
+  // O ícone é aplicado na hora (como a foto de perfil), sem esperar o "Salvar".
+  async function pickIcon() {
+    if (!project) return;
+    setIconBusy(true);
+    const result = await attempt(window.workspace.projects.pickIcon(project.id));
+    setIconBusy(false);
+    if (!result) return;
+    setIcon(result.icon);
+    setIconMode("custom");
+    void useProjectsStore.getState().load();
+  }
+
+  async function changeIconMode(mode: "auto" | "none") {
+    if (!project) return;
+    setIconBusy(true);
+    const result = await attempt(window.workspace.projects.setIconMode(project.id, mode));
+    setIconBusy(false);
+    if (result === undefined) return;
+    setIcon(result);
+    setIconMode(mode);
+    void useProjectsStore.getState().load();
+  }
+
+  const iconHint =
+    iconMode === "custom"
+      ? tr("Imagem escolhida por você.")
+      : iconMode === "none"
+        ? tr("Mostrando as iniciais do nome.")
+        : icon
+          ? project
+            ? tr("Detectado automaticamente na pasta do projeto.")
+            : tr("Detectado na pasta. Dá para trocar depois em Editar.")
+          : tr("Nenhum ícone ou logo encontrado na pasta.");
 
   async function save() {
     if (!name.trim() || !localPath) return;
@@ -158,6 +201,27 @@ function ProjectFormDialog({
             )}
           </div>
         </Field>
+        {(project || localPath) && (
+          <Field label={tr("Ícone")} hint={iconHint}>
+            <div className="flex items-center gap-3">
+              <ProjectIcon name={name || "?"} icon={icon} size={40} />
+              {project && (
+                <div className="flex flex-wrap gap-1.5">
+                  <Button size="xs" variant="secondary" onClick={() => void pickIcon()} disabled={iconBusy}>
+                    <ImagePlus size={12} />{" "}{tr("Escolher imagem")}</Button>
+                  {iconMode !== "auto" && (
+                    <Button size="xs" variant="ghost" onClick={() => void changeIconMode("auto")} disabled={iconBusy}>
+                      <ScanSearch size={12} />{" "}{tr("Detectar automaticamente")}</Button>
+                  )}
+                  {iconMode !== "none" && (
+                    <Button size="xs" variant="ghost" onClick={() => void changeIconMode("none")} disabled={iconBusy}>
+                      <CaseSensitive size={12} />{" "}{tr("Usar iniciais")}</Button>
+                  )}
+                </div>
+              )}
+            </div>
+          </Field>
+        )}
         <Field label={tr("Nome")}>
           <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="meu-projeto" />
         </Field>
@@ -457,6 +521,7 @@ function ProjectDrawer({
       width={560}
       title={
         <span className="flex items-center gap-2">
+          <ProjectIcon name={project.name} icon={project.icon} size={24} className="rounded-md" />
           {project.name}
           {project.favorite && <Star size={13} className="fill-warning text-warning" />}
         </span>
@@ -471,6 +536,7 @@ function ProjectDrawer({
             items={[
               { label: project.favorite ? tr("Remover dos favoritos") : tr("Favoritar"), icon: Star, onSelect: () => void toggleFavorite(project.id) },
               { label: tr("Editar"), icon: Pencil, onSelect: onEdit },
+              { label: tr("Trocar ícone"), icon: ImagePlus, onSelect: onEdit },
               "separator",
               { label: tr("Excluir projeto"), icon: Trash2, danger: true, onSelect: onDelete },
             ]}
@@ -558,7 +624,7 @@ function ProjectCard({ project, onOpen, onDelete }: { project: ProjectWithGit; o
   return (
     <Card className="card-interactive group flex flex-col p-4">
       <div className="flex items-start gap-2.5">
-        <Avatar name={project.name} size={34} className="rounded-lg" />
+        <ProjectIcon name={project.name} icon={project.icon} size={34} />
         <button className="min-w-0 flex-1 text-left" onClick={onOpen}>
           <p className="truncate text-sm font-semibold text-text">{project.name}</p>
           <p className="mt-0.5 line-clamp-2 min-h-[2.2em] text-xs text-text-muted">{project.description || project.localPath}</p>

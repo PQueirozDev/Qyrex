@@ -131,6 +131,9 @@ const api = {
     toggleFavorite: (id: string) => invoke<void>("projects:toggleFavorite", id),
     touchOpened: (id: string) => invoke<void>("projects:touchOpened", id),
     delete: (id: string) => invoke<void>("projects:delete", id),
+    /** Seletor nativo de imagem; `null` se o usuário cancelar. */
+    pickIcon: (id: string) => invoke<{ icon: string | null } | null>("projects:pickIcon", id),
+    setIconMode: (id: string, mode: "auto" | "none") => invoke<string | null>("projects:setIconMode", id, mode),
   },
   git: {
     status: (p: string) => invoke<GitStatusInfo>("git:status", p),
