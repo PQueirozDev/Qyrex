@@ -3,6 +3,7 @@ import {
   ArrowDownToLine,
   ArrowUpFromLine,
   Code2,
+  FileCode2,
   ExternalLink,
   FolderOpen,
   FolderSearch,
@@ -31,6 +32,7 @@ import { relativeDay, timeAgo } from "@/lib/format";
 import { fuzzyFilter } from "@/lib/fuzzy";
 import { useProjectsStore } from "@/stores/useProjectsStore";
 import { useClientsStore } from "@/stores/useClientsStore";
+import { useBusinessMode } from "@/stores/useSettingsStore";
 import { useTasksStore } from "@/stores/useTasksStore";
 import { confirmAction, toast, useUIStore } from "@/stores/useUIStore";
 
@@ -64,6 +66,7 @@ function ProjectFormDialog({
 }) {
   const { create, update } = useProjectsStore();
   const clients = useClientsStore((s) => s.clients);
+  const businessMode = useBusinessMode();
 
   const [localPath, setLocalPath] = useState("");
   const [name, setName] = useState("");
@@ -165,16 +168,18 @@ function ProjectFormDialog({
           <Field label={tr("Tecnologias")} hint={tr("Separe por vírgula")}>
             <input className="input" value={technologies} onChange={(e) => setTechnologies(e.target.value)} placeholder={tr("React, TypeScript")} />
           </Field>
-          <Field label={tr("Cliente")}>
-            <select className="input" value={clientId} onChange={(e) => setClientId(e.target.value)}>
-              <option value="">{tr("Nenhum")}</option>
-              {clients.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </Field>
+          {businessMode && (
+            <Field label={tr("Cliente")}>
+              <select className="input" value={clientId} onChange={(e) => setClientId(e.target.value)}>
+                <option value="">{tr("Nenhum")}</option>
+                {clients.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
         </div>
         <Field label={tr("Repositório no GitHub")}>
           <input className="input" value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} placeholder="https://github.com/usuario/repo" />
@@ -434,6 +439,7 @@ function ProjectDrawer({
   const { open, load, toggleFavorite } = useProjectsStore();
   const { tasks, loaded: tasksLoaded, load: loadTasks, toggleDone } = useTasksStore();
   const clients = useClientsStore((s) => s.clients);
+  const businessMode = useBusinessMode();
   const navigate = useUIStore((s) => s.navigate);
   const [taskOpen, setTaskOpen] = useState(false);
 
@@ -442,7 +448,7 @@ function ProjectDrawer({
   }, [tasksLoaded, loadTasks]);
 
   const projectTasks = tasks.filter((t) => t.projectId === project.id && t.status !== "concluido");
-  const client = clients.find((c) => c.id === project.clientId);
+  const client = businessMode ? clients.find((c) => c.id === project.clientId) : undefined;
 
   return (
     <Drawer
@@ -489,6 +495,8 @@ function ProjectDrawer({
           <div className="flex flex-wrap gap-1.5 pt-1">
             <Button size="sm" onClick={() => void open(project, "vscode")}>
               <Code2 size={13} />{" "}{tr("VS Code")}</Button>
+            <Button size="sm" variant="secondary" onClick={() => navigate("editor", project.localPath)} title={tr("Editar no Qyrex")}>
+              <FileCode2 size={13} />{" "}{tr("Editor")}</Button>
             <Button size="sm" variant="secondary" onClick={() => navigate("terminal", project.id)}>
               <SquareTerminal size={13} />{" "}{tr("Terminal")}</Button>
             <Button size="sm" variant="secondary" onClick={() => void open(project, "explorer")}>
@@ -594,6 +602,9 @@ function ProjectCard({ project, onOpen, onDelete }: { project: ProjectWithGit; o
       <div className="mt-3 flex gap-1.5 border-t border-border-subtle pt-3">
         <Button size="xs" onClick={() => void open(project, "vscode")}>
           <Code2 size={12} />{" "}{tr("VS Code")}</Button>
+        <Button size="xs" variant="secondary" onClick={() => navigate("editor", project.localPath)} title={tr("Editar no Qyrex")}>
+          <FileCode2 size={12} />
+        </Button>
         <Button size="xs" variant="secondary" onClick={() => navigate("terminal", project.id)} title={tr("Terminal")}>
           <SquareTerminal size={12} />
         </Button>
@@ -614,6 +625,7 @@ function ProjectCard({ project, onOpen, onDelete }: { project: ProjectWithGit; o
 export function Projects() {
   const { projects, loaded, loading, error, load } = useProjectsStore();
   const { loaded: clientsLoaded, load: loadClients } = useClientsStore();
+  const businessMode = useBusinessMode();
   const pageParam = useUIStore((s) => s.pageParam);
   const navigate = useUIStore((s) => s.navigate);
 
@@ -624,8 +636,8 @@ export function Projects() {
 
   useEffect(() => {
     void load();
-    if (!clientsLoaded) void loadClients();
-  }, [load, clientsLoaded, loadClients]);
+    if (businessMode && !clientsLoaded) void loadClients();
+  }, [load, clientsLoaded, businessMode, loadClients]);
 
   // "new" abre o diálogo; um id abre o drawer do projeto.
   useEffect(() => {

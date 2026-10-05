@@ -8,6 +8,7 @@ import { AILimitsIndicator } from "@/components/AILimits";
 import { Kbd, Spinner } from "@/components/ui/primitives";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/i18n";
+import { useBusinessMode } from "@/stores/useSettingsStore";
 
 function ResultGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -34,6 +35,7 @@ export function Header() {
   const navigate = useUIStore((s) => s.navigate);
   const setPaletteOpen = useUIStore((s) => s.setPaletteOpen);
   const setQuickTaskOpen = useUIStore((s) => s.setQuickTaskOpen);
+  const businessMode = useBusinessMode();
 
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResults | null>(null);
@@ -49,11 +51,12 @@ export function Header() {
     setLoading(true);
     const t = setTimeout(async () => {
       const data = await attempt(window.workspace.search.global(query.trim()));
-      setResults(data ?? null);
+      // Modo Dev: clientes e marketing não aparecem na busca.
+      setResults(data && !businessMode ? { ...data, clients: [], marketing: [] } : data ?? null);
       setLoading(false);
     }, 200);
     return () => clearTimeout(t);
-  }, [query]);
+  }, [query, businessMode]);
 
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
@@ -89,7 +92,7 @@ export function Header() {
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setFocused(true)}
             onKeyDown={(e) => e.key === "Escape" && (setQuery(""), (e.target as HTMLInputElement).blur())}
-            placeholder={tr("Buscar projetos, tarefas, clientes, arquivos...")}
+            placeholder={businessMode ? tr("Buscar projetos, tarefas, clientes, arquivos...") : tr("Buscar projetos, tarefas, arquivos...")}
             className="w-full bg-transparent text-[13px] text-text placeholder:text-text-faint focus:outline-none"
           />
           {loading ? <Spinner className="h-3.5 w-3.5" /> : query && (

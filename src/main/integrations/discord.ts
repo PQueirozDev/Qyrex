@@ -110,6 +110,7 @@ const PAGE_LABEL: Record<string, string> = {
   projetos: tm("Gerenciando projetos"),
   terminal: tm("No terminal"),
   arquivos: tm("Organizando arquivos"),
+  editor: tm("Editando código"),
   agenda: tm("Planejando a agenda"),
   tarefas: tm("Organizando tarefas"),
   clientes: tm("Atendendo clientes"),

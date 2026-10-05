@@ -99,6 +99,7 @@ interface SettingsRow {
   last_seen_version: string | null;
   splash_animation: number;
   allow_all_dirs: number;
+  business_mode: number;
 }
 
 const DEFAULT_DISCORD: DiscordPrefs = { enabled: false, clientId: null, showProject: false };
@@ -133,6 +134,7 @@ export function getSettings(): AppSettings {
     autoUpdate: Boolean(row.auto_update),
     lastSeenVersion: row.last_seen_version,
     splashAnimation: Boolean(row.splash_animation),
+    businessMode: Boolean(row.business_mode),
   };
 }
 
@@ -147,7 +149,7 @@ export function updateSettings(partial: Partial<AppSettings>): AppSettings {
         ai_default_provider = ?, ai_default_model = ?,
         notifications = ?, onboarding_completed = ?, vscode_path = ?,
         language = ?, discord = ?, auto_update = ?, last_seen_version = ?,
-        splash_animation = ?, allow_all_dirs = ?
+        splash_animation = ?, allow_all_dirs = ?, business_mode = ?
        WHERE id = 1`
     )
     .run(
@@ -167,7 +169,8 @@ export function updateSettings(partial: Partial<AppSettings>): AppSettings {
       merged.autoUpdate ? 1 : 0,
       merged.lastSeenVersion,
       merged.splashAnimation ? 1 : 0,
-      merged.allowAllDirs ? 1 : 0
+      merged.allowAllDirs ? 1 : 0,
+      merged.businessMode ? 1 : 0
     );
 
   return merged;

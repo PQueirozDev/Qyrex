@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 import { tr } from "@/lib/i18n";
 import { PAGE_ICONS } from "@/lib/pageIcons";
 import { useUIStore, type Page } from "@/stores/useUIStore";
-import { useSettingsStore } from "@/stores/useSettingsStore";
+import { useBusinessMode, useSettingsStore } from "@/stores/useSettingsStore";
 import { MiniPlayer } from "@/components/MiniPlayer";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { CHANGELOG, compareVersions } from "@shared/changelog";
@@ -19,7 +19,8 @@ interface NavItem {
 
 const item = (id: Page, label: string, shortcut?: string): NavItem => ({ id, label, icon: PAGE_ICONS[id], shortcut });
 
-const SECTIONS: { title: string | null; items: NavItem[] }[] = [
+/** `business`: seção só visível no Modo Negócio. */
+const SECTIONS: { title: string | null; business?: boolean; items: NavItem[] }[] = [
   {
     title: null,
     items: [item("inicio", tr("Início")), item("ia", tr("IA"), "Ctrl Shift A")],
@@ -30,6 +31,7 @@ const SECTIONS: { title: string | null; items: NavItem[] }[] = [
       item("projetos", tr("Projetos"), "Ctrl Shift P"),
       item("terminal", tr("Terminal")),
       item("arquivos", tr("Arquivos")),
+      item("editor", tr("Editor")),
       item("tarefas", tr("Tarefas")),
       item("agenda", tr("Agenda")),
       item("notion", tr("Notion")),
@@ -37,6 +39,7 @@ const SECTIONS: { title: string | null; items: NavItem[] }[] = [
   },
   {
     title: tr("Negócio"),
+    business: true,
     items: [item("clientes", tr("Clientes")), item("marketing", tr("Marketing")), item("whatsapp", tr("WhatsApp"))],
   },
 ];
@@ -89,6 +92,7 @@ export function Sidebar() {
   const navigate = useUIStore((s) => s.navigate);
   const settings = useSettingsStore((s) => s.settings);
   const system = useSettingsStore((s) => s.system);
+  const businessMode = useBusinessMode();
 
   const latest = CHANGELOG[0]?.version;
   const unreadNews = Boolean(latest && settings && (!settings.lastSeenVersion || compareVersions(settings.lastSeenVersion, latest) < 0));
@@ -104,7 +108,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 overflow-y-auto px-2 pb-2">
-        {SECTIONS.map((section, i) => (
+        {SECTIONS.filter((section) => businessMode || !section.business).map((section, i) => (
           <div key={i} className="space-y-0.5">
             {section.title ? <div className="nav-label">{section.title}</div> : <div className="h-2" />}
             {section.items.map((item) => (

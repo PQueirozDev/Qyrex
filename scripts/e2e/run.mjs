@@ -250,7 +250,8 @@ await step("perfil de teste (pasta autorizada, onboarding)", async () => {
   const r = await ev(`
     const w = window.workspace;
     const a = await w.settings.addAllowedDir(${JSON.stringify(WORK)});
-    const s = await w.settings.update({ onboardingCompleted: true, userName: "E2E" });
+    // Modo Negócio ligado para o E2E cobrir também clientes, marketing e WhatsApp.
+    const s = await w.settings.update({ onboardingCompleted: true, userName: "E2E", businessMode: true });
     return [a.ok || a.error, s.ok || s.error].join(",");`);
   await send("Page.reload");
   await sleep(2000);

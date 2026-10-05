@@ -226,6 +226,8 @@ const PROD_CSP = [
   "img-src 'self' data: https://i.scdn.co https://*.spotifycdn.com https://avatars.githubusercontent.com",
   "font-src 'self' data:",
   "connect-src 'self'",
+  // Workers do editor (Monaco) são blobs: em file:// o Chromium não cria workers a partir de arquivo.
+  "worker-src 'self' blob:",
   "object-src 'none'",
   "base-uri 'none'",
   "form-action 'none'",
@@ -240,6 +242,7 @@ const DEV_CSP = [
   "img-src 'self' data: https://i.scdn.co https://*.spotifycdn.com https://avatars.githubusercontent.com",
   "font-src 'self' data:",
   `connect-src 'self' ${DEV_SERVER_URL} ws://localhost:5173`,
+  `worker-src 'self' blob: ${DEV_SERVER_URL}`,
   "object-src 'none'",
   "base-uri 'none'",
 ].join("; ");

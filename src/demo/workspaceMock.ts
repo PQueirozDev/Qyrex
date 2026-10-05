@@ -135,6 +135,7 @@ function seed() {
     notifications: { tasks: true, events: true, billing: true, marketing: true },
     onboardingCompleted: true,
     splashAnimation: true,
+    businessMode: true,
     vscodePath: "C:\\Program Files\\Microsoft VS Code\\Code.exe",
   };
   const changes: Record<string, GitChangedFile[]> = {
@@ -403,6 +404,8 @@ for (const p of ["cafe-aurora", "nova-pilates", "bot-orcamentos"]) {
   FILES[`${dir}\\src\\app`] = [entry(`${dir}\\src\\app`, "page.tsx", false, 3100)];
 }
 const allFiles = () => Object.values(FILES).flat();
+/** Textos salvos pelo editor na demo (só nesta sessão). */
+const EDITED: Record<string, { content: string; mtimeMs: number }> = {};
 
 // ---------------------------------------------------------------------------------
 // Notion simulado
@@ -599,6 +602,29 @@ export const workspaceMock: WorkspaceApi = {
     },
     search: (query) => ok(allFiles().filter((f) => f.name.toLowerCase().includes(query.toLowerCase())).slice(0, 30)),
     isAllowed: (p) => ok(p.toLowerCase().startsWith(ROOT.toLowerCase())),
+    // Editor: o texto salvo fica só na sessão da demo (com mtime, para o conflito funcionar igual ao app).
+    readForEdit: async (p) => {
+      if (p.endsWith(".png") || p.endsWith(".ico")) return fail("Arquivo binário — não dá para editar no Qyrex.");
+      if (!allFiles().some((f) => f.path === p && !f.isDirectory)) return fail(`Caminho não encontrado: ${p}`);
+      const saved = EDITED[p];
+      if (saved) return ok({ path: p, content: saved.content, mtimeMs: saved.mtimeMs, size: saved.content.length, bom: false, eol: "\n" as const });
+      const preview = await workspaceMock.files.preview(p);
+      const content = preview.ok && preview.data.kind === "text" ? preview.data.content : "";
+      return ok({ path: p, content, mtimeMs: 1, size: content.length, bom: false, eol: "\n" as const });
+    },
+    save: async ({ path: p, content, expectedMtimeMs, force }) => {
+      const current = EDITED[p]?.mtimeMs ?? 1;
+      if (!force && expectedMtimeMs !== null && expectedMtimeMs !== current) return ok({ status: "conflict" as const, mtimeMs: current });
+      EDITED[p] = { content, mtimeMs: Date.now() };
+      return ok({ status: "saved" as const, mtimeMs: EDITED[p].mtimeMs, size: content.length });
+    },
+    createFile: async (dir, name) => {
+      if (FILES[dir]?.some((x) => x.name === name)) return fail("Já existe um item com esse nome.");
+      const e = entry(dir, name, false);
+      (FILES[dir] ??= []).push(e);
+      EDITED[e.path] = { content: "", mtimeMs: Date.now() };
+      return ok(e);
+    },
   },
   search: {
     global: (q) => {

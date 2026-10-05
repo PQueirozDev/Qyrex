@@ -6,6 +6,7 @@ import { Field } from "@/components/ui/primitives";
 import { useTasksStore } from "@/stores/useTasksStore";
 import { useProjectsStore } from "@/stores/useProjectsStore";
 import { useClientsStore } from "@/stores/useClientsStore";
+import { useBusinessMode } from "@/stores/useSettingsStore";
 import { confirmAction } from "@/stores/useUIStore";
 import type { Task, TaskPriority, TaskStatus } from "@shared/types";
 import { tr } from "@/lib/i18n";
@@ -38,6 +39,7 @@ export function TaskFormDialog({ open, onClose, task, defaults }: Props) {
   const { create, update } = useTasksStore();
   const { projects, loaded: projectsLoaded, load: loadProjects } = useProjectsStore();
   const { clients, loaded: clientsLoaded, load: loadClients } = useClientsStore();
+  const businessMode = useBusinessMode();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -53,7 +55,7 @@ export function TaskFormDialog({ open, onClose, task, defaults }: Props) {
   useEffect(() => {
     if (!open) return;
     if (!projectsLoaded) void loadProjects();
-    if (!clientsLoaded) void loadClients();
+    if (businessMode && !clientsLoaded) void loadClients();
     setTitle(task?.title ?? "");
     setDescription(task?.description ?? "");
     setStatus(task?.status ?? defaults?.status ?? "pendente");
@@ -179,16 +181,18 @@ export function TaskFormDialog({ open, onClose, task, defaults }: Props) {
               ))}
             </select>
           </Field>
-          <Field label={tr("Cliente")}>
-            <select className="input" value={clientId} onChange={(e) => setClientId(e.target.value)}>
-              <option value="">{tr("Nenhum")}</option>
-              {clients.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </Field>
+          {businessMode && (
+            <Field label={tr("Cliente")}>
+              <select className="input" value={clientId} onChange={(e) => setClientId(e.target.value)}>
+                <option value="">{tr("Nenhum")}</option>
+                {clients.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
         </div>
         <Field label={tr("Tags")} hint={tr("Separe por vírgula: site, urgente, instagram")}>
           <input className="input" value={tags} onChange={(e) => setTags(e.target.value)} placeholder={tr("site, cliente")} />

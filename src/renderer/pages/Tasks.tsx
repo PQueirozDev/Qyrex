@@ -11,6 +11,7 @@ import { fuzzyFilter } from "@/lib/fuzzy";
 import { useTasksStore } from "@/stores/useTasksStore";
 import { useProjectsStore } from "@/stores/useProjectsStore";
 import { useClientsStore } from "@/stores/useClientsStore";
+import { useBusinessMode } from "@/stores/useSettingsStore";
 import { useUIStore } from "@/stores/useUIStore";
 import { tr, trn } from "@/lib/i18n";
 import { PAGE_ICONS } from "@/lib/pageIcons";
@@ -25,9 +26,10 @@ function TaskRow({ task, onEdit }: { task: Task; onEdit: (t: Task) => void }) {
   const { toggleDone, update } = useTasksStore();
   const projects = useProjectsStore((s) => s.projects);
   const clients = useClientsStore((s) => s.clients);
+  const businessMode = useBusinessMode();
   const today = todayISO();
   const project = projects.find((p) => p.id === task.projectId);
-  const client = clients.find((c) => c.id === task.clientId);
+  const client = businessMode ? clients.find((c) => c.id === task.clientId) : undefined;
   const done = task.status === "concluido";
   const meta = [project?.name, client?.name].filter((part): part is string => Boolean(part));
 
@@ -199,6 +201,7 @@ export function Tasks() {
   const { tasks, loaded, loading, error, load, create } = useTasksStore();
   const { loaded: projectsLoaded, load: loadProjects, projects } = useProjectsStore();
   const { loaded: clientsLoaded, load: loadClients } = useClientsStore();
+  const businessMode = useBusinessMode();
   const pageParam = useUIStore((s) => s.pageParam);
 
   const [view, setView] = useState<View>("hoje");
@@ -212,8 +215,8 @@ export function Tasks() {
   useEffect(() => {
     void load();
     if (!projectsLoaded) void loadProjects();
-    if (!clientsLoaded) void loadClients();
-  }, [load, projectsLoaded, clientsLoaded, loadProjects, loadClients]);
+    if (businessMode && !clientsLoaded) void loadClients();
+  }, [load, projectsLoaded, clientsLoaded, businessMode, loadProjects, loadClients]);
 
   // Abrir uma tarefa específica vinda da busca/Dashboard.
   useEffect(() => {

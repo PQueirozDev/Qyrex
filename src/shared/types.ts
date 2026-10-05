@@ -98,6 +98,23 @@ export type FilePreview =
   | { kind: "binary"; size: number }
   | { kind: "too_large"; size: number };
 
+/** Arquivo de texto aberto no editor embutido. */
+export interface EditableFile {
+  path: string;
+  content: string;
+  /** mtime lido do disco — o save compara para detectar alteração externa. */
+  mtimeMs: number;
+  size: number;
+  /** O arquivo começava com BOM UTF-8 (é preservado ao salvar). */
+  bom: boolean;
+  eol: "\n" | "\r\n";
+}
+
+/** `conflict`: o arquivo mudou no disco desde que foi aberto (nada foi gravado). */
+export type SaveFileResult =
+  | { status: "saved"; mtimeMs: number; size: number }
+  | { status: "conflict"; mtimeMs: number };
+
 // --- Marketing ---------------------------------------------------------
 
 export type MarketingContentType = "post" | "story" | "reel";
@@ -409,6 +426,8 @@ export interface AppSettings {
   onboardingCompleted: boolean;
   /** Animação de abertura (logo + nome) ao abrir a janela. */
   splashAnimation: boolean;
+  /** Modo Negócio: mostra clientes, marketing e WhatsApp. Desligado = modo Dev (padrão). */
+  businessMode: boolean;
   vscodePath: string | null;
 }
 

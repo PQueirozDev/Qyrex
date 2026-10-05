@@ -55,6 +55,7 @@ describe("settings", () => {
     expect(s.theme).toBe("dark");
     expect(s.allowedProjectDirs).toEqual([]);
     expect(s.onboardingCompleted).toBe(false);
+    expect(s.businessMode).toBe(false);
     expect(s.notifications).toEqual({ tasks: true, events: true, billing: true, marketing: true });
   });
 

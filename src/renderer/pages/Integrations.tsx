@@ -12,6 +12,7 @@ import { confirmAction, toast, useUIStore } from "@/stores/useUIStore";
 
 import { tr, trn } from "@/lib/i18n";
 import { PAGE_ICONS } from "@/lib/pageIcons";
+import { useBusinessMode } from "@/stores/useSettingsStore";
 const SPOTIFY_REDIRECT = "http://127.0.0.1:43821/callback";
 
 interface Meta {
@@ -562,6 +563,7 @@ export function Integrations() {
   const [statuses, setStatuses] = useState<IntegrationStatus[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const providers = useAIStore((s) => s.providers);
+  const businessMode = useBusinessMode();
   const [clis, setClis] = useState<SubscriptionCliStatus[] | null>(null);
 
   const loadProviders = useAIStore((s) => s.loadProviders);
@@ -615,7 +617,7 @@ export function Integrations() {
               <NotionCard status={get("notion")} reload={reload} />
               <GoogleCalendarCard status={get("google_calendar")} reload={reload} />
               <SpotifyCard status={get("spotify")} reload={reload} />
-              <WhatsAppCard status={get("whatsapp")} />
+              {businessMode && <WhatsAppCard status={get("whatsapp")} />}
             </div>
           </section>
         </div>

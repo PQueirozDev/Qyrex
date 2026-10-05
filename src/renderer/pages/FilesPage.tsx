@@ -9,6 +9,7 @@ import {
   Copy,
   ExternalLink,
   File,
+  FileCode2,
   FileText,
   Folder,
   FolderOpen,
@@ -121,6 +122,10 @@ function PreviewPanel({ entry, onClose }: { entry: DirEntry; onClose: () => void
       <div className="flex items-center gap-2 border-b border-border-subtle px-4 py-2.5">
         <FileText size={14} className="shrink-0 text-text-faint" />
         <span className="min-w-0 flex-1 truncate text-sm font-medium text-text">{entry.name}</span>
+        {preview?.kind === "text" && (
+          <Button size="xs" onClick={() => useUIStore.getState().navigate("editor", entry.path)} title={tr("Editar no Qyrex")}>
+            <FileCode2 size={12} />{" "}{tr("Editar")}</Button>
+        )}
         <Button size="xs" variant="secondary" onClick={() => void attempt(window.workspace.system.openFile(entry.path))}>
           <ExternalLink size={12} />{" "}{tr("Abrir")}</Button>
         <Button size="icon-sm" variant="ghost" onClick={onClose} aria-label={tr("Fechar pré-visualização")}>
@@ -312,6 +317,7 @@ export function FilesPage() {
         ? { label: tr("Abrir pasta"), icon: FolderOpen, onSelect: () => openDir(entry.path) }
         : { label: tr("Abrir"), icon: ExternalLink, onSelect: () => void attempt(window.workspace.system.openFile(entry.path)) },
       { label: tr("Abrir no Explorer"), icon: Folder, onSelect: () => void attempt(window.workspace.system.openExplorer(entry.path)) },
+      { label: entry.isDirectory ? tr("Abrir no editor do Qyrex") : tr("Editar no Qyrex"), icon: FileCode2, onSelect: () => navigate("editor", entry.path) },
       { label: tr("Abrir no VS Code"), icon: Code2, onSelect: () => void attempt(window.workspace.system.openVSCode(entry.path)) },
       { label: tr("Copiar caminho"), icon: Link2, onSelect: () => copyPath(entry.path) },
       "separator",
@@ -425,6 +431,9 @@ export function FilesPage() {
             <FolderPlus size={13} />{" "}{tr("Nova pasta")}</Button>
           <Button size="sm" variant="ghost" onClick={() => currentPath && void attempt(window.workspace.system.openExplorer(currentPath))} title={tr("Abrir no Explorer")}>
             <Folder size={13} />
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => currentPath && navigate("editor", currentPath)} title={tr("Abrir no editor do Qyrex")}>
+            <FileCode2 size={13} />
           </Button>
           <Button size="sm" variant="ghost" onClick={() => currentPath && void attempt(window.workspace.system.openVSCode(currentPath))} title={tr("Abrir no VS Code")}>
             <Code2 size={13} />

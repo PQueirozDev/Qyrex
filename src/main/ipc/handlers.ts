@@ -248,6 +248,12 @@ export function registerIpcHandlers(): void {
     return fileService.deleteEntry(v.parse(v.filePath, p));
   });
   handle("files:preview", (_e, p) => fileService.previewFile(v.parse(v.filePath, p)));
+  handle("files:readForEdit", (_e, p) => fileService.readForEdit(v.parse(v.filePath, p)));
+  handle("files:save", (_e, input) => {
+    const { path, content, expectedMtimeMs, bom, force } = v.parse(v.fileSave, input);
+    return fileService.saveText(path, content, expectedMtimeMs, bom, force);
+  });
+  handle("files:createFile", (_e, dir, name) => fileService.createFile(v.parse(v.filePath, dir), v.parse(z.string().max(255), name)));
   handle("files:search", (_e, query, root) =>
     fileService.searchFiles(v.parse(z.string().max(200), query), root === undefined || root === null ? undefined : v.parse(v.filePath, root))
   );

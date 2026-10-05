@@ -81,6 +81,9 @@ describe("notificações", () => {
     const now = new Date(2030, 0, 10, 15, 50);
     calendar.createEvent({ title: "Reunião", startsAt: "2030-01-10T16:00:00" });
     clients.createClient({ name: "Aquecedores", monthlyValue: 39.99, nextBillingDate: "2030-01-10" });
+    // No modo Dev (padrão) não há aviso de cobrança.
+    expect(dueReminders(now).map((r) => r.title)).not.toContain("Cobrança hoje");
+    updateSettings({ businessMode: true });
     const titles = dueReminders(now).map((r) => r.title);
     expect(titles).toEqual(expect.arrayContaining(["Compromisso em breve", "Cobrança hoje"]));
 

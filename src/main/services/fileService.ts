@@ -7,7 +7,7 @@ import {
   getAllowedDirs,
   isWithin,
 } from "../security/paths.js";
-import type { DirEntry, FilePreview } from "../../shared/types.js";
+import type { DirEntry, EditableFile, FilePreview, SaveFileResult } from "../../shared/types.js";
 import { tt } from "../i18n.js";
 
 function toEntry(full: string, stat: fs.Stats): DirEntry {
@@ -213,6 +213,83 @@ export function readTextFile(filePath: string, maxBytes = 100_000): string {
   }
   if (preview.kind === "image") return "[imagem — conteúdo binário não enviado]";
   return `[arquivo binário ou grande demais (${preview.size} bytes) — não enviado]`;
+}
+
+// --- Editor embutido ----------------------------------------------------------------
+
+export const MAX_EDITABLE_BYTES = 5 * 1024 * 1024;
+const UTF8_BOM = Buffer.from([0xef, 0xbb, 0xbf]);
+
+function assertEditableFile(filePath: string): { resolved: string; stat: fs.Stats } {
+  // "arquivo.txt:fluxo" (alternate data stream do NTFS) nunca é um arquivo de texto do projeto.
+  if (process.platform === "win32" && path.resolve(filePath).indexOf(":", 2) !== -1) throw new Error("Caminho inválido.");
+  const resolved = assertPathAllowedAndExists(filePath);
+  const stat = fs.statSync(resolved);
+  if (!stat.isFile()) throw new Error("Selecione um arquivo para editar.");
+  return { resolved, stat };
+}
+
+/** Lê um arquivo de texto inteiro para o editor (sem truncar: editar um pedaço corromperia o arquivo). */
+export function readForEdit(filePath: string): EditableFile {
+  const { resolved, stat } = assertEditableFile(filePath);
+  if (stat.size > MAX_EDITABLE_BYTES) {
+    throw new Error(tt("Arquivo grande demais para o editor ({size} MB no máximo).", { size: MAX_EDITABLE_BYTES / 1024 / 1024 }));
+  }
+  const buffer = fs.readFileSync(resolved);
+  if (looksBinary(buffer)) throw new Error("Arquivo binário — não dá para editar no Qyrex.");
+  const bom = buffer.subarray(0, 3).equals(UTF8_BOM);
+  let content: string;
+  try {
+    // Decodificação estrita: um arquivo em Latin-1/ANSI seria corrompido ao salvar como UTF-8.
+    content = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(buffer.subarray(bom ? 3 : 0));
+  } catch {
+    throw new Error("O arquivo não está em UTF-8 — abra no VS Code para não corromper os acentos.");
+  }
+  const crlf = content.indexOf("\r\n");
+  const lf = content.indexOf("\n");
+  return {
+    path: resolved,
+    content,
+    mtimeMs: stat.mtimeMs,
+    size: stat.size,
+    bom,
+    eol: crlf !== -1 && crlf < lf ? "\r\n" : "\n",
+  };
+}
+
+/**
+ * Grava o texto no lugar (sem arquivo temporário + rename: preserva permissões
+ * e hardlinks e não falha quando outro programa está com o arquivo aberto).
+ * Se `expectedMtimeMs` não bater com o disco e não for `force`, nada é gravado.
+ */
+export function saveText(filePath: string, content: string, expectedMtimeMs: number | null, bom: boolean, force: boolean): SaveFileResult {
+  const { resolved, stat } = assertEditableFile(filePath);
+  const data = Buffer.from(content, "utf-8");
+  if (data.length + (bom ? 3 : 0) > MAX_EDITABLE_BYTES) {
+    throw new Error(tt("Arquivo grande demais para o editor ({size} MB no máximo).", { size: MAX_EDITABLE_BYTES / 1024 / 1024 }));
+  }
+  // `force` só pula a checagem de conflito; a allowlist acima vale sempre.
+  if (!force && expectedMtimeMs !== null && stat.mtimeMs !== expectedMtimeMs) {
+    return { status: "conflict", mtimeMs: stat.mtimeMs };
+  }
+  fs.writeFileSync(resolved, bom ? Buffer.concat([UTF8_BOM, data]) : data);
+  const after = fs.statSync(resolved);
+  return { status: "saved", mtimeMs: after.mtimeMs, size: after.size };
+}
+
+/** Cria um arquivo vazio (falha se já existir). */
+export function createFile(dirPath: string, name: string): DirEntry {
+  const parent = assertPathAllowedAndExists(dirPath);
+  if (!fs.statSync(parent).isDirectory()) throw new Error("O caminho não é uma pasta.");
+  const target = path.join(parent, assertSafeName(name));
+  assertPathAllowed(target);
+  try {
+    fs.writeFileSync(target, "", { flag: "wx" });
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "EEXIST") throw new Error("Já existe um item com esse nome.");
+    throw err;
+  }
+  return toEntry(target, fs.statSync(target));
 }
 
 // --- Busca ------------------------------------------------------------------------

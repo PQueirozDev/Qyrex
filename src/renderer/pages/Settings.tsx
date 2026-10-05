@@ -3,6 +3,7 @@ import { motion } from "motion/react";
 import {
   Bell,
   Bot,
+  Briefcase,
   Check,
   Code2,
   ExternalLink,
@@ -43,6 +44,7 @@ import { UpdateCard } from "@/pages/PatchNotes";
 const SECTIONS: { id: string; label: string; icon: LucideIcon }[] = [
   { id: "aparencia", label: tr("Aparência"), icon: Palette },
   { id: "idioma", label: tr("Idioma"), icon: Languages },
+  { id: "modo", label: tr("Modo de uso"), icon: Briefcase },
   { id: "geral", label: tr("Geral"), icon: User },
   { id: "pastas", label: tr("Pastas autorizadas"), icon: FolderPlus },
   { id: "ferramentas", label: tr("VS Code e terminal"), icon: SquareTerminal },
@@ -170,6 +172,9 @@ const NOTIFICATION_LABELS: Record<keyof NotificationPrefs, { label: string; hint
   billing: { label: tr("Cobranças"), hint: tr("Clientes com cobrança próxima ou atrasada") },
   marketing: { label: tr("Marketing"), hint: tr("Conteúdos agendados para hoje") },
 };
+
+/** Avisos que só existem no Modo Negócio. */
+const BUSINESS_NOTIFICATIONS: (keyof NotificationPrefs)[] = ["billing", "marketing"];
 
 const DISCORD_STATUS: Record<DiscordStatus, { label: string; tone: "success" | "neutral" | "warning" | "danger" | "accent" }> = {
   disabled: { label: tr("Desligado"), tone: "neutral" },
@@ -368,6 +373,39 @@ export function Settings() {
           </div>
         </Section>
 
+        <Section
+          id="modo"
+          title={tr("Modo de uso")}
+          description={tr("O modo Dev mostra só o que é de desenvolvimento. O modo Negócio adiciona clientes, cobranças, marketing e WhatsApp.")}
+        >
+          <div className="grid grid-cols-2 gap-3">
+            {(
+              [
+                { business: false, icon: Code2, label: tr("Dev"), sample: tr("Projetos, tarefas, terminal, arquivos e IA") },
+                { business: true, icon: Briefcase, label: tr("Dev + Negócio"), sample: tr("Tudo do Dev, mais clientes, marketing e WhatsApp") },
+              ] as const
+            ).map((mode) => (
+              <button
+                key={String(mode.business)}
+                onClick={() => mode.business !== settings.businessMode && void update({ businessMode: mode.business })}
+                className={cn(
+                  "flex items-start gap-3 rounded-lg border p-3 text-left transition-all",
+                  settings.businessMode === mode.business ? "border-accent ring-2 ring-accent/25" : "border-border-subtle hover:border-border hover:bg-bg-hover/50"
+                )}
+                aria-pressed={settings.businessMode === mode.business}
+              >
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-bg-hover text-text-muted">
+                  <mode.icon size={15} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[13px] font-medium text-text">{mode.label}</span>
+                  <span className="block truncate text-[11px] text-text-faint">{mode.sample}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </Section>
+
         <Section id="geral" title={tr("Geral")}>
           <Row label={tr("Foto de perfil")} hint={tr("Por padrão é o ícone do Qyrex. A imagem escolhida é recortada em quadrado e fica só neste PC.")}>
             <div className="flex items-center gap-3">
@@ -508,11 +546,13 @@ export function Settings() {
         </Section>
 
         <Section id="notificacoes" title={tr("Notificações")} description={tr("Notificações da área de trabalho.")}>
-          {(Object.keys(NOTIFICATION_LABELS) as (keyof NotificationPrefs)[]).map((key) => (
-            <Row key={key} label={NOTIFICATION_LABELS[key].label} hint={NOTIFICATION_LABELS[key].hint}>
-              <Switch checked={settings.notifications[key]} onChange={(v) => void update({ notifications: { ...settings.notifications, [key]: v } })} />
-            </Row>
-          ))}
+          {(Object.keys(NOTIFICATION_LABELS) as (keyof NotificationPrefs)[])
+            .filter((key) => settings.businessMode || !BUSINESS_NOTIFICATIONS.includes(key))
+            .map((key) => (
+              <Row key={key} label={NOTIFICATION_LABELS[key].label} hint={NOTIFICATION_LABELS[key].hint}>
+                <Switch checked={settings.notifications[key]} onChange={(v) => void update({ notifications: { ...settings.notifications, [key]: v } })} />
+              </Row>
+            ))}
         </Section>
 
         <DiscordSection />

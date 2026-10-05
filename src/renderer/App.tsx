@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
 import { CommandPalette } from "@/components/CommandPalette";
@@ -7,7 +7,7 @@ import { TaskFormDialog } from "@/components/TaskFormDialog";
 import { Spinner } from "@/components/ui/primitives";
 import { Dashboard } from "@/pages/Dashboard";
 import { Onboarding } from "@/pages/Onboarding";
-import { PAGES, useUIStore, type Page } from "@/stores/useUIStore";
+import { BUSINESS_PAGES, PAGES, useUIStore, type Page } from "@/stores/useUIStore";
 import { applyTheme, useSettingsStore } from "@/stores/useSettingsStore";
 import { useProjectsStore } from "@/stores/useProjectsStore";
 import { UpdateBanner, WhatsNewDialog } from "@/components/UpdateBanner";
@@ -28,6 +28,7 @@ const WhatsApp = lazy(() => import("@/pages/WhatsApp").then((m) => ({ default: m
 const PatchNotes = lazy(() => import("@/pages/PatchNotes").then((m) => ({ default: m.PatchNotes })));
 const Notion = lazy(() => import("@/pages/Notion").then((m) => ({ default: m.Notion })));
 const TerminalPage = lazy(() => import("@/pages/TerminalPage").then((m) => ({ default: m.TerminalPage })));
+const EditorPage = lazy(() => import("@/pages/EditorPage").then((m) => ({ default: m.EditorPage })));
 
 function PageView({ page }: { page: Page }) {
   switch (page) {
@@ -36,7 +37,8 @@ function PageView({ page }: { page: Page }) {
     case "projetos":
       return <Projects />;
     case "terminal":
-      return null; // fica sempre montado (ver PersistentTerminal) para as sessões não fecharem
+    case "editor":
+      return null; // ficam sempre montados (ver PersistentPage): shells e edições não salvas sobrevivem à troca de página
     case "tarefas":
       return <Tasks />;
     case "arquivos":
@@ -63,10 +65,10 @@ function PageView({ page }: { page: Page }) {
 }
 
 /**
- * O Terminal é montado na primeira visita e depois só escondido: desmontar a
- * página encerraria os shells abertos ao trocar de aba.
+ * Terminal e Editor são montados na primeira visita e depois só escondidos:
+ * desmontar encerraria os shells abertos / perderia as abas do editor.
  */
-function PersistentTerminal({ visible }: { visible: boolean }) {
+function PersistentPage({ visible, children }: { visible: boolean; children: (visible: boolean) => ReactNode }) {
   const [mounted, setMounted] = useState(visible);
   useEffect(() => {
     if (visible) setMounted(true);
@@ -81,14 +83,14 @@ function PersistentTerminal({ visible }: { visible: boolean }) {
           </div>
         }
       >
-        <TerminalPage visible={visible} />
+        {children(visible)}
       </Suspense>
     </div>
   );
 }
 
 /** Páginas que ocupam a altura toda (sem padding/scroll do layout). */
-const FULL_BLEED: Page[] = ["ia", "terminal", "notion"];
+const FULL_BLEED: Page[] = ["ia", "terminal", "editor", "notion"];
 
 export function App() {
   const page = useUIStore((s) => s.page);
@@ -106,6 +108,12 @@ export function App() {
   }, [load, loadSystem, loadAvatar]);
 
   useEffect(() => (settings ? applyTheme(settings.theme) : undefined), [settings?.theme, settings]);
+
+  // Modo Dev: áreas de negócio ficam fechadas (atalho, notificação ou modo desligado com a aba aberta).
+  const businessMode = settings?.businessMode ?? false;
+  useEffect(() => {
+    if (settings && !businessMode && BUSINESS_PAGES.includes(page)) navigate("inicio");
+  }, [settings, businessMode, page, navigate]);
 
   // Idioma salvo no banco manda: se diferente do atual, recarrega a janela.
   useEffect(() => {
@@ -125,7 +133,8 @@ export function App() {
   // Atalhos globais (dentro da janela). Customização futura: mapa em um só lugar.
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (!(e.ctrlKey || e.metaKey)) return;
+      // Teclas já tratadas por outro componente (ex.: atalhos do editor de código) não disparam os globais.
+      if (e.defaultPrevented || !(e.ctrlKey || e.metaKey)) return;
       const key = e.key.toLowerCase();
       if (!e.shiftKey && key === "k") {
         e.preventDefault();
@@ -203,7 +212,7 @@ export function App() {
         <Header />
         <UpdateBanner />
         <main className={fullBleed ? "min-h-0 flex-1 overflow-hidden" : "app-ambient flex-1 overflow-y-auto"}>
-          {page !== "terminal" && (
+          {page !== "terminal" && page !== "editor" && (
             <div key={page} className={fullBleed ? "h-full animate-page-in" : "mx-auto max-w-[1400px] animate-page-in px-7 py-6"}>
               <Suspense
                 fallback={
@@ -212,11 +221,12 @@ export function App() {
                   </div>
                 }
               >
-                <PageView page={page} />
+                <PageView page={!businessMode && BUSINESS_PAGES.includes(page) ? "inicio" : page} />
               </Suspense>
             </div>
           )}
-          <PersistentTerminal visible={page === "terminal"} />
+          <PersistentPage visible={page === "terminal"}>{(visible) => <TerminalPage visible={visible} />}</PersistentPage>
+          <PersistentPage visible={page === "editor"}>{(visible) => <EditorPage visible={visible} />}</PersistentPage>
         </main>
       </div>
 

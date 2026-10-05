@@ -54,7 +54,7 @@ export interface Reminder {
 
 /** Calcula os lembretes devidos em `now` — função pura sobre o banco, testável. */
 export function dueReminders(now: Date): Reminder[] {
-  const { notifications: prefs, language } = getSettings();
+  const { notifications: prefs, language, businessMode } = getSettings();
   const tr = (text: string, vars?: Record<string, string | number>) => translate(language, text, vars);
   const db = getDb();
   const today = localDate(now);
@@ -105,7 +105,8 @@ export function dueReminders(now: Date): Reminder[] {
     }
   }
 
-  if (prefs.billing && now.getHours() >= 9) {
+  // Cobranças e marketing só existem no Modo Negócio (no modo Dev essas áreas ficam ocultas).
+  if (businessMode && prefs.billing && now.getHours() >= 9) {
     const clients = db
       .prepare("SELECT id, name, monthly_value FROM clients WHERE status = 'ativo' AND next_billing_date = ?")
       .all(today) as { id: string; name: string; monthly_value: number | null }[];
@@ -115,7 +116,7 @@ export function dueReminders(now: Date): Reminder[] {
     }
   }
 
-  if (prefs.marketing && now.getHours() >= 8) {
+  if (businessMode && prefs.marketing && now.getHours() >= 8) {
     const items = db
       .prepare("SELECT id, title, type FROM marketing_content WHERE scheduled_date = ? AND status != 'publicado'")
       .all(today) as { id: string; title: string; type: string }[];

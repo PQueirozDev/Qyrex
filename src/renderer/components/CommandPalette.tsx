@@ -5,6 +5,7 @@ import {
   CalendarPlus,
   CheckSquare,
   Code2,
+  FileCode2,
   File,
   Folder,
   FolderSearch,
@@ -24,10 +25,10 @@ import { tm } from "@shared/i18n";
 import { cn } from "@/lib/cn";
 import { fuzzyScore } from "@/lib/fuzzy";
 import { attempt } from "@/lib/api";
-import { useUIStore } from "@/stores/useUIStore";
+import { BUSINESS_PAGES, useUIStore } from "@/stores/useUIStore";
 import { useProjectsStore } from "@/stores/useProjectsStore";
 import { useClientsStore } from "@/stores/useClientsStore";
-import { useSettingsStore } from "@/stores/useSettingsStore";
+import { useBusinessMode, useSettingsStore } from "@/stores/useSettingsStore";
 import { NAV_ITEMS } from "@/components/Sidebar";
 import { Kbd } from "@/components/ui/primitives";
 import { tr } from "@/lib/i18n";
@@ -40,6 +41,8 @@ interface Command {
   hint?: string;
   keywords?: string;
   icon: LucideIcon;
+  /** Só aparece no Modo Negócio. */
+  business?: boolean;
   run: () => void;
 }
 
@@ -73,6 +76,7 @@ export function CommandPalette() {
   const { projects, loaded: projectsLoaded, load: loadProjects, open: openProject } = useProjectsStore();
   const { clients, loaded: clientsLoaded, load: loadClients } = useClientsStore();
   const { settings, update: updateSettings } = useSettingsStore();
+  const businessMode = useBusinessMode();
 
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
@@ -86,9 +90,9 @@ export function CommandPalette() {
     setSelected(0);
     setResults(null);
     if (!projectsLoaded) void loadProjects();
-    if (!clientsLoaded) void loadClients();
+    if (businessMode && !clientsLoaded) void loadClients();
     setTimeout(() => inputRef.current?.focus(), 0);
-  }, [open, projectsLoaded, clientsLoaded, loadProjects, loadClients]);
+  }, [open, projectsLoaded, clientsLoaded, businessMode, loadProjects, loadClients]);
 
   // Busca global com debounce (só dispara com 2+ caracteres).
   useEffect(() => {
@@ -118,17 +122,17 @@ export function CommandPalette() {
     const actions: Command[] = [
       { id: "new-task", group: "Ações", label: tr("Nova tarefa"), hint: tr("Ctrl Shift T"), icon: Plus, run: act(() => setQuickTaskOpen(true)) },
       { id: "new-project", group: "Ações", label: tr("Novo projeto"), icon: Code2, run: act(() => navigate("projetos", "new")) },
-      { id: "new-client", group: "Ações", label: tr("Novo cliente"), icon: UserPlus, run: act(() => navigate("clientes", "new")) },
+      { id: "new-client", group: "Ações", label: tr("Novo cliente"), icon: UserPlus, business: true, run: act(() => navigate("clientes", "new")) },
       { id: "new-event", group: "Ações", label: tr("Novo evento na agenda"), icon: CalendarPlus, run: act(() => navigate("agenda", "new")) },
-      { id: "new-content", group: "Ações", label: tr("Nova ideia de conteúdo"), icon: Megaphone, run: act(() => navigate("marketing", "new")) },
+      { id: "new-content", group: "Ações", label: tr("Nova ideia de conteúdo"), icon: Megaphone, business: true, run: act(() => navigate("marketing", "new")) },
       { id: "ask-claude", group: "Ações", label: tr("Perguntar ao Claude"), keywords: "ia chat anthropic", icon: Bot, run: act(() => navigate("ia", "anthropic")) },
       { id: "ask-openai", group: "Ações", label: tr("Perguntar ao ChatGPT / OpenAI"), keywords: "ia chat gpt codex", icon: Bot, run: act(() => navigate("ia", "openai")) },
       { id: "ask-gemini", group: "Ações", label: tr("Perguntar ao Gemini"), keywords: "ia chat google", icon: Bot, run: act(() => navigate("ia", "google")) },
       { id: "ai-usage", group: "Ações", label: tr("Ver uso da IA"), keywords: "tokens custo gasto consumo usage", icon: Bot, run: act(() => navigate("ia", "usage")) },
       { id: "ai-council", group: "Ações", label: tr("AI Council (vários modelos)"), keywords: "ia comparar", icon: Bot, run: act(() => navigate("ia", "council")) },
       { id: "search-file", group: "Ações", label: tr("Pesquisar arquivo"), icon: FolderSearch, run: act(() => navigate("arquivos", "search")) },
-      { id: "search-client", group: "Ações", label: tr("Buscar cliente"), icon: Users, run: act(() => navigate("clientes", "search")) },
-      { id: "open-whatsapp", group: "Ações", label: tr("Abrir WhatsApp"), icon: MessageCircle, run: act(() => navigate("whatsapp")) },
+      { id: "search-client", group: "Ações", label: tr("Buscar cliente"), icon: Users, business: true, run: act(() => navigate("clientes", "search")) },
+      { id: "open-whatsapp", group: "Ações", label: tr("Abrir WhatsApp"), icon: MessageCircle, business: true, run: act(() => navigate("whatsapp")) },
       { id: "open-spotify", group: "Ações", label: tr("Abrir Spotify"), icon: Music2, run: act(() => void window.workspace.system.openSpotifyApp()) },
       {
         id: "toggle-theme",
@@ -149,10 +153,11 @@ export function CommandPalette() {
     const projectCommands: Command[] = projects.flatMap((p) => [
       { id: `p-${p.id}`, group: "Projetos", label: tr("Abrir projeto {name}", { name: p.name }), hint: tr("VS Code"), keywords: p.technologies.join(" "), icon: Code2, run: act(() => void openProject(p, "vscode")) },
       { id: `pt-${p.id}`, group: "Projetos", label: tr("Terminal em {name}", { name: p.name }), icon: SquareTerminal, run: act(() => navigate("terminal", p.id)) },
+      { id: `pe-${p.id}`, group: "Projetos", label: tr("Editar {name} no Qyrex", { name: p.name }), hint: tr("Editor"), icon: FileCode2, run: act(() => navigate("editor", p.localPath)) },
       { id: `pd-${p.id}`, group: "Projetos", label: tr("Detalhes de {name}", { name: p.name }), hint: tr("Git, GitHub, tarefas"), icon: Folder, run: act(() => navigate("projetos", p.id)) },
     ]);
 
-    const clientCommands: Command[] = clients.map((c) => ({
+    const clientCommands: Command[] = (businessMode ? clients : []).map((c) => ({
       id: `c-${c.id}`,
       group: "Clientes",
       label: tr("Abrir cliente {name}", { name: c.name }),
@@ -167,11 +172,12 @@ export function CommandPalette() {
       label: tr("Ir para {page}", { page: n.label }),
       hint: "shortcut" in n ? n.shortcut : undefined,
       icon: n.icon,
+      business: BUSINESS_PAGES.includes(n.id),
       run: act(() => navigate(n.id)),
     }));
 
-    return [...actions, ...projectCommands, ...clientCommands, ...navCommands];
-  }, [projects, clients, lastProject, settings?.theme, navigate, openProject, setOpen, setQuickTaskOpen, updateSettings]);
+    return [...actions, ...projectCommands, ...clientCommands, ...navCommands].filter((c) => businessMode || !c.business);
+  }, [projects, clients, businessMode, lastProject, settings?.theme, navigate, openProject, setOpen, setQuickTaskOpen, updateSettings]);
 
   const visible = useMemo(() => {
     const q = query.trim();
@@ -202,7 +208,7 @@ export function CommandPalette() {
             navigate("tarefas", t.id);
           },
         })),
-        results.marketing.map((m) => ({
+        (businessMode ? results.marketing : []).map((m) => ({
           id: `m-${m.id}`,
           group: "Marketing",
           label: m.title,
@@ -229,7 +235,7 @@ export function CommandPalette() {
 
     // Agrupa mantendo a ordem de relevância dentro de cada grupo.
     return list.sort((a, b) => GROUP_ORDER.indexOf(a.group) - GROUP_ORDER.indexOf(b.group));
-  }, [commands, query, results, navigate, setOpen]);
+  }, [commands, query, results, businessMode, navigate, setOpen]);
 
   useEffect(() => setSelected(0), [query, results]);
 
@@ -268,7 +274,7 @@ export function CommandPalette() {
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={tr("Buscar projetos, clientes, tarefas, arquivos ou executar um comando...")}
+            placeholder={businessMode ? tr("Buscar projetos, clientes, tarefas, arquivos ou executar um comando...") : tr("Buscar projetos, tarefas, arquivos ou executar um comando...")}
             className="w-full bg-transparent text-[14px] text-text placeholder:text-text-faint focus:outline-none"
           />
           <Kbd>{tr("ESC")}</Kbd>

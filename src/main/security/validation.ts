@@ -33,6 +33,16 @@ export const isoDateTime = z
   .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})?$/, "Data/hora inválida");
 export const filePath = z.string().min(1).max(4096);
 
+/** Save do editor embutido. O texto pode ter até ~5 MB (MAX_EDITABLE_BYTES). */
+export const fileSave = z.object({
+  path: filePath,
+  // Limite grosso em caracteres; o service confere o tamanho real em bytes.
+  content: z.string().max(5 * 1024 * 1024, "Arquivo grande demais para o editor."),
+  expectedMtimeMs: z.number().finite().nonnegative().nullable(),
+  bom: z.boolean(),
+  force: z.boolean(),
+});
+
 export const taskStatus = z.enum(["pendente", "em_andamento", "concluido"]);
 export const taskPriority = z.enum(["baixa", "normal", "alta", "urgente"]);
 export const clientStatus = z.enum(["ativo", "inativo", "prospecto"]);
@@ -87,6 +97,7 @@ export const settingsPatch = z
     onboardingCompleted: z.boolean(),
     splashAnimation: z.boolean(),
     allowAllDirs: z.boolean(),
+    businessMode: z.boolean(),
   })
   .partial();
 

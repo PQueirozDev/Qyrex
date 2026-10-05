@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/Button";
 import { Avatar, Badge, EmptyState, LoadingRows } from "@/components/ui/primitives";
 import { useTasksStore } from "@/stores/useTasksStore";
 import { useProjectsStore } from "@/stores/useProjectsStore";
-import { useSettingsStore } from "@/stores/useSettingsStore";
+import { useBusinessMode, useSettingsStore } from "@/stores/useSettingsStore";
 import { useClientsStore } from "@/stores/useClientsStore";
 import { useUIStore } from "@/stores/useUIStore";
 import { attempt } from "@/lib/api";
@@ -117,6 +117,7 @@ export function Dashboard() {
   const { projects, loaded: projectsLoaded, load: loadProjects, open: openProject } = useProjectsStore();
   const { clients, load: loadClients } = useClientsStore();
   const settings = useSettingsStore((s) => s.settings);
+  const businessMode = useBusinessMode();
 
   const [events, setEvents] = useState<CalendarEvent[] | null>(null);
   const [activity, setActivity] = useState<RecentItem[]>([]);
@@ -127,12 +128,13 @@ export function Dashboard() {
   useEffect(() => {
     void loadTasks();
     void loadProjects();
-    void loadClients();
+    if (businessMode) void loadClients();
     void attempt(window.workspace.calendar.list({ from: `${today}T00:00:00`, to: `${toLocalDate(addDays(new Date(), 2))}T23:59:59` })).then(
       (data) => setEvents(data ?? [])
     );
-    void attempt(window.workspace.activity.list(12)).then((data) => setActivity(data ?? []));
-  }, [loadTasks, loadProjects, loadClients, today]);
+    // Modo Dev: o histórico de clientes abertos não aparece.
+    void attempt(window.workspace.activity.list(12)).then((data) => setActivity((data ?? []).filter((a) => businessMode || a.itemType !== "client")));
+  }, [loadTasks, loadProjects, loadClients, businessMode, today]);
 
   const recentProjects = useMemo(
     () =>
@@ -176,13 +178,13 @@ export function Dashboard() {
 
   const quickActions = [
     { label: tr("Nova tarefa"), icon: Plus, run: () => setQuickTaskOpen(true) },
-    { label: tr("Novo cliente"), icon: UserPlus, run: () => navigate("clientes", "new") },
+    { label: tr("Novo cliente"), icon: UserPlus, business: true, run: () => navigate("clientes", "new") },
     { label: tr("Novo projeto"), icon: Code2, run: () => navigate("projetos", "new") },
     { label: tr("Abrir VS Code"), icon: Code2, run: () => (lastProject ? void openProject(lastProject, "vscode") : navigate("projetos")) },
     { label: tr("Abrir terminal"), icon: SquareTerminal, run: () => navigate("terminal", lastProject?.id ?? null) },
-    { label: tr("Abrir WhatsApp"), icon: MessageCircle, run: () => navigate("whatsapp") },
+    { label: tr("Abrir WhatsApp"), icon: MessageCircle, business: true, run: () => navigate("whatsapp") },
     { label: tr("Perguntar para IA"), icon: Bot, run: () => navigate("ia") },
-  ];
+  ].filter((a) => businessMode || !a.business);
 
   return (
     <div className="space-y-5">
@@ -213,7 +215,7 @@ export function Dashboard() {
         <AppUsageButton />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <div className={cn("grid grid-cols-2 gap-3", businessMode ? "xl:grid-cols-4" : "xl:grid-cols-3")}>
         <StatTile
           icon={CheckSquare}
           label={tr("Tarefas em foco")}
@@ -238,14 +240,16 @@ export function Dashboard() {
           tone="warning"
           onClick={() => navigate("projetos")}
         />
-        <StatTile
-          icon={Wallet}
-          label={tr("Manutenção mensal")}
-          value={formatCurrency(monthlyTotal) || formatCurrency(0)}
-          sub={trn(activeClients, "{n} cliente ativo", "{n} clientes ativos")}
-          tone="neutral"
-          onClick={() => navigate("clientes")}
-        />
+        {businessMode && (
+          <StatTile
+            icon={Wallet}
+            label={tr("Manutenção mensal")}
+            value={formatCurrency(monthlyTotal) || formatCurrency(0)}
+            sub={trn(activeClients, "{n} cliente ativo", "{n} clientes ativos")}
+            tone="neutral"
+            onClick={() => navigate("clientes")}
+          />
+        )}
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -405,7 +409,7 @@ export function Dashboard() {
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         {/* Projetos recentes */}
-        <Card className="xl:col-span-2">
+        <Card className={businessMode ? "xl:col-span-2" : "xl:col-span-3"}>
           <CardHeader
             title={tr("Projetos recentes")}
             icon={<Code2 size={12} />}
@@ -465,35 +469,37 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Financeiro */}
-        <Card>
-          <CardHeader
-            title={tr("Cobranças (7 dias)")}
-            icon={<Wallet size={12} />}
-            action={
-              <Button variant="ghost" size="xs" onClick={() => navigate("clientes")}>{tr("Clientes")}</Button>
-            }
-          />
-          <CardContent>
-            {billing.length === 0 ? (
-              <p className="py-3 text-sm text-text-faint">{tr("Nenhuma cobrança nos próximos 7 dias.")}</p>
-            ) : (
-              <ul className="space-y-1">
-                {billing.map((c) => (
-                  <li key={c.id}>
-                    <button onClick={() => navigate("clientes", c.id)} className="flex w-full items-center gap-2 rounded-md px-1 py-1.5 text-left hover:bg-bg-hover">
-                      <span className="min-w-0 flex-1 truncate text-sm text-text">{c.name}</span>
-                      <span className="text-xs tabular-nums text-text-muted">{formatCurrency(c.monthlyValue)}</span>
-                      <Badge tone={c.nextBillingDate! < today ? "danger" : c.nextBillingDate === today ? "warning" : "neutral"}>
-                        {c.nextBillingDate! < today ? tr("Vencida") : c.nextBillingDate === today ? tr("Hoje") : formatDate(c.nextBillingDate)}
-                      </Badge>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+        {/* Financeiro (só no Modo Negócio) */}
+        {businessMode && (
+          <Card>
+            <CardHeader
+              title={tr("Cobranças (7 dias)")}
+              icon={<Wallet size={12} />}
+              action={
+                <Button variant="ghost" size="xs" onClick={() => navigate("clientes")}>{tr("Clientes")}</Button>
+              }
+            />
+            <CardContent>
+              {billing.length === 0 ? (
+                <p className="py-3 text-sm text-text-faint">{tr("Nenhuma cobrança nos próximos 7 dias.")}</p>
+              ) : (
+                <ul className="space-y-1">
+                  {billing.map((c) => (
+                    <li key={c.id}>
+                      <button onClick={() => navigate("clientes", c.id)} className="flex w-full items-center gap-2 rounded-md px-1 py-1.5 text-left hover:bg-bg-hover">
+                        <span className="min-w-0 flex-1 truncate text-sm text-text">{c.name}</span>
+                        <span className="text-xs tabular-nums text-text-muted">{formatCurrency(c.monthlyValue)}</span>
+                        <Badge tone={c.nextBillingDate! < today ? "danger" : c.nextBillingDate === today ? "warning" : "neutral"}>
+                          {c.nextBillingDate! < today ? tr("Vencida") : c.nextBillingDate === today ? tr("Hoje") : formatDate(c.nextBillingDate)}
+                        </Badge>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
