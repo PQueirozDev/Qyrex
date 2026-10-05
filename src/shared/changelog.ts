@@ -22,6 +22,30 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.12.0",
+    date: "2026-10-05",
+    title: { pt: "Editor de código no Qyrex", en: "Code editor in Qyrex" },
+    sections: [
+      {
+        kind: "new",
+        items: [
+          {
+            pt: "Nova aba Editor: edite o código dos seus projetos sem sair do Qyrex, com o mesmo motor do VS Code (destaque de sintaxe, autocompletar, vários arquivos em abas e Ctrl+S).",
+            en: "New Editor tab: edit your projects' code without leaving Qyrex, powered by the same engine as VS Code (syntax highlighting, autocomplete, multiple files in tabs and Ctrl+S).",
+          },
+          {
+            pt: "Abra direto de Projetos, de Arquivos (\"Editar no Qyrex\") ou pela paleta de comandos (Ctrl+K).",
+            en: "Open it straight from Projects, from Files (\"Edit in Qyrex\") or from the command palette (Ctrl+K).",
+          },
+          {
+            pt: "O editor avisa quando o arquivo mudou fora do Qyrex antes de salvar e guarda o que não foi salvo até você voltar, mesmo fechando o app.",
+            en: "The editor warns you when a file changed outside Qyrex before saving, and keeps unsaved changes until you come back, even after closing the app.",
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: "1.11.0",
     date: "2026-10-03",
     title: { pt: "Modo Dev e modo Negócio", en: "Dev mode and Business mode" },
@@ -36,14 +60,6 @@ export const CHANGELOG: ChangelogEntry[] = [
           {
             pt: "Ligue o modo Negócio em Configurações → Modo de uso para trazer de volta tudo que é de cliente. Nenhum dado é apagado.",
             en: "Turn on Business mode in Settings → Usage mode to bring back everything client-related. No data is deleted.",
-          },
-          {
-            pt: "Nova aba Editor: edite o código dos seus projetos sem sair do Qyrex, com o mesmo motor do VS Code (destaque de sintaxe, autocompletar, vários arquivos em abas e Ctrl+S).",
-            en: "New Editor tab: edit your projects' code without leaving Qyrex, powered by the same engine as VS Code (syntax highlighting, autocomplete, multiple files in tabs and Ctrl+S).",
-          },
-          {
-            pt: "O editor avisa quando o arquivo mudou fora do Qyrex antes de salvar e guarda o que não foi salvo até você voltar.",
-            en: "The editor warns you when a file changed outside Qyrex before saving, and keeps unsaved changes until you come back.",
           },
         ],
       },
