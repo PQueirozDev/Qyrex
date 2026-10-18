@@ -1199,4 +1199,17 @@ export const EN: Record<string, string> = {
   "Configurações em arquivo": "Settings file",
   "Leve tema, idioma e preferências para outro PC. Sem pastas autorizadas e sem chaves.": "Take theme, language and preferences to another PC. No authorized folders and no keys.",
   "Exportar": "Export",
+
+  // --- Projetos: status e arquivo (2.0) --------------------------------------------
+  "Pausado": "Paused",
+  "Arquivado": "Archived",
+  "Arquivar \"{name}\"?": "Archive \"{name}\"?",
+  "O projeto sai do Início, da paleta de comandos e da bandeja, e o Git dele deixa de ser consultado. Cadastro, tarefas e a pasta continuam como estão; dá para desarquivar quando quiser.": "The project leaves Home, the command palette and the tray, and its Git is no longer checked. The record, tasks and folder stay as they are; you can unarchive it anytime.",
+  "Arquivar": "Archive",
+  "Desarquivar": "Unarchive",
+  "Projeto arquivado: o Git não é consultado. Desarquive para ver o status.": "Archived project: Git is not checked. Unarchive it to see the status.",
+  "Arquivado {time}": "Archived {time}",
+  "Arquivados": "Archived",
+  "Projeto arquivado": "Project archived",
+  "Projeto desarquivado": "Project unarchived",
 };

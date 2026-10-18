@@ -15,11 +15,15 @@ export interface Project {
   favorite: boolean;
   /** "auto": ícone/logo detectado na pasta; "custom": imagem escolhida; "none": só as iniciais. */
   iconMode: ProjectIconMode;
+  status: ProjectStatus;
+  /** Preenchido quando o projeto foi arquivado (some do dia a dia, mas nada é apagado). */
+  archivedAt: string | null;
   createdAt: string;
   lastOpenedAt: string | null;
 }
 
 export type ProjectIconMode = "auto" | "custom" | "none";
+export type ProjectStatus = "ativo" | "pausado" | "concluido";
 
 export interface Task {
   id: string;

@@ -142,11 +142,13 @@ const api = {
       githubUrl?: string;
       clientId?: string;
     }) => invoke<Project>("projects:create", input),
-    update: (id: string, patch: Partial<Pick<Project, "name" | "description" | "technologies" | "githubUrl" | "clientId">>) =>
+    update: (id: string, patch: Partial<Pick<Project, "name" | "description" | "technologies" | "githubUrl" | "clientId" | "status">>) =>
       invoke<Project>("projects:update", id, patch),
     toggleFavorite: (id: string) => invoke<void>("projects:toggleFavorite", id),
     touchOpened: (id: string) => invoke<void>("projects:touchOpened", id),
     delete: (id: string) => invoke<void>("projects:delete", id),
+    /** Arquivar só esconde do dia a dia; nada é apagado. */
+    setArchived: (id: string, archived: boolean) => invoke<Project>("projects:setArchived", id, archived),
     /** Seletor nativo de imagem; `null` se o usuário cancelar. */
     pickIcon: (id: string) => invoke<{ icon: string | null } | null>("projects:pickIcon", id),
     setIconMode: (id: string, mode: "auto" | "none") => invoke<string | null>("projects:setIconMode", id, mode),

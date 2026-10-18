@@ -73,7 +73,8 @@ export function CommandPalette() {
   const setOpen = useUIStore((s) => s.setPaletteOpen);
   const navigate = useUIStore((s) => s.navigate);
   const setQuickTaskOpen = useUIStore((s) => s.setQuickTaskOpen);
-  const { projects, loaded: projectsLoaded, load: loadProjects, open: openProject } = useProjectsStore();
+  const { projects: allProjects, loaded: projectsLoaded, load: loadProjects, open: openProject } = useProjectsStore();
+  const projects = useMemo(() => allProjects.filter((p) => !p.archivedAt), [allProjects]);
   const { clients, loaded: clientsLoaded, load: loadClients } = useClientsStore();
   const { settings, update: updateSettings } = useSettingsStore();
   const businessMode = useBusinessMode();

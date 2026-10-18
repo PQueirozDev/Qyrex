@@ -147,6 +147,36 @@ describe("projetos", () => {
     projects.deleteProject(p.id);
     expect(fs.existsSync(path.join(dir, "keep"))).toBe(true);
   });
+
+  it("status começa ativo e pode mudar", () => {
+    fs.mkdirSync(path.join(dir, "s"));
+    const p = projects.createProject({ name: "S", localPath: path.join(dir, "s") });
+    expect(p.status).toBe("ativo");
+    expect(p.archivedAt).toBeNull();
+    expect(projects.updateProject(p.id, { status: "pausado" }).status).toBe("pausado");
+    // Editar outro campo não mexe no status.
+    expect(projects.updateProject(p.id, { name: "S2" }).status).toBe("pausado");
+  });
+
+  it("arquivar preserva cadastro, tarefas e pasta, tira dos favoritos e não consulta o git", async () => {
+    fs.mkdirSync(path.join(dir, "arq"));
+    const p = projects.createProject({ name: "Arq", localPath: path.join(dir, "arq") });
+    projects.toggleFavorite(p.id);
+    const t = tasks.createTask({ title: "Tarefa do arquivado", projectId: p.id });
+
+    const archived = projects.setArchived(p.id, true);
+    expect(archived.archivedAt).not.toBeNull();
+    expect(archived.favorite).toBe(false);
+    expect(tasks.listTasks().find((x) => x.id === t.id)?.projectId).toBe(p.id);
+    expect(fs.existsSync(path.join(dir, "arq"))).toBe(true);
+    const listed = (await projects.listProjectsWithGit()).find((x) => x.id === p.id);
+    expect(listed?.git).toBeNull();
+
+    // Arquivar de novo não muda a data; desarquivar volta ao normal.
+    expect(projects.setArchived(p.id, true).archivedAt).toBe(archived.archivedAt);
+    expect(projects.setArchived(p.id, false).archivedAt).toBeNull();
+    expect(() => projects.setArchived("nao-existe", true)).toThrow(/não encontrado/);
+  });
 });
 
 describe("clientes", () => {

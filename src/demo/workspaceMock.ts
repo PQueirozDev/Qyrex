@@ -86,9 +86,9 @@ function seed() {
     { id: "c4", name: "Doce Lar Confeitaria", company: null, phone: null, whatsapp: "11900000004", instagram: "@docelar", email: null, notes: null, status: "ativo", monthlyValue: 180, nextBillingDate: day(18), filesPath: null, createdAt: ago(60 * 24 * 120) },
   ];
   const projects: Project[] = [
-    { id: "p1", name: "Loja Café Aurora", description: "E-commerce com assinatura de cafés.", localPath: `${ROOT}\\cafe-aurora`, technologies: ["Next.js", "TypeScript", "Stripe"], githubUrl: "https://github.com/exemplo/cafe-aurora", clientId: "c1", favorite: true, iconMode: "auto", createdAt: ago(60 * 24 * 40), lastOpenedAt: ago(35) },
-    { id: "p2", name: "App Nova Pilates", description: "Agendamento de aulas e planos.", localPath: `${ROOT}\\nova-pilates`, technologies: ["React", "Supabase"], githubUrl: "https://github.com/exemplo/nova-pilates", clientId: "c2", favorite: false, iconMode: "auto", createdAt: ago(60 * 24 * 20), lastOpenedAt: ago(60 * 26) },
-    { id: "p3", name: "Bot de Orçamentos", description: "Bot de WhatsApp que monta orçamentos.", localPath: `${ROOT}\\bot-orcamentos`, technologies: ["Node.js", "Prisma"], githubUrl: null, clientId: null, favorite: false, iconMode: "auto", createdAt: ago(60 * 24 * 10), lastOpenedAt: null },
+    { id: "p1", name: "Loja Café Aurora", description: "E-commerce com assinatura de cafés.", localPath: `${ROOT}\\cafe-aurora`, technologies: ["Next.js", "TypeScript", "Stripe"], githubUrl: "https://github.com/exemplo/cafe-aurora", clientId: "c1", favorite: true, iconMode: "auto", status: "ativo", archivedAt: null, createdAt: ago(60 * 24 * 40), lastOpenedAt: ago(35) },
+    { id: "p2", name: "App Nova Pilates", description: "Agendamento de aulas e planos.", localPath: `${ROOT}\\nova-pilates`, technologies: ["React", "Supabase"], githubUrl: "https://github.com/exemplo/nova-pilates", clientId: "c2", favorite: false, iconMode: "auto", status: "ativo", archivedAt: null, createdAt: ago(60 * 24 * 20), lastOpenedAt: ago(60 * 26) },
+    { id: "p3", name: "Bot de Orçamentos", description: "Bot de WhatsApp que monta orçamentos.", localPath: `${ROOT}\\bot-orcamentos`, technologies: ["Node.js", "Prisma"], githubUrl: null, clientId: null, favorite: false, iconMode: "auto", status: "ativo", archivedAt: null, createdAt: ago(60 * 24 * 10), lastOpenedAt: null },
   ];
   const tasks: Task[] = [
     { id: "t1", title: "Publicar página de assinaturas", description: "Checkout com plano mensal e trimestral.", status: "em_andamento", priority: "urgente", projectId: "p1", clientId: "c1", dueDate: day(0), dueTime: "18:00", tags: ["site"], createdAt: ago(60 * 30), completedAt: null },
@@ -428,6 +428,8 @@ const notionItem = ({ markdown: _m, ...item }: (typeof notionPages)[number]): No
 const withGit = (p: Project): ProjectWithGit => ({
   ...p,
   iconMode: p.iconMode ?? "auto",
+  status: p.status ?? "ativo",
+  archivedAt: p.archivedAt ?? null,
   icon: null,
   git: { branch: "main", modifiedCount: db.changes[p.id]?.length ?? 0, isRepo: true, ahead: p.id === "p1" ? 1 : 0, behind: 0, remoteUrl: p.githubUrl },
 });
@@ -540,6 +542,13 @@ export const workspaceMock: WorkspaceApi = {
       if (p) p.lastOpenedAt = new Date().toISOString();
       save();
       return ok(undefined);
+    },
+    setArchived: async (id, archived) => {
+      const p = db.projects.find((x) => x.id === id)!;
+      p.archivedAt = archived ? new Date().toISOString() : null;
+      if (archived) p.favorite = false;
+      save();
+      return ok(withGit(p));
     },
     delete: async (id) => {
       db.projects = db.projects.filter((p) => p.id !== id);

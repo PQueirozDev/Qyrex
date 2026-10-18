@@ -20,6 +20,8 @@ interface ProjectRow {
   client_id: string | null;
   favorite: number;
   icon_mode: string;
+  status: string;
+  archived_at: string | null;
   created_at: string;
   last_opened_at: string | null;
 }
@@ -35,6 +37,8 @@ function rowToProject(row: ProjectRow): Project {
     clientId: row.client_id,
     favorite: Boolean(row.favorite),
     iconMode: row.icon_mode === "custom" || row.icon_mode === "none" ? row.icon_mode : "auto",
+    status: row.status === "pausado" || row.status === "concluido" ? row.status : "ativo",
+    archivedAt: row.archived_at,
     createdAt: row.created_at,
     lastOpenedAt: row.last_opened_at,
   };
@@ -180,16 +184,32 @@ export function createProject(input: {
 
 export function updateProject(
   id: string,
-  partial: Partial<Pick<Project, "name" | "description" | "technologies" | "githubUrl" | "clientId">>
+  partial: Partial<Pick<Project, "name" | "description" | "technologies" | "githubUrl" | "clientId" | "status">>
 ): Project {
   const current = getProject(id);
   if (!current) throw new Error("Projeto não encontrado.");
   const merged = { ...current, ...partial };
   getDb()
-    .prepare("UPDATE projects SET name = ?, description = ?, technologies = ?, github_url = ?, client_id = ? WHERE id = ?")
-    .run(merged.name, merged.description, JSON.stringify(merged.technologies), merged.githubUrl, merged.clientId, id);
+    .prepare("UPDATE projects SET name = ?, description = ?, technologies = ?, github_url = ?, client_id = ?, status = ? WHERE id = ?")
+    .run(merged.name, merged.description, JSON.stringify(merged.technologies), merged.githubUrl, merged.clientId, merged.status, id);
   return getProject(id)!;
 }
+
+/** Arquiva (some do Início, da bandeja e da paleta; o Git não é mais consultado) ou desarquiva. Nada é apagado. */
+export function setArchived(id: string, archived: boolean): Project {
+  const { changes } = getDb()
+    .prepare(
+      archived
+        ? "UPDATE projects SET archived_at = strftime('%Y-%m-%dT%H:%M:%fZ','now'), favorite = 0 WHERE id = ? AND archived_at IS NULL"
+        : "UPDATE projects SET archived_at = NULL WHERE id = ?"
+    )
+    .run(id);
+  const project = getProject(id);
+  if (!project) throw new Error("Projeto não encontrado.");
+  if (changes > 0) recordActivity("project", id, project.name);
+  return project;
+}
+
 
 export function toggleFavorite(id: string): void {
   getDb().prepare("UPDATE projects SET favorite = NOT favorite WHERE id = ?").run(id);
@@ -231,6 +251,8 @@ export async function listProjectsWithGit(): Promise<ProjectWithGit[]> {
   return Promise.all(
     projects.map(async (p) => {
       let git = null;
+      // Arquivados não gastam processos do git a cada carregamento da lista.
+      if (p.archivedAt) return { ...p, git, icon: resolveProjectIcon(p) };
       try {
         assertPathAllowed(p.localPath);
         git = await getGitStatus(p.localPath);

@@ -114,7 +114,8 @@ export function Dashboard() {
   const navigate = useUIStore((s) => s.navigate);
   const setQuickTaskOpen = useUIStore((s) => s.setQuickTaskOpen);
   const { tasks, loaded: tasksLoaded, load: loadTasks, toggleDone } = useTasksStore();
-  const { projects, loaded: projectsLoaded, load: loadProjects, open: openProject } = useProjectsStore();
+  const { projects: allProjects, loaded: projectsLoaded, load: loadProjects, open: openProject } = useProjectsStore();
+  const projects = useMemo(() => allProjects.filter((p) => !p.archivedAt), [allProjects]);
   const { clients, load: loadClients } = useClientsStore();
   const settings = useSettingsStore((s) => s.settings);
   const businessMode = useBusinessMode();

@@ -175,7 +175,7 @@ function createWindow(): void {
 
 function buildTrayMenu(): Menu {
   const recent = listProjects()
-    .filter((p) => p.lastOpenedAt)
+    .filter((p) => p.lastOpenedAt && !p.archivedAt)
     .slice(0, 5);
   return Menu.buildFromTemplate([
     { label: "Qyrex", enabled: false },

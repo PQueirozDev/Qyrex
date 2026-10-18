@@ -20,14 +20,16 @@ import {
   Trash2,
   CircleDot,
   CaseSensitive,
+  Archive,
+  ArchiveRestore,
   ImagePlus,
   ScanSearch,
 } from "lucide-react";
-import type { GitChangedFile, GitCommit, GitHubOverview, ProjectIconMode, ProjectWithGit } from "@shared/types";
+import type { GitChangedFile, GitCommit, GitHubOverview, ProjectIconMode, ProjectStatus, ProjectWithGit } from "@shared/types";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Dialog } from "@/components/ui/Dialog";
-import { Badge, Drawer, EmptyState, ErrorState, Field, LoadingRows, Menu, PageHeader, ProjectIcon, Spinner } from "@/components/ui/primitives";
+import { Badge, Drawer, EmptyState, ErrorState, Field, LoadingRows, Menu, PageHeader, ProjectIcon, Segmented, Spinner } from "@/components/ui/primitives";
 import { TaskFormDialog } from "@/components/TaskFormDialog";
 import { attempt, errorMessage, unwrap } from "@/lib/api";
 import { cn } from "@/lib/cn";
@@ -41,6 +43,30 @@ import { confirmAction, toast, useUIStore } from "@/stores/useUIStore";
 
 import { tr, trn } from "@/lib/i18n";
 import { PAGE_ICONS } from "@/lib/pageIcons";
+import { tm } from "@shared/i18n";
+
+const STATUS_LABEL: Record<ProjectStatus, string> = { ativo: tm("Ativo"), pausado: tm("Pausado"), concluido: tm("Concluído") };
+const STATUS_TONE: Record<ProjectStatus, "success" | "warning" | "neutral"> = { ativo: "success", pausado: "warning", concluido: "neutral" };
+
+function StatusBadge({ project }: { project: ProjectWithGit }) {
+  if (project.archivedAt) return <Badge>{tr("Arquivado")}</Badge>;
+  // "Ativo" é o normal: só mostra quando foge disso.
+  if (project.status === "ativo") return null;
+  return <Badge tone={STATUS_TONE[project.status]}>{tr(STATUS_LABEL[project.status])}</Badge>;
+}
+
+/** Arquivar pede confirmação explicando que nada é apagado. */
+async function toggleArchive(project: ProjectWithGit): Promise<void> {
+  if (!project.archivedAt) {
+    const ok = await confirmAction({
+      title: tr("Arquivar \"{name}\"?", { name: project.name }),
+      description: tr("O projeto sai do Início, da paleta de comandos e da bandeja, e o Git dele deixa de ser consultado. Cadastro, tarefas e a pasta continuam como estão; dá para desarquivar quando quiser."),
+      confirmLabel: tr("Arquivar"),
+    });
+    if (!ok) return;
+  }
+  await useProjectsStore.getState().setArchived(project.id, !project.archivedAt);
+}
 /** Pede confirmação e exclui o cadastro do projeto (a pasta fica intacta). Devolve true se excluiu. */
 async function confirmDeleteProject(project: ProjectWithGit): Promise<boolean> {
   const ok = await confirmAction({
@@ -77,6 +103,7 @@ function ProjectFormDialog({
   const [technologies, setTechnologies] = useState("");
   const [githubUrl, setGithubUrl] = useState("");
   const [clientId, setClientId] = useState("");
+  const [status, setStatus] = useState<ProjectStatus>("ativo");
   const [detecting, setDetecting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [icon, setIcon] = useState<string | null>(null);
@@ -93,6 +120,7 @@ function ProjectFormDialog({
     setTechnologies(project?.technologies.join(", ") ?? "");
     setGithubUrl(project?.githubUrl ?? "");
     setClientId(project?.clientId ?? "");
+    setStatus(project?.status ?? "ativo");
   }, [open, project]);
 
   async function pickFolder() {
@@ -158,6 +186,7 @@ function ProjectFormDialog({
           technologies: techList,
           githubUrl: githubUrl.trim() || null,
           clientId: clientId || null,
+          status,
         })
       : await create({
           name: name.trim(),
@@ -245,6 +274,17 @@ function ProjectFormDialog({
             </Field>
           )}
         </div>
+        {project && (
+          <Field label={tr("Status")}>
+            <select className="input" value={status} onChange={(e) => setStatus(e.target.value as ProjectStatus)}>
+              {(Object.keys(STATUS_LABEL) as ProjectStatus[]).map((s) => (
+                <option key={s} value={s}>
+                  {tr(STATUS_LABEL[s])}
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
         <Field label={tr("Repositório no GitHub")}>
           <input className="input" value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} placeholder="https://github.com/usuario/repo" />
         </Field>
@@ -524,6 +564,7 @@ function ProjectDrawer({
           <ProjectIcon name={project.name} icon={project.icon} size={24} className="rounded-md" />
           {project.name}
           {project.favorite && <Star size={13} className="fill-warning text-warning" />}
+          <StatusBadge project={project} />
         </span>
       }
       actions={
@@ -537,6 +578,9 @@ function ProjectDrawer({
               { label: project.favorite ? tr("Remover dos favoritos") : tr("Favoritar"), icon: Star, onSelect: () => void toggleFavorite(project.id) },
               { label: tr("Editar"), icon: Pencil, onSelect: onEdit },
               { label: tr("Trocar ícone"), icon: ImagePlus, onSelect: onEdit },
+              project.archivedAt
+                ? { label: tr("Desarquivar"), icon: ArchiveRestore, onSelect: () => void toggleArchive(project) }
+                : { label: tr("Arquivar"), icon: Archive, onSelect: () => void toggleArchive(project) },
               "separator",
               { label: tr("Excluir projeto"), icon: Trash2, danger: true, onSelect: onDelete },
             ]}
@@ -576,7 +620,11 @@ function ProjectDrawer({
 
         <section>
           <p className="section-title mb-2">{tr("Git")}</p>
-          <GitSection project={project} onChanged={() => void load()} />
+          {project.archivedAt ? (
+            <p className="text-xs text-text-muted">{tr("Projeto arquivado: o Git não é consultado. Desarquive para ver o status.")}</p>
+          ) : (
+            <GitSection project={project} onChanged={() => void load()} />
+          )}
         </section>
 
         {project.githubUrl && (
@@ -626,7 +674,10 @@ function ProjectCard({ project, onOpen, onDelete }: { project: ProjectWithGit; o
       <div className="flex items-start gap-2.5">
         <ProjectIcon name={project.name} icon={project.icon} size={34} />
         <button className="min-w-0 flex-1 text-left" onClick={onOpen}>
-          <p className="truncate text-sm font-semibold text-text">{project.name}</p>
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-text">
+            <span className="truncate">{project.name}</span>
+            <StatusBadge project={project} />
+          </p>
           <p className="mt-0.5 line-clamp-2 min-h-[2.2em] text-xs text-text-muted">{project.description || project.localPath}</p>
         </button>
         <button
@@ -654,7 +705,9 @@ function ProjectCard({ project, onOpen, onDelete }: { project: ProjectWithGit; o
       </div>
 
       <div className="mt-3 flex items-center gap-2 text-[11px] text-text-faint">
-        {git?.isRepo ? (
+        {project.archivedAt ? (
+          <span>{tr("Arquivado {time}", { time: timeAgo(project.archivedAt) })}</span>
+        ) : git?.isRepo ? (
           <>
             <GitBranch size={11} /> {git.branch ?? "?"}
             {git.modifiedCount > 0 && <span className="text-warning">· {trn(git.modifiedCount, "{n} alterado", "{n} alterados")}</span>}
@@ -682,6 +735,11 @@ function ProjectCard({ project, onOpen, onDelete }: { project: ProjectWithGit; o
             <Github size={12} />
           </Button>
         )}
+        {project.archivedAt && (
+          <Button size="xs" variant="secondary" onClick={() => void toggleArchive(project)} title={tr("Desarquivar")}>
+            <ArchiveRestore size={12} />
+          </Button>
+        )}
         <Button size="xs" variant="ghost" className="ml-auto" onClick={onOpen}>{tr("Detalhes")}</Button>
       </div>
     </Card>
@@ -699,6 +757,7 @@ export function Projects() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<ProjectWithGit | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [view, setView] = useState<"ativos" | "arquivados">("ativos");
 
   useEffect(() => {
     void load();
@@ -712,12 +771,14 @@ export function Projects() {
     else setDetailId(pageParam);
   }, [pageParam]);
 
+  const archivedCount = projects.filter((p) => p.archivedAt).length;
+  const showArchived = view === "arquivados" && archivedCount > 0;
   const sorted = useMemo(() => {
-    const list = [...projects].sort(
+    const list = projects.filter((p) => Boolean(p.archivedAt) === showArchived).sort(
       (a, b) => Number(b.favorite) - Number(a.favorite) || (b.lastOpenedAt ?? b.createdAt).localeCompare(a.lastOpenedAt ?? a.createdAt)
     );
     return fuzzyFilter(list, search, (p) => `${p.name} ${p.description ?? ""} ${p.technologies.join(" ")}`);
-  }, [projects, search]);
+  }, [projects, search, showArchived]);
 
   const favorites = sorted.filter((p) => p.favorite);
   const others = sorted.filter((p) => !p.favorite);
@@ -758,9 +819,19 @@ export function Projects() {
       <PageHeader
         title={tr("Projetos")}
         icon={PAGE_ICONS.projetos}
-        description={trn(projects.length, "{n} projeto no Qyrex", "{n} projetos no Qyrex")}
+        description={trn(projects.length - archivedCount, "{n} projeto no Qyrex", "{n} projetos no Qyrex")}
         actions={
           <>
+            {archivedCount > 0 && (
+              <Segmented
+                value={view}
+                onChange={setView}
+                options={[
+                  { value: "ativos", label: tr("Ativos") },
+                  { value: "arquivados", label: tr("Arquivados"), count: archivedCount },
+                ]}
+              />
+            )}
             <input className="input w-56 py-1 text-xs" placeholder={tr("Filtrar projetos...")} value={search} onChange={(e) => setSearch(e.target.value)} />
             <Button size="sm" variant="ghost" onClick={() => void load()} title={tr("Atualizar status git")}>
               {loading ? <Spinner /> : <RefreshCw size={13} />}

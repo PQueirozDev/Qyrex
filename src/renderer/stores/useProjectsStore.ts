@@ -17,6 +17,7 @@ interface ProjectsState {
   update: (id: string, patch: UpdatePatch) => Promise<boolean>;
   remove: (id: string) => Promise<boolean>;
   toggleFavorite: (id: string) => Promise<void>;
+  setArchived: (id: string, archived: boolean) => Promise<void>;
   open: (project: ProjectWithGit, target: "vscode" | "terminal" | "explorer" | "github") => Promise<void>;
 }
 
@@ -61,6 +62,10 @@ export const useProjectsStore = create<ProjectsState>((set, get) => ({
   toggleFavorite: async (id) => {
     set({ projects: get().projects.map((p) => (p.id === id ? { ...p, favorite: !p.favorite } : p)) });
     await attempt(window.workspace.projects.toggleFavorite(id));
+  },
+  setArchived: async (id, archived) => {
+    const ok = await attempt(window.workspace.projects.setArchived(id, archived), archived ? tr("Projeto arquivado") : tr("Projeto desarquivado"));
+    if (ok) await get().load();
   },
   open: async (project, target) => {
     const api = window.workspace;

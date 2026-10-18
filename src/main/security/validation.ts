@@ -126,6 +126,7 @@ export const projectUpdate = z
     technologies: tags,
     githubUrl: url.nullable().or(z.literal("").transform(() => null)),
     clientId: id.nullable().or(z.literal("").transform(() => null)),
+    status: z.enum(["ativo", "pausado", "concluido"]),
   })
   .partial();
 
