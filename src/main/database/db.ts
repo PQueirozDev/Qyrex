@@ -2,9 +2,23 @@ import Database from "better-sqlite3";
 import fs from "node:fs";
 import path from "node:path";
 import { app } from "electron";
-import type { AppSettings, DiscordPrefs, NotificationPrefs } from "../../shared/types.js";
+import type { AppSettings, BackupPrefs, DiscordPrefs, NotificationPrefs } from "../../shared/types.js";
 
 let db: Database.Database | null = null;
+
+export const DB_FILE_NAME = "workspace.sqlite";
+
+/**
+ * Chamado com o banco já aberto quando há migrations pendentes num banco que já
+ * tinha dados (atualização do app). O index.ts liga aqui o backup automático
+ * "antes de atualizar o banco", para dar como voltar atrás.
+ */
+type BeforeMigrateHook = (database: Database.Database, pending: string[]) => void;
+let beforeMigrateHook: BeforeMigrateHook | null = null;
+
+export function setBeforeMigrateHook(hook: BeforeMigrateHook | null): void {
+  beforeMigrateHook = hook;
+}
 
 function migrationsDir(): string {
   // Em produção os .sql são copiados para dist-electron/main/database/migrations
@@ -43,6 +57,9 @@ export function runMigrations(database: Database.Database, dir = migrationsDir()
     database.prepare("INSERT INTO _migrations (name) VALUES (?)").run(file);
   });
 
+  const pending = files.filter((f) => !applied.has(f));
+  if (pending.length > 0 && applied.size > 0 && beforeMigrateHook) beforeMigrateHook(database, pending);
+
   const newlyApplied: string[] = [];
   for (const file of files) {
     if (applied.has(file)) continue;
@@ -61,12 +78,48 @@ export function openDatabase(file: string, dir?: string): Database.Database {
   return database;
 }
 
+/** Caminho do banco do app em `<userData>`. */
+export function databaseFile(): string {
+  return path.join(app.getPath("userData"), DB_FILE_NAME);
+}
+
+let opening = false;
+
 export function getDb(): Database.Database {
   if (db) return db;
-  const userDataDir = app.getPath("userData");
-  fs.mkdirSync(userDataDir, { recursive: true });
-  db = openDatabase(path.join(userDataDir, "workspace.sqlite"));
+  // O gancho de antes das migrations roda com o banco ainda abrindo: quem chamar
+  // getDb() nesse meio (ex.: tradução de erro) recebe um erro, não uma recursão.
+  if (opening) throw new Error("O banco de dados ainda está abrindo.");
+  opening = true;
+  try {
+    fs.mkdirSync(app.getPath("userData"), { recursive: true });
+    db = openDatabase(databaseFile());
+  } finally {
+    opening = false;
+  }
   return db;
+}
+
+/**
+ * Troca o banco do app por uma cópia (restauração de backup). A cópia vai
+ * primeiro para um arquivo ao lado e só substitui o banco depois de abrir sem
+ * erro; a conexão atual é fechada (o que já grava o WAL no arquivo) e a nova
+ * aplica as migrations que faltarem, trazendo um backup antigo para o esquema atual.
+ */
+export function replaceDatabaseFile(source: string): void {
+  const target = databaseFile();
+  const staging = `${target}.restoring`;
+  fs.copyFileSync(source, staging);
+  try {
+    new Database(staging, { fileMustExist: true }).close();
+  } catch (err) {
+    fs.rmSync(staging, { force: true });
+    throw err;
+  }
+  closeDb();
+  for (const suffix of ["-wal", "-shm"]) fs.rmSync(`${target}${suffix}`, { force: true });
+  fs.renameSync(staging, target);
+  getDb();
 }
 
 /** Usado pelos testes para injetar um banco em memória. */
@@ -100,9 +153,11 @@ interface SettingsRow {
   splash_animation: number;
   allow_all_dirs: number;
   business_mode: number;
+  backup: string;
 }
 
 const DEFAULT_DISCORD: DiscordPrefs = { enabled: false, clientId: null, showProject: false };
+export const DEFAULT_BACKUP: BackupPrefs = { auto: true, intervalDays: 1, keep: 10 };
 const DEFAULT_NOTIFICATIONS: NotificationPrefs = { tasks: true, events: true, billing: true, marketing: true };
 
 function parseJson<T>(raw: string, fallback: T): T {
@@ -135,6 +190,7 @@ export function getSettings(): AppSettings {
     lastSeenVersion: row.last_seen_version,
     splashAnimation: Boolean(row.splash_animation),
     businessMode: Boolean(row.business_mode),
+    backup: { ...DEFAULT_BACKUP, ...parseJson<Partial<BackupPrefs>>(row.backup, {}) },
   };
 }
 
@@ -149,7 +205,7 @@ export function updateSettings(partial: Partial<AppSettings>): AppSettings {
         ai_default_provider = ?, ai_default_model = ?,
         notifications = ?, onboarding_completed = ?, vscode_path = ?,
         language = ?, discord = ?, auto_update = ?, last_seen_version = ?,
-        splash_animation = ?, allow_all_dirs = ?, business_mode = ?
+        splash_animation = ?, allow_all_dirs = ?, business_mode = ?, backup = ?
        WHERE id = 1`
     )
     .run(
@@ -170,7 +226,8 @@ export function updateSettings(partial: Partial<AppSettings>): AppSettings {
       merged.lastSeenVersion,
       merged.splashAnimation ? 1 : 0,
       merged.allowAllDirs ? 1 : 0,
-      merged.businessMode ? 1 : 0
+      merged.businessMode ? 1 : 0,
+      JSON.stringify(merged.backup)
     );
 
   return merged;

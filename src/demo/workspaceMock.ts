@@ -15,6 +15,7 @@ import type {
   AIUsageRecord,
   AIUsageSummary,
   AppSettings,
+  BackupInfo,
   CalendarEvent,
   Client,
   CommandRisk,
@@ -136,6 +137,7 @@ function seed() {
     onboardingCompleted: true,
     splashAnimation: true,
     businessMode: true,
+    backup: { auto: true, intervalDays: 1, keep: 10 },
     vscodePath: "C:\\Program Files\\Microsoft VS Code\\Code.exe",
   };
   const changes: Record<string, GitChangedFile[]> = {
@@ -433,6 +435,21 @@ const projectByPath = (path: string) => db.projects.find((p) => path.toLowerCase
 const risk = (cmd: string): CommandRisk => (/\b(rm|del|remove-item|format|rd|rmdir)\b|--force|reset --hard/i.test(cmd) ? "dangerous" : /^(git status|dir|ls|echo|npm run dev|node -v|npm -v)\b/i.test(cmd.trim()) ? "safe" : "normal");
 const DEMO_ONLY = "Na demo web isso não abre nada no seu computador — no app desktop abre de verdade.";
 
+// Backups da demo: só na memória da aba (nada é gravado de verdade).
+const demoBackups: BackupInfo[] = [];
+const demoBackup = (): BackupInfo => ({
+  id: `demo-${demoBackups.length + 1}`,
+  kind: "manual",
+  createdAt: new Date().toISOString(),
+  appVersion: APP_VERSION,
+  migrations: [],
+  sizeBytes: 180_224,
+  sha256: "demo",
+  extraFiles: 0,
+  valid: true,
+  problem: null,
+});
+
 export const workspaceMock: WorkspaceApi = {
   settings: {
     get: () => ok(db.settings, 20),
@@ -443,6 +460,27 @@ export const workspaceMock: WorkspaceApi = {
     },
     addAllowedDir: () => fail("Na demo, as pastas já vêm autorizadas (C:\\Projetos)."),
     removeAllowedDir: () => fail("Na demo não é possível remover a pasta de exemplo."),
+    exportToFile: () => fail(DEMO_ONLY),
+    readImport: () => fail(DEMO_ONLY),
+  },
+  backup: {
+    list: () => ok([...demoBackups], 30),
+    create: () => {
+      const info = demoBackup();
+      demoBackups.unshift(info);
+      return ok(info, 400);
+    },
+    verify: (id: string) => {
+      const info = demoBackups.find((b) => b.id === id);
+      return info ? ok(info, 300) : fail("Backup não encontrado.");
+    },
+    restore: () => fail(DEMO_ONLY),
+    delete: (id: string) => {
+      const i = demoBackups.findIndex((b) => b.id === id);
+      if (i >= 0) demoBackups.splice(i, 1);
+      return ok(undefined, 20);
+    },
+    openFolder: () => fail(DEMO_ONLY),
   },
   profile: {
     getAvatar: () => ok(readDemoAvatar(), 10),

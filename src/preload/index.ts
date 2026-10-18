@@ -10,6 +10,7 @@ import type {
   AppCommand,
   AppSettings,
   AttachedFileRef,
+  BackupInfo,
   CalendarEvent,
   Client,
   CommandAssessment,
@@ -37,6 +38,7 @@ import type {
   ProjectWithGit,
   RecentItem,
   SearchResults,
+  SettingsImport,
   SpotifyPlayback,
   SystemInfo,
   SubscriptionLimits,
@@ -82,6 +84,20 @@ const api = {
     /** Sem argumento: abre o seletor de pastas nativo. */
     addAllowedDir: (dir?: string) => invoke<AppSettings>("settings:addAllowedDir", dir),
     removeAllowedDir: (dir: string) => invoke<AppSettings>("settings:removeAllowedDir", dir),
+    /** Salva as preferências portáveis num JSON (diálogo nativo). Devolve o caminho ou null. */
+    exportToFile: () => invoke<string | null>("settings:export"),
+    /** Lê (sem aplicar) um JSON exportado; a UI confirma e aplica com `update(patch)`. */
+    readImport: () => invoke<SettingsImport | null>("settings:readImport"),
+  },
+  backup: {
+    list: () => invoke<BackupInfo[]>("backup:list"),
+    create: () => invoke<BackupInfo>("backup:create"),
+    /** Confere hash e integridade do banco do backup. */
+    verify: (id: string) => invoke<BackupInfo>("backup:verify", id),
+    /** Substitui os dados atuais pelos do backup (antes, faz um backup de segurança). */
+    restore: (id: string, confirmed: true) => invoke<{ restored: BackupInfo; safety: BackupInfo }>("backup:restore", id, confirmed),
+    delete: (id: string, confirmed: true) => invoke<void>("backup:delete", id, confirmed),
+    openFolder: () => invoke<void>("backup:openFolder"),
   },
   profile: {
     /** Foto de perfil como data URL, ou null se não houver. */

@@ -404,6 +404,41 @@ export interface NotificationPrefs {
   marketing: boolean;
 }
 
+/** Backup local automático (Configurações → Backup). */
+export interface BackupPrefs {
+  auto: boolean;
+  /** Intervalo mínimo entre backups automáticos, em dias. */
+  intervalDays: number;
+  /** Quantos backups automáticos guardar (os manuais nunca são apagados sozinhos). */
+  keep: number;
+}
+
+export type BackupKind = "manual" | "auto" | "pre-restore" | "pre-migration";
+
+export interface BackupInfo {
+  id: string;
+  kind: BackupKind;
+  createdAt: string;
+  appVersion: string;
+  /** Migrations aplicadas no banco copiado (diz de que versão do esquema ele é). */
+  migrations: string[];
+  sizeBytes: number;
+  sha256: string;
+  /** Arquivos do Qyrex copiados junto (foto de perfil, ícones de projeto). */
+  extraFiles: number;
+  valid: boolean;
+  /** Motivo de o backup ser inválido (arquivo faltando, hash diferente, banco corrompido...). */
+  problem: string | null;
+}
+
+/** Arquivo de configurações exportado (sem segredos e sem pastas autorizadas). */
+export interface SettingsImport {
+  file: string;
+  exportedAt: string | null;
+  appVersion: string | null;
+  patch: Partial<AppSettings>;
+}
+
 export type ThemeId = "dark" | "light" | "midnight" | "violet" | "sand" | "onsen";
 export type Language = "pt" | "en";
 
@@ -436,6 +471,7 @@ export interface AppSettings {
   splashAnimation: boolean;
   /** Modo Negócio: mostra clientes, marketing e WhatsApp. Desligado = modo Dev (padrão). */
   businessMode: boolean;
+  backup: BackupPrefs;
   vscodePath: string | null;
 }
 

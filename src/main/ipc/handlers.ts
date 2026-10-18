@@ -31,6 +31,7 @@ import * as updateService from "../services/updateService.js";
 import * as profileService from "../services/profileService.js";
 import * as usageService from "../services/usageService.js";
 import * as appUsageService from "../services/appUsageService.js";
+import * as backupService from "../services/backupService.js";
 import { getDiscordStatus, setDiscordActivity } from "../integrations/discord.js";
 
 const log = createLogger("ipc");
@@ -114,6 +115,28 @@ export function registerIpcHandlers(): void {
     const target = v.parse(v.filePath, dir);
     return updateSettings({ allowedProjectDirs: getSettings().allowedProjectDirs.filter((d) => d !== target) });
   });
+
+  // --- Backup ----------------------------------------------------------------------
+  handle("backup:list", () => backupService.listBackups());
+  handle("backup:create", () => backupService.createBackup("manual"));
+  handle("backup:verify", (_e, id) => backupService.verifyBackup(v.parse(v.backupId, id)));
+  handle("backup:restore", (_e, id, confirmed) => {
+    requireConfirmation(confirmed);
+    const result = backupService.restoreBackup(v.parse(v.backupId, id));
+    settingsChangedHook?.();
+    return result;
+  });
+  handle("backup:delete", (_e, id, confirmed) => {
+    requireConfirmation(confirmed);
+    backupService.deleteBackup(v.parse(v.backupId, id));
+  });
+  handle("backup:openFolder", async () => {
+    fs.mkdirSync(backupService.backupsDir(), { recursive: true });
+    const error = await shell.openPath(backupService.backupsDir());
+    if (error) throw new Error(error);
+  });
+  handle("settings:export", (e) => backupService.exportSettingsToFile(windowOf(e)));
+  handle("settings:readImport", (e) => backupService.readSettingsFile(windowOf(e)));
 
   // --- Atualizações --------------------------------------------------------------
   handle("update:status", () => updateService.getUpdateStatus());

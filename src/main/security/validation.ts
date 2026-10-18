@@ -98,8 +98,16 @@ export const settingsPatch = z
     splashAnimation: z.boolean(),
     allowAllDirs: z.boolean(),
     businessMode: z.boolean(),
+    backup: z.object({
+      auto: z.boolean(),
+      intervalDays: z.number().int().min(1).max(30),
+      keep: z.number().int().min(1).max(100),
+    }),
   })
   .partial();
+
+/** ID de backup: o nome da pasta em `<userData>/backups` (data + tipo). */
+export const backupId = z.string().regex(/^[\w-]{1,80}$/, "Backup inválido");
 
 // --- Projects ---
 export const projectCreate = z.object({

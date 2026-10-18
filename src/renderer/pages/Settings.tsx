@@ -6,6 +6,8 @@ import {
   Briefcase,
   Check,
   Code2,
+  DatabaseBackup,
+  Download,
   ExternalLink,
   FileText,
   FolderPlus,
@@ -18,27 +20,32 @@ import {
   Monitor,
   Palette,
   RefreshCw,
+  RotateCcw,
   Shield,
+  ShieldCheck,
   SquareTerminal,
   Trash2,
+  Upload,
   User,
   X,
   type LucideIcon,
 } from "lucide-react";
-import type { AIProviderId, AppSettings, DiscordStatus, NotificationPrefs } from "@shared/types";
+import type { AIProviderId, AppSettings, BackupInfo, BackupKind, DiscordStatus, NotificationPrefs } from "@shared/types";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge, EmptyState, Spinner, Switch } from "@/components/ui/primitives";
 import { attempt } from "@/lib/api";
+import { formatBytes } from "@/lib/format";
 import { cn } from "@/lib/cn";
-import { tr } from "@/lib/i18n";
+import { tr, trn } from "@/lib/i18n";
+import { tm } from "@shared/i18n";
 import { REPO_URL, SITE_HOST, SITE_URL } from "@shared/links";
 import logoUrl from "@/assets/logo.svg";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { THEMES, type ThemeDefinition } from "@/lib/themes";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useAIStore } from "@/stores/useAIStore";
-import { confirmAction } from "@/stores/useUIStore";
+import { confirmAction, toast } from "@/stores/useUIStore";
 import { UpdateCard } from "@/pages/PatchNotes";
 
 const SECTIONS: { id: string; label: string; icon: LucideIcon }[] = [
@@ -51,6 +58,7 @@ const SECTIONS: { id: string; label: string; icon: LucideIcon }[] = [
   { id: "ia", label: tr("IA"), icon: Bot },
   { id: "notificacoes", label: tr("Notificações"), icon: Bell },
   { id: "discord", label: tr("Discord"), icon: Gamepad2 },
+  { id: "backup", label: tr("Backup"), icon: DatabaseBackup },
   { id: "atualizacoes", label: tr("Atualizações"), icon: RefreshCw },
   { id: "privacidade", label: tr("Privacidade"), icon: Shield },
   { id: "sobre", label: tr("Sobre"), icon: Info },
@@ -245,6 +253,194 @@ function DiscordSection() {
       </div>
       <Row label={tr("Mostrar nome do projeto")} hint={tr("Desligado por padrão: nomes de projetos podem ser de clientes.")}>
         <Switch checked={discord.showProject} disabled={!discord.enabled} onChange={(v) => void update({ discord: { ...discord, showProject: v } })} />
+      </Row>
+    </Section>
+  );
+}
+
+const BACKUP_KIND: Record<BackupKind, string> = {
+  manual: tm("Manual"),
+  auto: tm("Automático"),
+  "pre-restore": tm("Antes de restaurar"),
+  "pre-migration": tm("Antes de atualizar"),
+};
+
+function BackupSection() {
+  const { settings, update } = useSettingsStore();
+  const [backups, setBackups] = useState<BackupInfo[] | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const load = () => void attempt(window.workspace.backup.list()).then((list) => setBackups(list ?? []));
+  useEffect(load, []);
+
+  if (!settings) return null;
+  const prefs = settings.backup;
+
+  async function createNow() {
+    setBusy("create");
+    const info = await attempt(window.workspace.backup.create(), tr("Backup criado e verificado"));
+    setBusy(null);
+    if (info) load();
+  }
+
+  async function verify(b: BackupInfo) {
+    setBusy(b.id);
+    const info = await attempt(window.workspace.backup.verify(b.id));
+    setBusy(null);
+    if (!info) return;
+    if (info.valid) toast.success(tr("Backup íntegro"));
+    else toast.error(tr("Backup inválido: {problem}", { problem: info.problem ?? "" }));
+    setBackups((list) => list?.map((x) => (x.id === info.id ? info : x)) ?? null);
+  }
+
+  async function restore(b: BackupInfo) {
+    const ok = await confirmAction({
+      title: tr("Restaurar este backup?"),
+      description: tr(
+        "Projetos, tarefas, conversas, configurações e demais dados do Qyrex voltam a como estavam neste backup. O que foi feito depois some do app. Antes de restaurar, o Qyrex guarda um backup do estado atual (tipo “Antes de restaurar”) para você poder desfazer. Arquivos dos seus projetos no disco não são tocados."
+      ),
+      detail: `${new Date(b.createdAt).toLocaleString()} · v${b.appVersion}`,
+      danger: true,
+      confirmLabel: tr("Restaurar"),
+    });
+    if (!ok) return;
+    setBusy(b.id);
+    const result = await attempt(window.workspace.backup.restore(b.id, true));
+    setBusy(null);
+    if (!result) return;
+    toast.success(tr("Backup restaurado. Recarregando…"));
+    // Todos os dados mudaram: recarrega a interface inteira a partir do banco restaurado.
+    setTimeout(() => window.location.reload(), 800);
+  }
+
+  async function remove(b: BackupInfo) {
+    const ok = await confirmAction({
+      title: tr("Excluir este backup?"),
+      description: tr("A cópia é apagada da pasta de backups. Os dados atuais do app não mudam."),
+      detail: b.id,
+      danger: true,
+      confirmLabel: tr("Excluir"),
+    });
+    if (!ok) return;
+    await attempt(window.workspace.backup.delete(b.id, true), tr("Backup excluído"));
+    load();
+  }
+
+  async function exportSettings() {
+    const file = await attempt(window.workspace.settings.exportToFile());
+    if (file) toast.success(tr("Configurações exportadas"));
+  }
+
+  async function importSettings() {
+    const data = await attempt(window.workspace.settings.readImport());
+    if (!data) return;
+    if (Object.keys(data.patch).length === 0) {
+      toast.error(tr("O arquivo não tem configurações que possam ser importadas."));
+      return;
+    }
+    const ok = await confirmAction({
+      title: tr("Importar estas configurações?"),
+      description: tr("Tema, idioma, notificações e demais preferências do arquivo substituem as atuais. Pastas autorizadas e chaves de API não são importadas."),
+      detail: data.file,
+      confirmLabel: tr("Importar"),
+    });
+    if (ok) await update(data.patch);
+  }
+
+  return (
+    <Section
+      id="backup"
+      title={tr("Backup")}
+      description={tr(
+        "Cópias locais do banco do Qyrex (projetos, tarefas, conversas, configurações), da foto de perfil e dos ícones de projeto. Chaves de API e tokens nunca entram: ficam no cofre do Windows. Os arquivos dos seus projetos não são copiados."
+      )}
+    >
+      <Row
+        label={tr("Backup automático")}
+        hint={tr("Uma cópia verificada a cada intervalo, enquanto o app está aberto. Antes de uma atualização mudar o banco, o Qyrex também guarda uma cópia.")}
+      >
+        <Switch checked={prefs.auto} onChange={(v) => void update({ backup: { ...prefs, auto: v } })} />
+      </Row>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label>
+          <span className="label">{tr("Intervalo")}</span>
+          <select
+            className="input"
+            value={prefs.intervalDays}
+            disabled={!prefs.auto}
+            onChange={(e) => void update({ backup: { ...prefs, intervalDays: Number(e.target.value) } })}
+          >
+            {[1, 3, 7, 14].map((d) => (
+              <option key={d} value={d}>
+                {trn(d, "Todo dia", "A cada {n} dias")}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span className="label">{tr("Guardar os últimos")}</span>
+          <select className="input" value={prefs.keep} disabled={!prefs.auto} onChange={(e) => void update({ backup: { ...prefs, keep: Number(e.target.value) } })}>
+            {[5, 10, 20, 30].map((n) => (
+              <option key={n} value={n}>
+                {trn(n, "{n} backup automático", "{n} backups automáticos")}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" onClick={() => void createNow()} loading={busy === "create"} disabled={busy !== null}>
+          <DatabaseBackup size={13} /> {tr("Fazer backup agora")}
+        </Button>
+        <Button size="sm" variant="secondary" onClick={() => void attempt(window.workspace.backup.openFolder())}>
+          <FolderPlus size={13} /> {tr("Abrir pasta de backups")}
+        </Button>
+      </div>
+
+      <div>
+        <p className="section-title mb-1.5">{tr("Histórico")}</p>
+        {backups === null ? (
+          <Spinner />
+        ) : backups.length === 0 ? (
+          <p className="text-xs text-text-faint">{tr("Nenhum backup ainda.")}</p>
+        ) : (
+          <div className="max-h-72 divide-y divide-border-subtle overflow-y-auto rounded-lg border border-border-subtle">
+            {backups.map((b) => (
+              <div key={b.id} className="flex items-center gap-2 px-3 py-2">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-xs text-text">{new Date(b.createdAt).toLocaleString()}</span>
+                    <Badge>{tr(BACKUP_KIND[b.kind])}</Badge>
+                    {!b.valid && <Badge tone="danger">{tr("Inválido")}</Badge>}
+                  </div>
+                  <p className="truncate text-[11px] text-text-faint" title={b.problem ?? undefined}>
+                    {b.valid ? `v${b.appVersion} · ${formatBytes(b.sizeBytes)}` : b.problem}
+                  </p>
+                </div>
+                <Button size="icon-sm" variant="ghost" title={tr("Verificar integridade")} onClick={() => void verify(b)} disabled={busy !== null || !b.valid}>
+                  <ShieldCheck size={12} />
+                </Button>
+                <Button size="xs" variant="secondary" onClick={() => void restore(b)} loading={busy === b.id} disabled={busy !== null || !b.valid}>
+                  <RotateCcw size={11} /> {tr("Restaurar")}
+                </Button>
+                <Button size="icon-sm" variant="ghost" title={tr("Excluir")} onClick={() => void remove(b)} disabled={busy !== null}>
+                  <Trash2 size={12} />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <Row label={tr("Configurações em arquivo")} hint={tr("Leve tema, idioma e preferências para outro PC. Sem pastas autorizadas e sem chaves.")}>
+        <div className="flex gap-2">
+          <Button size="sm" variant="secondary" onClick={() => void exportSettings()}>
+            <Download size={13} /> {tr("Exportar")}
+          </Button>
+          <Button size="sm" variant="secondary" onClick={() => void importSettings()}>
+            <Upload size={13} /> {tr("Importar")}
+          </Button>
+        </div>
       </Row>
     </Section>
   );
@@ -556,6 +752,8 @@ export function Settings() {
         </Section>
 
         <DiscordSection />
+
+        <BackupSection />
 
         <section id="settings-atualizacoes" className="scroll-mt-4">
           <h2 className="mb-2 px-1 text-[15px] font-semibold tracking-tight text-text">{tr("Atualizações")}</h2>

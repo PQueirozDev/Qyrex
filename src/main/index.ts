@@ -1,7 +1,8 @@
 import { app, BrowserWindow, Menu, Tray, nativeImage, session, shell } from "electron";
 import path from "node:path";
 import { registerIpcHandlers, setDevServerUrl, setSettingsChangedHook } from "./ipc/handlers.js";
-import { closeDb, getDb, getSettings } from "./database/db.js";
+import { closeDb, getDb, getSettings, setBeforeMigrateHook } from "./database/db.js";
+import { startAutoBackup, stopAutoBackup, writeBackup } from "./services/backupService.js";
 import { createLogger, initLogger } from "./logger.js";
 import { isProtocolAllowed } from "./security/commands.js";
 import { listProjects } from "./services/projectService.js";
@@ -274,6 +275,17 @@ app.on("web-contents-created", (_event, contents) => {
 
 app.on("second-instance", showWindow);
 
+// Atualização que muda o esquema do banco: guarda uma cópia antes de migrar.
+// Se a cópia falhar, o app segue abrindo (não deixar o usuário sem o app).
+setBeforeMigrateHook((database, pending) => {
+  try {
+    writeBackup(database, "pre-migration");
+    log.info(`Backup antes das migrations ${pending.join(", ")}`);
+  } catch (err) {
+    log.error("Backup antes das migrations falhou:", err);
+  }
+});
+
 app.whenReady().then(() => {
   try {
     getDb(); // aplica migrations na primeira execução
@@ -295,6 +307,7 @@ app.whenReady().then(() => {
   startAutoUpdate();
   startNotifications(navigate);
   startAppUsageTracker(() => mainWindow);
+  startAutoBackup();
   log.info(`Qyrex ${app.getVersion()} iniciado${isDev ? " (dev)" : ""}`);
 
   // Sincronização do Google Calendar sob demanda: só se estiver conectado, e
@@ -318,6 +331,7 @@ app.on("window-all-closed", () => {
 app.on("before-quit", () => {
   isQuitting = true;
   stopNotifications();
+  stopAutoBackup();
   killAllTerminals();
   stopDiscord();
   stopLocalMedia();
