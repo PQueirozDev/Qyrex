@@ -1,14 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ArrowDownToLine,
-  ArrowUpFromLine,
   Code2,
   FileCode2,
   ExternalLink,
   FolderOpen,
   FolderSearch,
   GitBranch,
-  GitCommitHorizontal,
   GitPullRequest,
   Github,
   MoreHorizontal,
@@ -25,12 +22,13 @@ import {
   ImagePlus,
   ScanSearch,
 } from "lucide-react";
-import type { GitChangedFile, GitCommit, GitHubOverview, ProjectIconMode, ProjectStatus, ProjectWithGit } from "@shared/types";
+import type { GitHubOverview, ProjectIconMode, ProjectStatus, ProjectWithGit } from "@shared/types";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Dialog } from "@/components/ui/Dialog";
 import { Badge, Drawer, EmptyState, ErrorState, Field, LoadingRows, Menu, PageHeader, ProjectIcon, Segmented, Spinner } from "@/components/ui/primitives";
 import { TaskFormDialog } from "@/components/TaskFormDialog";
+import { GitPanel } from "@/components/GitPanel";
 import { attempt, errorMessage, unwrap } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { relativeDay, timeAgo } from "@/lib/format";
@@ -295,167 +293,6 @@ function ProjectFormDialog({
 
 // --- Drawer de detalhes -------------------------------------------------------------
 
-function GitSection({ project, onChanged }: { project: ProjectWithGit; onChanged: () => void }) {
-  const [changes, setChanges] = useState<GitChangedFile[] | null>(null);
-  const [commits, setCommits] = useState<GitCommit[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState("");
-  const [stageAll, setStageAll] = useState(true);
-  const [busy, setBusy] = useState<"commit" | "pull" | "push" | null>(null);
-  const git = project.git;
-
-  const load = useCallback(async () => {
-    setError(null);
-    try {
-      const [c, l] = await Promise.all([
-        unwrap(window.workspace.git.changes(project.localPath)),
-        unwrap(window.workspace.git.commits(project.localPath, 8)),
-      ]);
-      setChanges(c);
-      setCommits(l);
-    } catch (err) {
-      setError(errorMessage(err));
-    }
-  }, [project.localPath]);
-
-  useEffect(() => {
-    if (git?.isRepo) void load();
-  }, [git?.isRepo, load]);
-
-  if (!git?.isRepo) {
-    return <p className="text-xs text-text-muted">{tr("Esta pasta não é um repositório git.")}</p>;
-  }
-
-  async function doCommit() {
-    const msg = message.trim();
-    if (!msg) return;
-    const ok = await confirmAction({
-      title: tr("Criar commit?"),
-      description: stageAll ? tr("Todas as alterações serão adicionadas (git add -A) e commitadas.") : tr("Somente o que já está no stage será commitado."),
-      detail: msg,
-      danger: true,
-      confirmLabel: tr("Commitar"),
-    });
-    if (!ok) return;
-    setBusy("commit");
-    const out = await attempt(window.workspace.git.commit({ projectPath: project.localPath, message: msg, stageAll, confirmed: true }), tr("Commit criado"));
-    setBusy(null);
-    if (out !== undefined) {
-      setMessage("");
-      void load();
-      onChanged();
-    }
-  }
-
-  async function remote(op: "pull" | "push") {
-    const ok = await confirmAction({
-      title: op === "pull" ? tr("Fazer pull?") : tr("Fazer push?"),
-      description:
-        op === "pull"
-          ? tr("Baixa e integra as alterações do remoto na branch {branch}.", { branch: git?.branch ?? tr("atual") })
-          : tr("Envia os commits locais da branch {branch} para o remoto (nunca com --force).", { branch: git?.branch ?? tr("atual") }),
-      detail: project.localPath,
-      danger: true,
-      confirmLabel: op === "pull" ? tr("Pull") : tr("Push"),
-    });
-    if (!ok) return;
-    setBusy(op);
-    const input = { projectPath: project.localPath, confirmed: true as const };
-    const out = await attempt(op === "pull" ? window.workspace.git.pull(input) : window.workspace.git.push(input), op === "pull" ? tr("Pull concluído") : tr("Push concluído"));
-    setBusy(null);
-    if (out !== undefined) {
-      void load();
-      onChanged();
-    }
-  }
-
-  return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        <Badge tone="accent">
-          <GitBranch size={11} /> {git.branch ?? tr("(sem branch)")}
-        </Badge>
-        {/* A lista de alterações é mais recente que o status do card (recarrega no botão Atualizar). */}
-        {(changes?.length ?? git.modifiedCount) > 0 ? (
-          <Badge tone="warning">{trn(changes?.length ?? git.modifiedCount, "{n} alterado", "{n} alterados")}</Badge>
-        ) : (
-          <Badge tone="success">{tr("Limpo")}</Badge>
-        )}
-        {git.ahead > 0 && <Badge>↑ {git.ahead}</Badge>}
-        {git.behind > 0 && <Badge>↓ {git.behind}</Badge>}
-        <div className="ml-auto flex gap-1.5">
-          <Button size="xs" variant="secondary" onClick={() => void remote("pull")} loading={busy === "pull"} disabled={!git.remoteUrl || busy !== null}>
-            <ArrowDownToLine size={12} />{" "}{tr("Pull")}</Button>
-          <Button size="xs" variant="secondary" onClick={() => void remote("push")} loading={busy === "push"} disabled={!git.remoteUrl || busy !== null}>
-            <ArrowUpFromLine size={12} />{" "}{tr("Push")}</Button>
-          <Button
-            size="icon-sm"
-            variant="ghost"
-            onClick={() => {
-              void load();
-              onChanged();
-            }}
-            title={tr("Atualizar")}
-          >
-            <RefreshCw size={12} />
-          </Button>
-        </div>
-      </div>
-
-      {error && <ErrorState message={error} onRetry={() => void load()} />}
-
-      {changes === null ? (
-        <LoadingRows rows={2} />
-      ) : changes.length > 0 ? (
-        <div className="max-h-40 overflow-y-auto rounded-lg border border-border-subtle bg-bg">
-          {changes.map((c) => (
-            <div key={c.path} className="flex items-center gap-2 px-2.5 py-1 font-mono text-[11px]">
-              <span className="w-5 shrink-0 text-warning">{c.status}</span>
-              <span className="truncate text-text-muted">{c.path}</span>
-            </div>
-          ))}
-        </div>
-      ) : null}
-
-      {changes && changes.length > 0 && (
-        <div className="space-y-2">
-          <textarea
-            className="input min-h-[56px] resize-y"
-            placeholder={tr("Mensagem do commit")}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-          />
-          <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 text-xs text-text-muted">
-              <input type="checkbox" className="accent-accent" checked={stageAll} onChange={(e) => setStageAll(e.target.checked)} />{tr("Adicionar todas as alterações")}</label>
-            <Button size="sm" onClick={() => void doCommit()} disabled={!message.trim() || busy !== null} loading={busy === "commit"}>
-              <GitCommitHorizontal size={13} />{" "}{tr("Commit")}</Button>
-          </div>
-        </div>
-      )}
-
-      <div>
-        <p className="section-title mb-1.5">{tr("Commits recentes")}</p>
-        {commits === null ? (
-          <LoadingRows rows={2} />
-        ) : commits.length === 0 ? (
-          <p className="text-xs text-text-faint">{tr("Nenhum commit ainda.")}</p>
-        ) : (
-          <div className="space-y-1">
-            {commits.map((c) => (
-              <div key={c.hash} className="flex items-baseline gap-2 text-xs">
-                <span className="shrink-0 font-mono text-text-faint">{c.shortHash}</span>
-                <span className="min-w-0 flex-1 truncate text-text">{c.subject}</span>
-                <span className="shrink-0 text-[11px] text-text-faint">{timeAgo(c.date)}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 function GitHubSection({ url }: { url: string }) {
   const [data, setData] = useState<GitHubOverview | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -623,7 +460,7 @@ function ProjectDrawer({
           {project.archivedAt ? (
             <p className="text-xs text-text-muted">{tr("Projeto arquivado: o Git não é consultado. Desarquive para ver o status.")}</p>
           ) : (
-            <GitSection project={project} onChanged={() => void load()} />
+            <GitPanel project={project} onChanged={() => void load()} />
           )}
         </section>
 

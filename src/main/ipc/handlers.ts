@@ -236,7 +236,22 @@ export function registerIpcHandlers(): void {
   handle("git:commit", (_e, input) => {
     const parsed = v.parse(v.gitCommit, input);
     requireConfirmation(parsed.confirmed);
-    return gitService.commit(parsed.projectPath, parsed.message, parsed.stageAll);
+    return gitService.commit(parsed.projectPath, parsed.message, parsed.stageAll, parsed.files);
+  });
+  handle("git:diff", (_e, input) => {
+    const parsed = v.parse(v.gitFileRef, input);
+    return gitService.getFileDiff(parsed.projectPath, parsed.file);
+  });
+  handle("git:branches", (_e, p) => gitService.listBranches(v.parse(v.filePath, p)));
+  handle("git:fetch", (_e, p) => gitService.fetchRemote(v.parse(v.filePath, p)));
+  handle("git:switchBranch", (_e, input) => {
+    const parsed = v.parse(v.gitSwitch, input);
+    requireConfirmation(parsed.confirmed);
+    return gitService.switchBranch(parsed.projectPath, parsed.name);
+  });
+  handle("git:createBranch", (_e, input) => {
+    const parsed = v.parse(v.gitCreateBranch, input);
+    return gitService.createBranch(parsed.projectPath, parsed.name, parsed.checkout);
   });
   handle("git:pull", (_e, input) => {
     const parsed = v.parse(v.gitRemoteOp, input);

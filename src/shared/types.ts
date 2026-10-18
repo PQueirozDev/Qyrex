@@ -65,6 +65,30 @@ export interface GitStatusInfo {
   ahead: number;
   behind: number;
   remoteUrl: string | null;
+  /** Branch remota acompanhada (ex.: origin/main); null = ainda não publicada. */
+  upstream: string | null;
+  /** Arquivos com conflito de merge não resolvido. */
+  conflicts: number;
+  /** Merge/rebase/cherry-pick parado no meio. */
+  operation: GitOperation | null;
+}
+
+export type GitOperation = "merge" | "rebase" | "cherry-pick";
+
+export interface GitBranch {
+  name: string;
+  current: boolean;
+  upstream: string | null;
+  lastCommitAt: string | null;
+}
+
+export interface GitDiff {
+  file: string;
+  /** Diff unificado (vazio para binários e arquivos grandes demais). */
+  diff: string;
+  truncated: boolean;
+  binary: boolean;
+  untracked: boolean;
 }
 
 export interface GitCommit {
@@ -78,6 +102,11 @@ export interface GitCommit {
 export interface GitChangedFile {
   status: string;
   path: string;
+  /** Caminho anterior numa renomeação/cópia. */
+  oldPath: string | null;
+  staged: boolean;
+  untracked: boolean;
+  conflict: boolean;
 }
 
 export interface ProjectWithGit extends Project {

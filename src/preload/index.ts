@@ -26,8 +26,10 @@ import type {
   EditableFile,
   FilePreview,
   SaveFileResult,
+  GitBranch,
   GitChangedFile,
   GitCommit,
+  GitDiff,
   GitHubOverview,
   GitStatusInfo,
   IntegrationStatus,
@@ -157,8 +159,16 @@ const api = {
     status: (p: string) => invoke<GitStatusInfo>("git:status", p),
     commits: (p: string, limit?: number) => invoke<GitCommit[]>("git:commits", p, limit),
     changes: (p: string) => invoke<GitChangedFile[]>("git:changes", p),
-    commit: (input: { projectPath: string; message: string; stageAll: boolean; confirmed: true }) =>
+    commit: (input: { projectPath: string; message: string; stageAll: boolean; files?: string[]; confirmed: true }) =>
       invoke<string>("git:commit", input),
+    /** Diff de um arquivo (caminho relativo ao repositório) contra o último commit. */
+    diff: (input: { projectPath: string; file: string }) => invoke<GitDiff>("git:diff", input),
+    branches: (p: string) => invoke<GitBranch[]>("git:branches", p),
+    /** Atualiza ahead/behind sem mexer nos arquivos. */
+    fetch: (p: string) => invoke<GitStatusInfo>("git:fetch", p),
+    /** Recusado se houver alterações não commitadas. */
+    switchBranch: (input: { projectPath: string; name: string; confirmed: true }) => invoke<string>("git:switchBranch", input),
+    createBranch: (input: { projectPath: string; name: string; checkout: boolean }) => invoke<string>("git:createBranch", input),
     pull: (input: { projectPath: string; confirmed: true }) => invoke<string>("git:pull", input),
     push: (input: { projectPath: string; confirmed: true }) => invoke<string>("git:push", input),
   },

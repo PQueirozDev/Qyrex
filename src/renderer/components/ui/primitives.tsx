@@ -10,10 +10,12 @@ export function Badge({
   children,
   tone = "neutral",
   className,
+  title,
 }: {
   children: ReactNode;
   tone?: "neutral" | "accent" | "success" | "warning" | "danger";
   className?: string;
+  title?: string;
 }) {
   const tones = {
     neutral: "bg-bg-hover text-text-muted border-border-subtle",
@@ -23,7 +25,7 @@ export function Badge({
     danger: "bg-danger/10 text-danger border-danger/20",
   };
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-md border px-1.5 py-px text-[11px] font-medium", tones[tone], className)}>
+    <span title={title} className={cn("inline-flex items-center gap-1 rounded-md border px-1.5 py-px text-[11px] font-medium", tones[tone], className)}>
       {children}
     </span>
   );

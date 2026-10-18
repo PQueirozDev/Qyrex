@@ -284,8 +284,15 @@ export const gitCommit = z.object({
   projectPath: filePath,
   message: z.string().trim().min(1).max(5000),
   stageAll: z.boolean(),
+  /** Só estes caminhos (relativos ao repositório) entram no commit. */
+  files: z.array(z.string().min(1).max(1024)).max(5000).optional(),
   confirmed: z.literal(true),
 });
+
+export const gitFileRef = z.object({ projectPath: filePath, file: z.string().min(1).max(1024) });
+export const gitBranchName = z.string().trim().min(1).max(200);
+export const gitSwitch = z.object({ projectPath: filePath, name: gitBranchName, confirmed: z.literal(true) });
+export const gitCreateBranch = z.object({ projectPath: filePath, name: gitBranchName, checkout: z.boolean() });
 
 export const gitRemoteOp = z.object({ projectPath: filePath, confirmed: z.literal(true) });
 

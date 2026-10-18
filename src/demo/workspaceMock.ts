@@ -141,9 +141,12 @@ function seed() {
     vscodePath: "C:\\Program Files\\Microsoft VS Code\\Code.exe",
   };
   const changes: Record<string, GitChangedFile[]> = {
-    p1: [{ status: "M", path: "src/app/assinaturas/page.tsx" }, { status: "??", path: "src/components/PlanPicker.tsx" }],
+    p1: [
+      { status: "M", path: "src/app/assinaturas/page.tsx", oldPath: null, staged: false, untracked: false, conflict: false },
+      { status: "??", path: "src/components/PlanPicker.tsx", oldPath: null, staged: false, untracked: true, conflict: false },
+    ],
     p2: [],
-    p3: [{ status: "M", path: "src/flows/orcamento.ts" }],
+    p3: [{ status: "M", path: "src/flows/orcamento.ts", oldPath: null, staged: false, untracked: false, conflict: false }],
   };
   const commits: Record<string, GitCommit[]> = {
     p1: [
@@ -157,7 +160,8 @@ function seed() {
     { id: "r2", itemType: "task_completed", itemId: "t5", label: "Configurar domínio do Café Aurora", openedAt: ago(90) },
     { id: "r3", itemType: "project", itemId: "p1", label: "Loja Café Aurora", openedAt: ago(35) },
   ];
-  return { clients, projects, tasks, events, marketing, conversations, messages, settings, changes, commits, activity, allowedCommands: [] as string[] };
+  const branch: Record<string, string> = {};
+  return { clients, projects, tasks, events, marketing, conversations, messages, settings, changes, commits, branch, activity, allowedCommands: [] as string[] };
 }
 
 const KEY = "qrz-demo-state";
@@ -166,6 +170,7 @@ let db: State;
 try {
   const saved = sessionStorage.getItem(KEY);
   db = saved ? (JSON.parse(saved) as State) : seed();
+  db.branch ??= {};
 } catch {
   db = seed();
 }
@@ -431,7 +436,7 @@ const withGit = (p: Project): ProjectWithGit => ({
   status: p.status ?? "ativo",
   archivedAt: p.archivedAt ?? null,
   icon: null,
-  git: { branch: "main", modifiedCount: db.changes[p.id]?.length ?? 0, isRepo: true, ahead: p.id === "p1" ? 1 : 0, behind: 0, remoteUrl: p.githubUrl },
+  git: { branch: db.branch[p.id] ?? "main", modifiedCount: db.changes[p.id]?.length ?? 0, isRepo: true, ahead: p.id === "p1" ? 1 : 0, behind: 0, remoteUrl: p.githubUrl, upstream: `origin/${db.branch[p.id] ?? "main"}`, conflicts: 0, operation: null },
 });
 const projectByPath = (path: string) => db.projects.find((p) => path.toLowerCase().startsWith(p.localPath.toLowerCase()));
 const risk = (cmd: string): CommandRisk => (/\b(rm|del|remove-item|format|rd|rmdir)\b|--force|reset --hard/i.test(cmd) ? "dangerous" : /^(git status|dir|ls|echo|npm run dev|node -v|npm -v)\b/i.test(cmd.trim()) ? "safe" : "normal");
@@ -566,7 +571,7 @@ export const workspaceMock: WorkspaceApi = {
   git: {
     status: (path) => {
       const p = projectByPath(path);
-      return ok(p ? withGit(p).git! : { branch: null, modifiedCount: 0, isRepo: false, ahead: 0, behind: 0, remoteUrl: null });
+      return ok(p ? withGit(p).git! : { branch: null, modifiedCount: 0, isRepo: false, ahead: 0, behind: 0, remoteUrl: null, upstream: null, conflicts: 0, operation: null });
     },
     commits: (path) => ok(db.commits[projectByPath(path)?.id ?? ""] ?? []),
     changes: (path) => ok(db.changes[projectByPath(path)?.id ?? ""] ?? []),
@@ -580,6 +585,37 @@ export const workspaceMock: WorkspaceApi = {
       db.activity.unshift({ id: uid(), itemType: "commit", itemId: p.id, label: input.message, openedAt: new Date().toISOString() });
       save();
       return ok(`[main ${hash.slice(0, 7)}] ${input.message}`, 500);
+    },
+    diff: (input) => {
+      const change = (db.changes[projectByPath(input.projectPath)?.id ?? ""] ?? []).find((c) => c.path === input.file);
+      const diff = change?.untracked
+        ? "@@ -0,0 +1,3 @@\n+export function cupom(codigo: string) {\n+  return codigo.trim().toUpperCase();\n+}"
+        : "@@ -12,7 +12,8 @@ export function Checkout() {\n   const total = useTotal();\n-  const frete = 15;\n+  const frete = total > 150 ? 0 : 15;\n+  // frete grátis acima de R$ 150 (pedido do cliente)\n   return (\n     <Resumo total={total} frete={frete} />\n   );";
+      return ok({ file: input.file, diff, truncated: false, binary: false, untracked: Boolean(change?.untracked) }, 150);
+    },
+    branches: (path) => {
+      const current = db.branch[projectByPath(path)?.id ?? ""] ?? "main";
+      const names = Array.from(new Set(["main", "feat/assinaturas", current]));
+      return ok(names.map((name) => ({ name, current: name === current, upstream: `origin/${name}`, lastCommitAt: ago(60) })));
+    },
+    fetch: (path) => {
+      const p = projectByPath(path);
+      return p ? ok(withGit(p).git!, 600) : fail("Projeto não encontrado.");
+    },
+    switchBranch: async (input) => {
+      const p = projectByPath(input.projectPath);
+      if (!p) return fail("Projeto não encontrado.");
+      if ((db.changes[p.id] ?? []).some((c) => !c.untracked)) return fail("Há alterações não commitadas. Faça commit antes de trocar de branch.");
+      db.branch[p.id] = input.name;
+      save();
+      return ok(`Switched to branch '${input.name}'`, 300);
+    },
+    createBranch: async (input) => {
+      const p = projectByPath(input.projectPath);
+      if (!p) return fail("Projeto não encontrado.");
+      if (input.checkout) db.branch[p.id] = input.name;
+      save();
+      return ok(`Switched to a new branch '${input.name}'`, 300);
     },
     pull: () => ok("Already up to date.", 700),
     push: () => ok("Enviado para origin/main (simulação).", 900),
