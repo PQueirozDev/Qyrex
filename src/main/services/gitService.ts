@@ -21,6 +21,8 @@ const GIT_ENV = {
   GIT_TERMINAL_PROMPT: "0",
   // Saída sempre em inglês/estável para o parse.
   LC_ALL: "C",
+  // Caminhos vindos da UI são sempre literais: nada de curingas/"magic" (:(glob), *, ?).
+  GIT_LITERAL_PATHSPECS: "1",
 };
 
 /** Diff maior que isso é cortado (a UI avisa e sugere o VS Code). */
@@ -207,7 +209,8 @@ export async function getFileDiff(projectPath: string, file: string): Promise<Gi
 
   if (changed?.untracked) {
     // Arquivo novo: mostra o conteúdo como "tudo adicionado", sem passar pelo git.
-    const full = path.join(repo, rel);
+    // Um arquivo novo pode ser um symlink para fora da pasta: o caminho real passa pela allowlist.
+    const full = assertPathAllowedAndExists(path.join(repo, rel));
     const stat = fs.statSync(full);
     if (stat.isDirectory()) return { file: rel, diff: "", truncated: false, binary: false, untracked: true };
     if (stat.size > MAX_UNTRACKED_PREVIEW) return { file: rel, diff: "", truncated: true, binary: false, untracked: true };
@@ -218,7 +221,8 @@ export async function getFileDiff(projectPath: string, file: string): Promise<Gi
     return { file: rel, diff: [`@@ -0,0 +1,${lines.length} @@`, ...lines.map((l) => `+${l}`)].join("\n"), truncated: false, binary: false, untracked: true };
   }
 
-  const base = ["diff", "--no-color", "--no-ext-diff", "-M"];
+  // --no-ext-diff e --no-textconv: ver um diff nunca roda programas configurados no repositório.
+  const base = ["diff", "--no-color", "--no-ext-diff", "--no-textconv", "-M"];
   let res = await git(repo, [...base, "HEAD", "--", rel], 20_000, MAX_DIFF_BYTES + 1);
   if (res.code !== 0) {
     // Repositório sem nenhum commit: compara com o que já está no stage.
@@ -238,7 +242,11 @@ export async function commit(projectPath: string, message: string, stageAll: boo
   const resolved = assertRepo(projectPath);
   if (files && files.length > 0) {
     const rels = files.map((f) => assertInsideRepo(resolved, f));
-    await gitOk(resolved, ["add", "--all", "--", ...rels]);
+    // O nome antigo de uma renomeação já no stage não existe mais nem no índice nem na pasta:
+    // não dá para "adicionar", mas precisa ir no commit para a renomeação sair completa.
+    const goneRenames = new Set((await getChangedFiles(resolved)).filter((f) => f.staged && f.oldPath).map((f) => f.oldPath!));
+    const toAdd = rels.filter((r) => !goneRenames.has(r));
+    if (toAdd.length > 0) await gitOk(resolved, ["add", "--all", "--", ...toAdd]);
     // A mensagem vai como argumento isolado: nenhuma interpretação por shell.
     return (await gitOk(resolved, ["commit", "-m", message, "--", ...rels])).trim();
   }

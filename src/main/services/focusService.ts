@@ -112,6 +112,11 @@ function emit(): FocusState {
   return state;
 }
 
+/** Reenvia o estado atual para a interface (ex.: depois de restaurar um backup). */
+export function notifyChanged(): void {
+  listener?.(getState());
+}
+
 /** Grava o trecho atual em focused_seconds e reinicia o trecho em `now`. */
 export function checkpoint(now = new Date()): void {
   const row = activeRow();

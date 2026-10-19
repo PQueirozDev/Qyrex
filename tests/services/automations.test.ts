@@ -114,6 +114,21 @@ describe.skipIf(!isWin)("automações: execução (PowerShell)", () => {
     expect(auto.isRunning(a.id)).toBe(false);
   }, 20_000);
 
+  it("cancelar encerra também os processos filhos do comando", async () => {
+    const late = path.join(dir, "app", "tarde.txt");
+    const a = auto.createAutomation({
+      name: "Filho",
+      projectId,
+      steps: [{ kind: "command", command: `node -e "setTimeout(() => require('fs').writeFileSync('tarde.txt', 'x'), 2500)"` }],
+    });
+    const pending = auto.runAutomation(a.id, noOpen);
+    await new Promise((r) => setTimeout(r, 900));
+    auto.cancelRun(a.id);
+    expect((await pending).status).toBe("cancelled");
+    await new Promise((r) => setTimeout(r, 3000));
+    expect(fs.existsSync(late)).toBe(false);
+  }, 20_000);
+
   it("desativada não roda e pasta fora da allowlist é recusada", async () => {
     const a = auto.createAutomation({ name: "Off", projectId, enabled: false, steps: [{ kind: "command", command: "Write-Output x" }] });
     await expect(auto.runAutomation(a.id, noOpen)).rejects.toThrow(/desativada/);

@@ -22,6 +22,20 @@ export interface ExecOptions {
   signal?: AbortSignal;
 }
 
+/**
+ * Encerra o processo e os filhos dele. No Windows, `child.kill()` só derruba o
+ * processo direto (ex.: o PowerShell) e um `npm run build` aberto por ele
+ * continuaria rodando; o taskkill /T leva a árvore inteira.
+ */
+function killTree(child: ReturnType<typeof spawn>): void {
+  if (process.platform === "win32" && child.pid) {
+    const killer = spawn("taskkill.exe", ["/pid", String(child.pid), "/T", "/F"], { shell: false, windowsHide: true, stdio: "ignore" });
+    killer.once("error", () => child.kill());
+  } else {
+    child.kill();
+  }
+}
+
 function assertNoShellMetaInExecutable(command: string): void {
   // .cmd/.bat só rodam via cmd.exe (que reinterpreta argumentos) — por isso
   // o Node recusa spawná-los sem shell (CVE-2024-27980). Nós também.
@@ -170,13 +184,13 @@ export function runCapture(
     let stdout = "";
     let stderr = "";
     let timedOut = false;
-    const onAbort = () => child.kill();
-    if (options.signal?.aborted) child.kill();
+    const onAbort = () => killTree(child);
+    if (options.signal?.aborted) killTree(child);
     else options.signal?.addEventListener("abort", onAbort, { once: true });
     const timer = options.timeoutMs
       ? setTimeout(() => {
           timedOut = true;
-          child.kill();
+          killTree(child);
         }, options.timeoutMs)
       : null;
 

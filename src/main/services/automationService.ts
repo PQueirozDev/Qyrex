@@ -261,6 +261,10 @@ export function cancelRun(automationId: string): boolean {
   return true;
 }
 
+export function anyRunning(): boolean {
+  return running.size > 0;
+}
+
 export function isRunning(automationId: string): boolean {
   return running.has(automationId);
 }

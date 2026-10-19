@@ -109,17 +109,41 @@ export function getDb(): Database.Database {
 export function replaceDatabaseFile(source: string): void {
   const target = databaseFile();
   const staging = `${target}.restoring`;
+  const previous = `${target}.previous`;
   fs.copyFileSync(source, staging);
   try {
-    new Database(staging, { fileMustExist: true }).close();
+    // Aplica as migrations NA CÓPIA antes de tocar no banco do app: se alguma
+    // falhar, o banco atual continua intacto. (Sem o backup "antes de migrar":
+    // quem restaura já guardou um backup de segurança.)
+    const hook = beforeMigrateHook;
+    beforeMigrateHook = null;
+    try {
+      const probe = openDatabase(staging);
+      probe.pragma("journal_mode = DELETE");
+      probe.close();
+    } finally {
+      beforeMigrateHook = hook;
+    }
   } catch (err) {
-    fs.rmSync(staging, { force: true });
+    for (const suffix of ["", "-wal", "-shm"]) fs.rmSync(`${staging}${suffix}`, { force: true });
     throw err;
   }
   closeDb();
   for (const suffix of ["-wal", "-shm"]) fs.rmSync(`${target}${suffix}`, { force: true });
+  // O banco atual vira ".previous" até o restaurado abrir; se não abrir, volta.
+  fs.rmSync(previous, { force: true });
+  if (fs.existsSync(target)) fs.renameSync(target, previous);
   fs.renameSync(staging, target);
-  getDb();
+  try {
+    getDb();
+  } catch (err) {
+    closeDb();
+    fs.rmSync(target, { force: true });
+    if (fs.existsSync(previous)) fs.renameSync(previous, target);
+    getDb();
+    throw err;
+  }
+  fs.rmSync(previous, { force: true });
 }
 
 /** Usado pelos testes para injetar um banco em memória. */

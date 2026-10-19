@@ -85,6 +85,30 @@ describe("backup local", () => {
     expect(listTasks()).toHaveLength(2);
   });
 
+  it("restaurar o backup de segurança mais antigo não o apaga no meio do caminho", () => {
+    createTask({ title: "Estado A" });
+    const target = createBackup("pre-restore");
+    for (let i = 0; i < 4; i++) createBackup("pre-restore");
+    createTask({ title: "Estado B" });
+    // Criar o backup de segurança desta restauração empurra o mais antigo (o escolhido) para fora do limite.
+    restoreBackup(target.id);
+    expect(listTasks().map((t) => t.title)).toEqual(["Estado A"]);
+  });
+
+  it("se as migrations do backup falharem, o banco atual fica intacto", () => {
+    createTask({ title: "Atual" });
+    const backup = createBackup("manual");
+    // Simula um banco que não aceita uma migration atual (tabela já criada de outro jeito).
+    const file = path.join(backupsDir(), backup.id, "workspace.sqlite");
+    const broken = openDatabase(file, MIGRATIONS_DIR);
+    broken.prepare("DELETE FROM _migrations WHERE name = '017_ai_prompts.sql'").run();
+    broken.exec("DROP TABLE ai_prompts; CREATE TABLE ai_prompts (x INTEGER); CREATE INDEX ai_prompts_quebra ON ai_prompts(x); DROP TABLE ai_prompts; CREATE VIEW ai_prompts AS SELECT 1 AS x;");
+    broken.pragma("journal_mode = DELETE");
+    broken.close();
+    expect(() => restoreBackup(backup.id)).toThrow();
+    expect(listTasks().map((t) => t.title)).toEqual(["Atual"]);
+  });
+
   it("restaura também a foto de perfil", () => {
     fs.writeFileSync(path.join(userData, "avatar.png"), "foto-antiga");
     const backup = createBackup("manual");

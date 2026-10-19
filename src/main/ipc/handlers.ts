@@ -161,7 +161,12 @@ export function registerIpcHandlers(): void {
   handle("backup:verify", (_e, id) => backupService.verifyBackup(v.parse(v.backupId, id)));
   handle("backup:restore", (_e, id, confirmed) => {
     requireConfirmation(confirmed);
+    // Trocar o banco no meio de uma automação faria os passos seguintes gravarem no banco restaurado.
+    if (automationService.anyRunning()) throw new Error("Espere as automações em andamento terminarem (ou cancele) antes de restaurar.");
     const result = backupService.restoreBackup(v.parse(v.backupId, id));
+    // Sessão de foco do banco restaurado: relógio refeito do zero (pausada, se estava rodando).
+    focusService.recoverOnStartup();
+    focusService.notifyChanged();
     settingsChangedHook?.();
     return result;
   });

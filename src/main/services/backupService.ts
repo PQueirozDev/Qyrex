@@ -232,18 +232,32 @@ export function restoreBackup(id: string): { restored: BackupInfo; safety: Backu
     throw new Error(tt("Este backup é de uma versão mais nova do Qyrex ({version}). Atualize o app antes de restaurar.", { version: info.appVersion }));
   }
 
-  const safety = createBackup("pre-restore");
+  // Copia o backup escolhido para uma área temporária ANTES do backup de
+  // segurança: o limite de backups de segurança poderia apagar justamente ele.
   const dir = backupPath(id);
-  replaceDatabaseFile(path.join(dir, DB_FILE_NAME));
+  const stage = path.join(backupsDir(), `.restore-${id}`);
+  fs.rmSync(stage, { recursive: true, force: true });
+  fs.mkdirSync(stage);
+  try {
+    fs.copyFileSync(path.join(dir, DB_FILE_NAME), path.join(stage, DB_FILE_NAME));
+    if (sha256File(path.join(stage, DB_FILE_NAME)) !== info.sha256) throw new Error("O backup mudou durante a restauração.");
+    const files = path.join(dir, FILES_DIR);
+    if (fs.existsSync(files)) fs.cpSync(files, path.join(stage, FILES_DIR), { recursive: true });
 
-  // Arquivos do Qyrex voltam ao estado do backup (o atual está no backup de segurança).
-  const userData = app.getPath("userData");
-  for (const entry of EXTRA_ENTRIES) fs.rmSync(path.join(userData, entry), { recursive: true, force: true });
-  const files = path.join(dir, FILES_DIR);
-  if (fs.existsSync(files)) copyExtras(files, userData);
+    const safety = createBackup("pre-restore");
+    replaceDatabaseFile(path.join(stage, DB_FILE_NAME));
 
-  log.info(`Backup restaurado: ${id} (estado anterior em ${safety.id})`);
-  return { restored: info, safety };
+    // Arquivos do Qyrex voltam ao estado do backup (o atual está no backup de segurança).
+    // Só chega aqui com o banco já trocado e os arquivos do backup lidos sem erro.
+    const userData = app.getPath("userData");
+    for (const entry of EXTRA_ENTRIES) fs.rmSync(path.join(userData, entry), { recursive: true, force: true });
+    if (fs.existsSync(path.join(stage, FILES_DIR))) copyExtras(path.join(stage, FILES_DIR), userData);
+
+    log.info(`Backup restaurado: ${id} (estado anterior em ${safety.id})`);
+    return { restored: info, safety };
+  } finally {
+    fs.rmSync(stage, { recursive: true, force: true });
+  }
 }
 
 export function deleteBackup(id: string): void {

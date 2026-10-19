@@ -1395,4 +1395,8 @@ export const EN: Record<string, string> = {
   "Modelos": "Templates",
   "Meus prompts": "My prompts",
   "Nenhum prompt salvo. Escreva uma mensagem e salve para reaproveitar depois.": "No saved prompts. Write a message and save it to reuse later.",
+
+  // --- Revisão (2.0) ---------------------------------------------------------------
+  "O backup mudou durante a restauração.": "The backup changed during the restore.",
+  "Espere as automações em andamento terminarem (ou cancele) antes de restaurar.": "Wait for running automations to finish (or cancel them) before restoring.",
 };

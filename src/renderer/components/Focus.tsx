@@ -35,11 +35,16 @@ function useTick(active: boolean): number {
 }
 
 export function useFocusSummary(days: number, refreshKey: unknown): FocusSummary | null {
-  const [data, setData] = useState<FocusSummary | null>(null);
+  return useFocusSummaryAt(days, refreshKey)?.data ?? null;
+}
+
+/** Resumo + quando foi lido (para somar só o que a sessão andou depois disso). */
+function useFocusSummaryAt(days: number, refreshKey: unknown): { data: FocusSummary; at: number } | null {
+  const [value, setValue] = useState<{ data: FocusSummary; at: number } | null>(null);
   useEffect(() => {
-    void attempt(window.workspace.focus.summary(days)).then((d) => d && setData(d));
+    void attempt(window.workspace.focus.summary(days)).then((d) => d && setValue({ data: d, at: Date.now() }));
   }, [days, refreshKey]);
-  return data;
+  return value;
 }
 
 /** Cabeçalho: botão "Foco" ou o relógio da sessão com pausar/retomar/encerrar. */
@@ -100,11 +105,13 @@ function StartFocusDialog() {
   const [minutes, setMinutes] = useState(25);
   const [projectId, setProjectId] = useState("");
   const [label, setLabel] = useState("");
+  const [custom, setCustom] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setMinutes(settings?.focus.minutes ?? 25);
+    setCustom(false);
     setLabel("");
     if (!projectsLoaded) void loadProjects();
   }, [open, settings?.focus.minutes, projectsLoaded, loadProjects]);
@@ -116,7 +123,7 @@ function StartFocusDialog() {
     if (ok) setDialog(null);
   }
 
-  const preset = PRESETS.includes(minutes) ? String(minutes) : "custom";
+  const preset = custom || !PRESETS.includes(minutes) ? "custom" : String(minutes);
   return (
     <Dialog
       open={open}
@@ -140,7 +147,10 @@ function StartFocusDialog() {
           <div className="flex items-center gap-2">
             <Segmented
               value={preset}
-              onChange={(v) => v !== "custom" && setMinutes(Number(v))}
+              onChange={(v) => {
+                setCustom(v === "custom");
+                if (v !== "custom") setMinutes(Number(v));
+              }}
               options={[...PRESETS.map((m) => ({ value: String(m), label: tr("{m}min", { m }) })), { value: "custom", label: tr("Outro") }]}
             />
             {preset === "custom" && (
@@ -345,10 +355,11 @@ export function FocusDialogs() {
 export function FocusCardBody() {
   const { state, readAt, setDialog } = useFocusStore();
   const now = useTick(state.session?.status === "running");
-  const summary = useFocusSummary(7, `${state.session?.status}-${state.session?.id}`);
-  if (!summary) return <LoadingRows rows={2} />;
-  // O resumo foi lido há pouco: soma o que a sessão andou desde então.
-  const live = state.session ? liveElapsed(state, readAt, now) - state.elapsedSeconds : 0;
+  const snapshot = useFocusSummaryAt(7, `${state.session?.status}-${state.session?.id}`);
+  if (!snapshot) return <LoadingRows rows={2} />;
+  const summary = snapshot.data;
+  // O resumo já inclui a sessão até o momento em que foi lido: soma só o que andou depois.
+  const live = state.session ? liveElapsed(state, readAt, now) - liveElapsed(state, readAt, Math.max(readAt, snapshot.at)) : 0;
   const today = summary.todaySeconds + Math.max(0, live);
   const goal = summary.dailyGoalMinutes * 60;
   return (

@@ -75,6 +75,7 @@ export function GitPanel({ project, onChanged }: { project: ProjectWithGit; onCh
   const [busy, setBusy] = useState<"commit" | "pull" | "push" | "fetch" | "branch" | null>(null);
   // Caminhos vistos na última carga: um arquivo que aparece depois já entra marcado.
   const known = useRef<Set<string>>(new Set());
+  const diffRequest = useRef(0);
   const git = project.git;
   const repo = project.localPath;
 
@@ -120,7 +121,10 @@ export function GitPanel({ project, onChanged }: { project: ProjectWithGit; onCh
     setOpenDiff(file);
     setDiff(null);
     setDiffLoading(true);
+    const request = ++diffRequest.current;
     const result = await attempt(window.workspace.git.diff({ projectPath: repo, file }));
+    // Outro arquivo foi aberto enquanto este carregava: descarta a resposta velha.
+    if (request !== diffRequest.current) return;
     setDiffLoading(false);
     setDiff(result ?? null);
   }

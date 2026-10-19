@@ -95,6 +95,21 @@ describe("git em um repositório real", () => {
     await expect(git.commit(dir, "x", false, ["../fora"])).rejects.toThrow(/inválido/);
   });
 
+  it("commit dos arquivos marcados funciona com renomeação já no stage", async () => {
+    sh("mv", "README.md", "LEIAME.md");
+    const renamed = (await git.getChangedFiles(dir)).find((f) => f.status === "R");
+    expect(renamed).toMatchObject({ path: "LEIAME.md", oldPath: "README.md" });
+    await git.commit(dir, "renomeia", false, ["LEIAME.md", "README.md"]);
+    expect(await git.getChangedFiles(dir)).toEqual([]);
+  });
+
+  it("caminhos são literais: curinga não seleciona outros arquivos", async () => {
+    write("a1.txt", "1\n");
+    write("a2.txt", "2\n");
+    await expect(git.commit(dir, "curinga", false, ["a*.txt"])).rejects.toThrow();
+    expect((await git.getChangedFiles(dir)).map((f) => f.path).sort()).toEqual(["a1.txt", "a2.txt"]);
+  });
+
   it("cria, lista e troca de branch; recusa trocar com alterações locais", async () => {
     await git.createBranch(dir, "feat/nova", false);
     expect((await git.listBranches(dir)).map((b) => b.name).sort()).toEqual(["feat/nova", "main"]);
