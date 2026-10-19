@@ -22,6 +22,68 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "2.0.0",
+    date: "2026-10-19",
+    title: { pt: "Qyrex 2.0: backup, Git visual, foco e automações", en: "Qyrex 2.0: backup, visual Git, focus and automations" },
+    sections: [
+      {
+        kind: "new",
+        items: [
+          {
+            pt: "Backup local em Configurações → Backup: cópia verificada (integridade e hash) do banco, da foto de perfil e dos ícones, automática todo dia e antes de cada atualização mudar o banco. Restaurar guarda antes uma cópia do estado atual.",
+            en: "Local backup in Settings → Backup: a verified copy (integrity and hash) of the database, profile photo and icons, automatic every day and before any update changes the database. Restoring first saves a copy of the current state.",
+          },
+          {
+            pt: "Exportar e importar configurações (sem pastas autorizadas e sem chaves).",
+            en: "Export and import settings (without authorized folders and without keys).",
+          },
+          {
+            pt: "Git visual nos detalhes do projeto: diff de cada arquivo, commit só dos arquivos marcados, criar e trocar de branch, fetch, estado de sincronização e aviso de conflitos.",
+            en: "Visual Git in the project details: diff for each file, commit only the checked files, create and switch branches, fetch, sync status and conflict warnings.",
+          },
+          {
+            pt: "Modo Foco: temporizador no topo com pausa, ligado a um projeto, com histórico do dia, da semana e por projeto e meta diária opcional.",
+            en: "Focus mode: a timer in the top bar with pause, linked to a project, with daily, weekly and per-project history and an optional daily goal.",
+          },
+          {
+            pt: "Automações: sequências de comandos e ações de um projeto (testes, lint, build, Git, abrir o ambiente), com modelos a partir dos scripts do projeto e histórico de cada execução. Nada roda sozinho: você confirma cada execução e vê o risco de cada comando.",
+            en: "Automations: sequences of commands and actions for a project (tests, lint, build, Git, opening the workspace), with templates from the project's scripts and a history of every run. Nothing runs on its own: you confirm every run and see each command's risk.",
+          },
+          {
+            pt: "Prompts reutilizáveis na IA: modelos para explicar código, corrigir erros, analisar logs, planejar e resumir alterações, e os seus prompts salvos.",
+            en: "Reusable prompts in AI: templates to explain code, fix errors, analyze logs, plan and summarize changes, plus your own saved prompts.",
+          },
+          {
+            pt: "Projetos com status (ativo, pausado, concluído) e arquivamento: o arquivado sai do dia a dia sem apagar nada.",
+            en: "Projects with a status (active, paused, done) and archiving: an archived project leaves your daily view without deleting anything.",
+          },
+        ],
+      },
+      {
+        kind: "improved",
+        items: [
+          {
+            pt: "Início personalizável: escolha quais cards aparecem e em que ordem, com os novos cards de Foco e Automações.",
+            en: "Customizable Home: choose which cards appear and in what order, with the new Focus and Automations cards.",
+          },
+          {
+            pt: "Nova animação de abertura: a capivara pousa num cartão que se abre até virar o app.",
+            en: "New opening animation: the capybara lands on a card that opens up into the app.",
+          },
+        ],
+      },
+      {
+        kind: "fixed",
+        items: [
+          {
+            pt: "Arquivos com espaço ou acento no nome aparecem certos na lista de alterações do Git.",
+            en: "Files with spaces or accents in their names now show correctly in the Git changes list.",
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: "1.13.0",
     date: "2026-10-05",
     title: { pt: "Ícone dos projetos", en: "Project icons" },

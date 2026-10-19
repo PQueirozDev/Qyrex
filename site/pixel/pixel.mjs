@@ -539,8 +539,12 @@ async function renderSprite() {
   console.log(`sprite: site/assets/capy-sheet.png (${N} quadros de ${CAPY_W}×${CAPY_H})`);
 }
 
-/** Ícone 32×32: a capivara saindo da água do onsen, com a laranja. */
-export function iconCanvas() {
+/**
+ * Ícone 32×32: a capivara saindo da água do onsen, com a laranja.
+ * `background: false` desenha só o símbolo (capivara + laranja), sem o quadrado
+ * de céu, estrelas e água: usado na animação de abertura do app.
+ */
+export function iconCanvas({ background = true } = {}) {
   const S = 32;
   const c = new Canvas(S, S);
   const capy = capybara({ breathe: 0.5 });
@@ -548,12 +552,12 @@ export function iconCanvas() {
   for (let y = 0; y < S; y++)
     for (let x = 0; x < S; x++) {
       const inside = inRR(x, y, 0, 0, 32, 32, 7);
-      if (!inside) continue;
+      if (!inside || !background) continue;
       if (y >= WL) c.set(x, y, y === WL ? "#8fe0e0" : y === WL + 1 ? "#3fa3a8" : "#236b77");
       else c.set(x, y, y < 12 ? "#141a33" : y < 19 ? "#18203d" : "#1c2647");
     }
   // Estrelas.
-  for (const [x, y] of [[5, 5], [9, 11], [4, 17], [26, 22]]) c.set(x, y, "#f6ecc9");
+  if (background) for (const [x, y] of [[5, 5], [9, 11], [4, 17], [26, 22]]) c.set(x, y, "#f6ecc9");
   // Recorte da capivara: cabeça, laranja e ombro.
   const ox = -28,
     oy = 1;
@@ -566,13 +570,14 @@ export function iconCanvas() {
       if (a && inRR(x, y, 0, 0, 32, 32, 7)) c.set(x, y, [r, g, b]);
     }
   // Ondinha na frente do corpo.
-  for (const x of [3, 4, 5, 13, 14, 20, 21, 22]) c.set(x, WL + 3, "#5cc0c4");
+  if (background) for (const x of [3, 4, 5, 13, 14, 20, 21, 22]) c.set(x, WL + 3, "#5cc0c4");
   return c;
 }
 
-function renderIcon() {
-  const c = iconCanvas();
+/** Retângulos de 1 px de altura (linhas contínuas da mesma cor) e a caixa ocupada. */
+function toRects(c) {
   const rects = [];
+  let [minX, minY, maxX, maxY] = [c.w, c.h, -1, -1];
   for (let y = 0; y < c.h; y++) {
     let x = 0;
     while (x < c.w) {
@@ -589,12 +594,29 @@ function renderIcon() {
       }
       const col = "#" + [r, g, b].map((v) => Math.round(v).toString(16).padStart(2, "0")).join("");
       rects.push(`<rect x="${x}" y="${y}" width="${run}" height="1" fill="${col}"/>`);
+      [minX, minY, maxX, maxY] = [Math.min(minX, x), Math.min(minY, y), Math.max(maxX, x + run - 1), Math.max(maxY, y)];
       x += run;
     }
   }
+  return { rects, box: { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 } };
+}
+
+function renderIcon() {
+  const { rects } = toRects(iconCanvas());
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="512" height="512" shape-rendering="crispEdges">\n<!-- Qyrex: capivara no onsen (pixel art 32×32, gerada por site/pixel/pixel.mjs) -->\n${rects.join("\n")}\n</svg>\n`;
   for (const out of [path.join(ROOT, "build", "icon.svg"), path.join(ROOT, "src", "renderer", "assets", "logo.svg"), path.join(ASSETS, "icon.svg")]) fs.writeFileSync(out, svg);
   console.log("ícone: build/icon.svg (+ logo da sidebar e do site)");
+
+  // Só o símbolo (sem o quadrado de fundo), recortado na área ocupada: abertura do app.
+  const mark = toRects(iconCanvas({ background: false }));
+  const { x, y, w, h } = mark.box;
+  const markSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x} ${y} ${w} ${h}" width="${w * 16}" height="${h * 16}" shape-rendering="crispEdges">
+<!-- Qyrex: só a capivara com a laranja, sem o fundo do ícone (gerada por site/pixel/pixel.mjs) -->
+${mark.rects.join("\n")}
+</svg>
+`;
+  fs.writeFileSync(path.join(ROOT, "src", "renderer", "assets", "logo-mark.svg"), markSvg);
+  console.log(`símbolo: src/renderer/assets/logo-mark.svg (${w}×${h})`);
 }
 
 // --- CLI -----------------------------------------------------------------------

@@ -4,9 +4,20 @@ Guia para o Claude Code continuar o **Qyrex**: um app desktop (Electron + React 
 
 Sempre responda e comente o código em **português do Brasil**, com acentuação correta.
 
-## Estado atual (v1.13.0)
+## Estado atual (v2.0.0, ainda não publicada)
 
-App completo e publicado. `npm run check` passa (typecheck, lint sem warnings e 234 testes; 3 testes de caminho do Windows são pulados fora do Windows). `npm run e2e` passa (26 etapas pela interface, com as APIs simuladas).
+`npm run check` passa (typecheck, lint sem warnings e 280 testes; 3 pulados). A auditoria e o plano do 2.0 estão em `docs/AUDITORIA_QYREX.md`.
+
+### Qyrex 2.0 (migrations 012–017)
+- **Backup** (`services/backupService.ts`, 012): `<userData>/backups/<id>/` com `workspace.sqlite` (VACUUM INTO, `journal_mode=DELETE`), `files/` (avatar, ícones) e `manifest.json` (migrations, tamanho, SHA-256). A pasta só ganha o nome final depois do `integrity_check`; poda só depois. Automático (prefs `backup`, padrão 1×/dia, guarda 10) e "antes de migrar" (`setBeforeMigrateHook` em `db.ts`, ligado no `index.ts`; `getDb` tem trava `opening` contra recursão). Restaurar: copia o backup para `.restore-<id>`, faz backup "pre-restore", `replaceDatabaseFile` migra a CÓPIA antes de trocar e volta o `.previous` se não abrir; recusado com automação rodando. Exportar/importar só as chaves `PORTABLE_KEYS` (sem pastas, sem segredos), aplicadas pelo `settings:update`.
+- **Projetos** (013): `status` (ativo/pausado/concluido) e `archived_at`. Arquivado não consulta git, sai do Início/paleta/bandeja.
+- **Git** (`gitService.ts`): status com `-z` + `core.quotepath=false` (nomes com espaço/acento), `GIT_LITERAL_PATHSPECS=1`, diff com `--no-ext-diff --no-textconv`, arquivo novo lido via allowlist. Commit dos arquivos marcados (`files`), branches (trocar é recusado com alterações rastreadas), fetch, `push -u origin <branch>` sem upstream (nunca `--force`), conflitos e merge/rebase em andamento. UI em `components/GitPanel.tsx`.
+- **Foco** (`focusService.ts`, 014): relógio no main (`focus:changed`), checkpoint por minuto, `recoverOnStartup` volta pausada sem inventar tempo, `pauseOnQuit`. Cancelada não conta; nunca passa do planejado. Tempo vai para o dia em que a sessão começou (limitação conhecida). UI em `components/Focus.tsx` + `stores/useFocusStore.ts`.
+- **Início** (015): widgets `DASHBOARD_WIDGETS` com ordem/ocultos em `settings.dashboard` (`components/DashboardCustomize.tsx`). Widget novo entra sozinho no fim.
+- **Automações** (`automationService.ts`, 016): passos `command` (PowerShell via `commandService.executeConfirmed`) ou `open` (vscode/explorer/terminal). Sem agendamento; `automations:run` exige `confirmed`; risco recalculado no main a cada leitura; para no primeiro erro; 5 min por comando; cancelar mata a árvore (`killTree` em `exec.ts`). Histórico (30/automação, fim da saída). Página `pages/Automations.tsx`, diálogo `components/AutomationRun.tsx`.
+- **Prompts** (`promptService.ts`, 017) + modelos fixos em `components/PromptLibrary.tsx`; inserir só preenche o campo.
+- **Abertura**: só o símbolo no centro (sem cartão) e, na saída, um círculo se abre a partir dele (máscara `--hole`); barrinha ligada ao carregamento real.
+- Verificação visual: o E2E (`npm run e2e`) cobre os fluxos antigos; os novos foram conferidos com um roteiro CDP no mesmo molde (perfil temporário).
 
 ### Feito
 - **Nome e marca (1.7.0)**: o app se chamava QrzSpace e virou **Qyrex** (open source, licença MIT). O `appId` continua `com.pedroqueiroz.qrzspace` de propósito (o instalador novo substitui o antigo e o atalho fixado continua valendo). A pasta de dados mudou com o nome: `src/main/legacyData.ts` copia `%APPDATA%/QrzSpace` para `%APPDATA%/Qyrex` na primeira abertura (nunca sobrescreve um banco existente; a pasta antiga fica como backup).
@@ -109,6 +120,8 @@ tests/             # vitest; tests/setup.ts mocka "electron"; helpers.ts cria ba
 - Segredos só em `security/secrets.ts` (safeStorage/DPAPI). Nunca no SQLite, no renderer ou nos logs. Na UI, só key mascarada.
 - URLs externas passam por `isProtocolAllowed` (http, https, mailto, tel). Arquivos executáveis nunca são "abertos", só revelados no Explorer.
 - AI Council: nunca disparar mais providers do que o usuário confirmou (`confirmedCount`).
+- Automações nunca são agendadas nem disparadas sem clique + `confirmed: true`; "Permitir sempre" do chat não vale para elas.
+- Backup nunca inclui segredos; restauração sempre cria antes um backup "pre-restore".
 - WhatsApp: apenas links oficiais (`wa.me` / `whatsapp://`). Nada de bibliotecas não oficiais.
 
 ## Convenções

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useSettingsStore } from "@/stores/useSettingsStore";
-import logoUrl from "@/assets/logo.svg";
+// Só a capivara com a laranja, sem o quadrado de fundo do ícone (site/pixel/pixel.mjs).
+import markUrl from "@/assets/logo-mark.svg";
 import { tr } from "@/lib/i18n";
 
 /** Espelho da preferência no localStorage: decide antes das configurações carregarem. */
@@ -64,23 +65,19 @@ export function SplashScreen() {
       {visible && (
         <motion.div
           key="splash"
-          className="drag-region fixed inset-0 z-[200] flex items-center justify-center bg-[rgb(0_0_0)]"
-          initial={{ opacity: 1 }}
-          // O fundo só some depois que o cartão já cobriu a tela: o app aparece por inteiro.
-          exit={{ opacity: 0, transition: { delay: 0.55, duration: 0.35, ease: "easeOut" } }}
+          className="drag-region fixed inset-0 z-[200] flex items-center justify-center bg-bg"
+          // Saída: um círculo se abre a partir do símbolo e revela o app inteiro.
+          style={{
+            maskImage: "radial-gradient(circle at 50% 50%, transparent var(--hole), #000 calc(var(--hole) + 1px))",
+            WebkitMaskImage: "radial-gradient(circle at 50% 50%, transparent var(--hole), #000 calc(var(--hole) + 1px))",
+          }}
+          initial={{ "--hole": "0vmax" }}
+          animate={{ "--hole": "0vmax" }}
+          exit={{ "--hole": "80vmax", transition: { delay: 0.2, duration: 0.7, ease: [0.65, 0, 0.35, 1] } }}
           aria-hidden
           data-splash
         >
-          {/* Cartão pequeno no centro que, na saída, cresce até virar a janela do app. */}
-          <motion.div
-            className="relative flex items-center justify-center overflow-hidden border border-border-subtle bg-bg shadow-pop"
-            initial={{ width: 300, height: 300, borderRadius: 28, opacity: 0, scale: 0.94 }}
-            animate={{ width: 300, height: 300, borderRadius: 28, opacity: 1, scale: 1 }}
-            exit={{ width: "100vw", height: "100vh", borderRadius: 0, transition: { duration: 0.6, ease: [0.65, 0, 0.35, 1] } }}
-            transition={{ duration: 0.45, ease: "easeOut" }}
-          >
-            {started && <SplashContent ready={settings !== null} />}
-          </motion.div>
+          {started && <SplashContent ready={settings !== null} />}
         </motion.div>
       )}
     </AnimatePresence>
@@ -99,7 +96,7 @@ function SplashContent({ ready }: { ready: boolean }) {
   return (
     <motion.div
       className="relative flex flex-col items-center"
-      exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.2 } }}
+      exit={{ opacity: 0, scale: 1.12, transition: { duration: 0.4, ease: "easeIn" } }}
     >
       {/* Brilho laranja da marca que acende atrás da capivara. */}
       <motion.div
@@ -110,7 +107,7 @@ function SplashContent({ ready }: { ready: boolean }) {
         transition={{ duration: 1.6, ease: "easeOut", times: [0, 0.55, 1] }}
       />
 
-      <div className="relative h-16 w-16">
+      <div className="relative h-[69px] w-[87px]">
         {STEAM.map((p, i) => (
           <motion.span
             key={i}
@@ -123,10 +120,11 @@ function SplashContent({ ready }: { ready: boolean }) {
           />
         ))}
         <motion.img
-          src={logoUrl}
+          src={markUrl}
           alt=""
           draggable={false}
-          className="relative h-16 w-16 [image-rendering:pixelated] drop-shadow-[0_10px_28px_rgb(255_154_60/0.35)]"
+          // 29×23 px desenhados em 3× (escala inteira: o pixel art não borra).
+          className="relative h-[69px] w-[87px] [image-rendering:pixelated] drop-shadow-[0_10px_28px_rgb(255_154_60/0.35)]"
           initial={{ opacity: 0, y: -28 }}
           animate={{ opacity: 1, y: [-28, 0, -4, 0], scaleY: [1, 0.9, 1.03, 1], scaleX: [1, 1.08, 0.98, 1] }}
           transition={{ duration: 1.1, times: [0, 0.45, 0.7, 1], ease: "easeOut", opacity: { duration: 0.3 } }}

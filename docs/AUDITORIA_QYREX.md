@@ -97,6 +97,27 @@ O backup vem **antes** de tudo porque as fases seguintes adicionam migrations: o
 
 Fica fora deste ciclo, com motivo registrado: sincronização entre computadores (sem estratégia de conflito/autenticação), suporte declarado a Linux (sem teste em Linux).
 
-## 8. Resultados
+## 8. Entrega (resultados reais)
 
-Ver a seção "Entrega" ao final deste arquivo, preenchida com os resultados reais de cada etapa.
+### Implementado
+| Etapa | Migration | Testes novos |
+|---|---|---|
+| Backup verificado, restauração segura, exportar/importar configurações | 012 | `tests/services/backup.test.ts` |
+| Status e arquivamento de projetos | 013 | `tests/database/database.test.ts` |
+| Git visual (diff, commit por arquivo, branches, fetch, conflitos) + correção de nomes com espaço/acento | — | `tests/services/git.test.ts` (repositório real) |
+| Modo Foco | 014 | `tests/services/focus.test.ts` |
+| Início personalizável | 015 | — (validado na UI) |
+| Automações | 016 | `tests/services/automations.test.ts` (PowerShell real) |
+| Prompts reutilizáveis | 017 | `tests/services/prompts.test.ts` |
+| Nova animação de abertura | — | validada por captura de quadros |
+
+### Validação
+- `npm run check`: typecheck, lint (0 warnings) e **280 testes passando** (3 pulados: específicos de outra plataforma). Base era 234.
+- Interface conferida no Electron real com perfil temporário (roteiro CDP no molde do E2E): Git/diff/branches, backup, foco (pausa realmente para o relógio), personalização do Início, automação executando `npm run lint` de verdade, prompts e abertura — **sem erros de console**.
+- Revisão independente pelo Codex: 14 apontamentos; 11 confirmados e corrigidos com teste de regressão (restauração, `--no-textconv`, symlink fora da allowlist, árvore de processos no cancelamento, pathspecs literais, renomeação no commit, diff fora de ordem, duração personalizada do foco, contagem dupla); 1 aceito como arquitetura (confirmação enviada pelo renderer, igual ao resto do app); 1 documentado como limitação (sessão de foco que atravessa a meia-noite conta no dia em que começou).
+
+### Não feito (com motivo)
+- **Sincronização entre PCs**: exige estratégia de conflito e autenticação; fora deste ciclo.
+- **Suporte declarado a Linux**: nada foi testado em Linux.
+- **Workers duplicados do Monaco no build (P2)**: só aumentam o instalador; não investigado neste ciclo.
+- **Benchmarks antes/depois**: não houve otimização de desempenho que justificasse medição; o ganho estrutural é projetos arquivados não rodarem `git`.

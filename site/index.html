@@ -134,7 +134,7 @@
           <article class="cell">
             <p class="ck"><span class="i">▣</span> projetos</p>
             <h3>Projetos com git</h3>
-            <p class="cp">Cards com tecnologias lidas do <code>package.json</code>, status do git, commit, pull e push sempre com confirmação.</p>
+            <p class="cp">Cards com tecnologias lidas do <code>package.json</code>, diff de cada arquivo, commit só do que você marcar, branches e aviso de conflito. Pull e push sempre com confirmação.</p>
             <div class="mock">
               <div class="m-win">
                 <div class="m-bar"><span class="m-sw" style="--c:#ff9a3c"></span><b>barbearia-site</b><span class="pill">main</span><span class="st ok"></span></div>
@@ -259,6 +259,52 @@
               </div>
             </div>
           </article>
+
+          <article class="cell">
+            <p class="ck"><span class="i">◷</span> foco</p>
+            <h3>Modo foco</h3>
+            <p class="cp">Um temporizador no topo, ligado ao projeto. Pausa, retoma e mostra quanto tempo cada projeto recebeu na semana. Meta diária só se você quiser.</p>
+            <div class="mock">
+              <div class="m-win">
+                <div class="m-bar"><b>foco</b><span class="pill">barbearia-site</span></div>
+                <div class="m-body mono">
+                  <div>18:42 <span class="dim">restantes de 25:00</span></div>
+                  <div class="row-btns"><span class="mbtn">Pausar</span><span class="mbtn ghost">Encerrar</span></div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="cell">
+            <p class="ck"><span class="i">⟳</span> automações</p>
+            <h3>Automações</h3>
+            <p class="cp">Testes, lint, build e checagem do git em sequência, na pasta do projeto. Modelos saem dos scripts do <code>package.json</code>. Nada roda sem você confirmar.</p>
+            <div class="mock">
+              <div class="m-win">
+                <div class="m-bar"><b>verificar o projeto</b><span class="st ok"></span></div>
+                <div class="m-body mono">
+                  <div><span class="ok-t">✓</span> npm run lint</div>
+                  <div><span class="ok-t">✓</span> npm run typecheck</div>
+                  <div><span class="ok-t">✓</span> npm run build</div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="cell">
+            <p class="ck"><span class="i">⛁</span> backup</p>
+            <h3>Backup verificado</h3>
+            <p class="cp">Cópia local do banco, conferida por integridade e hash, todo dia e antes de cada atualização. Restaurar guarda antes o estado atual.</p>
+            <div class="mock">
+              <div class="m-win">
+                <div class="m-body mono">
+                  <div><span class="ok-t">✓</span> automático <span class="dim">· hoje</span></div>
+                  <div><span class="ok-t">✓</span> antes de atualizar <span class="dim">· ontem</span></div>
+                  <div class="row-btns"><span class="mbtn">Fazer backup agora</span><span class="mbtn ghost">Restaurar</span></div>
+                </div>
+              </div>
+            </div>
+          </article>
         </div>
       </section>
 
@@ -306,7 +352,9 @@
           <div><dt>pastas</dt><dd>Só lê e altera arquivos nas pastas que você autorizar. Raiz de disco, pastas do sistema e a sua home inteira são recusadas.</dd></div>
           <div><dt>segredos</dt><dd>Chaves e tokens ficam no cofre do Windows (DPAPI). Nunca vão para o banco, para a interface nem para os logs.</dd></div>
           <div><dt>comandos</dt><dd>Processos rodam com <code>spawn</code>, argumentos em lista e sem shell. Comando perigoso nunca pode ser "permitido sempre".</dd></div>
-          <div><dt>git</dt><dd>Commit, pull e push só depois do diálogo. Push nunca é automático e nunca usa <code>--force</code>.</dd></div>
+          <div><dt>git</dt><dd>Commit, pull e push só depois do diálogo. Push nunca é automático e nunca usa <code>--force</code>. Trocar de branch com alterações não commitadas é recusado.</dd></div>
+          <div><dt>automações</dt><dd>Nada é agendado nem roda sozinho. Cada execução mostra os comandos e o risco de cada um e só começa depois da sua confirmação.</dd></div>
+          <div><dt>backup</dt><dd>As cópias ficam no seu PC. Chaves e tokens nunca entram no backup nem na exportação de configurações.</dd></div>
           <div><dt>janela</dt><dd><code>contextIsolation</code>, <code>sandbox</code> e CSP restritiva. Cada canal IPC confere a origem e valida a entrada com zod.</dd></div>
           <div><dt>updates</dt><dd>Atualização automática pelo GitHub Releases, com SHA-512 conferido. Instalador adulterado é descartado e nunca há downgrade.</dd></div>
         </dl>
