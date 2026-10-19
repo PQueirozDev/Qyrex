@@ -18,7 +18,7 @@ Projetos, tarefas, arquivos, IA, clientes, marketing e agenda num app desktop s�
 
 <br>
 
-<img src="docs/screenshots/inicio.png" alt="Tela Início do Qyrex: tarefas em foco, compromissos, projetos, manutenção mensal, agenda do dia, atividade recente e cobranças da semana" width="100%">
+<img src="docs/screenshots/inicio.png" alt="Tela Início do Qyrex: tarefas em foco, compromissos, projetos, manutenção mensal, agenda do dia, atividade recente, foco do dia e projetos recentes" width="100%">
 
 </div>
 
@@ -35,6 +35,10 @@ para criar.
   <tr>
     <td width="50%"><img src="docs/screenshots/ia.png" alt="Chat com IA"><p align="center"><b>IA</b> · Claude, OpenAI e Gemini, com comandos executáveis</p></td>
     <td width="50%"><img src="docs/screenshots/projetos.png" alt="Projetos"><p align="center"><b>Projetos</b> · status do git, VS Code e terminal num clique</p></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/projeto-git.png" alt="Git visual nos detalhes do projeto"><p align="center"><b>Git visual</b> · diff, commit só do que você marcar, branches</p></td>
+    <td><img src="docs/screenshots/automacoes.png" alt="Automações"><p align="center"><b>Automações</b> · testes, lint e build com confirmação</p></td>
   </tr>
   <tr>
     <td><img src="docs/screenshots/tarefas.png" alt="Tarefas"><p align="center"><b>Tarefas</b> · lista ou kanban, com prazo e prioridade</p></td>
@@ -63,9 +67,13 @@ Também tem Escuro, Meia-noite, Areia e Sistema, escolhidos por prévia em
 
 | | |
 | --- | --- |
-| 🏠 **Início** | Tarefas em foco, compromissos do dia, cobranças da semana, projetos e commits recentes, tempo de uso do app e ações rápidas. |
-| 🧩 **Projetos** | Tecnologias detectadas pelo `package.json`, status do git, commit/pull/push com confirmação (push nunca com `--force`), issues e PRs do GitHub. |
-| 💻 **Terminal** | xterm.js + node-pty com abas, PowerShell ou CMD, aberto na pasta do projeto. |
+| 🏠 **Início** | Cards que você escolhe e ordena: tarefas em foco, agenda, atividade, foco do dia, projetos recentes, automações e cobranças, mais tempo de uso do app e ações rápidas. |
+| 🧩 **Projetos** | Tecnologias detectadas pelo `package.json`, status (ativo, pausado, concluído) e arquivamento, issues e PRs do GitHub. |
+| 🌿 **Git visual** | Diff de cada arquivo, commit só do que você marcar, criar e trocar de branch (recusado com alterações não commitadas), fetch, sincronização e aviso de conflito. Pull só fast-forward, push nunca com `--force`. |
+| 💻 **Terminal** | xterm.js + node-pty com abas ou grade, PowerShell, CMD, Claude Code ou Codex, aberto na pasta do projeto, e modo só terminais. |
+| ⚙️ **Automações** | Sequências de comandos e ações de um projeto (testes, lint, build, git, abrir o ambiente), com modelos a partir dos scripts e histórico. Cada execução pede confirmação e mostra o risco de cada comando. |
+| ⏱️ **Foco** | Temporizador com pausa ligado a um projeto, histórico do dia e da semana e meta diária opcional. |
+| 💾 **Backup e sincronização** | Backup local verificado (diário e antes de cada atualização), restauração com cópia de segurança e sincronização entre PCs por uma pasta da nuvem, cifrada com a sua senha. |
 | 📁 **Arquivos** | Navegação só nas pastas autorizadas, busca, renomear/copiar/mover/excluir e preview de imagem, código e Markdown. |
 | ✅ **Tarefas** | Lista (Hoje, Próximas, Todas, Concluídas) ou kanban, com prioridade, prazo, tags, projeto e cliente. `Ctrl+Shift+T` de qualquer lugar. |
 | 📅 **Agenda** | Dia, semana e mês, com eventos locais e do Google Agenda. |
@@ -73,7 +81,7 @@ Também tem Escuro, Meia-noite, Areia e Sistema, escolhidos por prévia em
 | 🤝 **Clientes** | Status, manutenção mensal, próxima cobrança, pasta de arquivos e atalhos para WhatsApp, Instagram, email e telefone. |
 | 📣 **Marketing** | Quadro Ideia → Produzindo → Pronto → Publicado, calendário semanal e captura rápida de ideias. |
 | 💬 **WhatsApp** | Abre conversas pelo app desktop ou pelo WhatsApp Web, só com links oficiais. |
-| 🤖 **IA** | Chat com Claude, OpenAI e Gemini (por API key ou pela sua assinatura do Claude Code/Codex), anexos explícitos, comandos com botão **Executar** e permissão, **AI Council** (vários modelos e uma síntese) e aba de uso de tokens. |
+| 🤖 **IA** | Chat com Claude, OpenAI e Gemini (por API key ou pela sua assinatura do Claude Code/Codex), anexos explícitos, prompts reutilizáveis, comandos com botão **Executar** e permissão, **AI Council** (vários modelos e uma síntese) e aba de uso de tokens. |
 | 🎵 **Mini player** | Mostra e controla o que está tocando no Windows (Spotify, navegador etc.), com capa. |
 
 E mais: Command Palette (`Ctrl+K`), bandeja do sistema, notificações,
@@ -136,6 +144,8 @@ regra, não detalhe:
 - **Segredos só no cofre do Windows** (`safeStorage`/DPAPI): nunca no banco, na interface ou nos logs, que têm redação automática.
 - **Ações sensíveis** (excluir, mover, commit, pull, push, executar) passam por um diálogo de confirmação.
 - **Atualizações** vêm de origem fixa por HTTPS, com SHA-512 conferido e sem downgrade.
+- **Automações** nunca são agendadas nem rodam sozinhas: cada execução mostra os comandos e o risco e espera a sua confirmação.
+- **Backup e sincronização** nunca levam chaves nem tokens. A cópia que vai para a nuvem é cifrada (AES-256-GCM) e não leva pastas autorizadas nem integrações.
 
 ## Desenvolvimento
 
@@ -200,6 +210,7 @@ script e rode `node site/pixel/pixel.mjs` e depois `npm run icons`.
 - [x] IA com Claude, OpenAI e Gemini, AI Council e execução com permissão
 - [x] Clientes, Marketing, Agenda, GitHub, Notion, WhatsApp e mini player
 - [x] Temas, português/inglês, Discord e atualização automática
+- [x] 2.0: backup, sincronização entre PCs, Git visual, foco, automações, prompts e Início personalizável
 - [ ] WhatsApp Cloud API oficial (lembretes de cobrança e confirmações)
 - [ ] Criar e editar eventos do Google Agenda pelo app
 - [ ] Automações entre módulos (ex.: tarefa ao publicar conteúdo)

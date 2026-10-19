@@ -15,6 +15,8 @@ import type {
   AIUsageRecord,
   AIUsageSummary,
   AppSettings,
+  Automation,
+  AutomationRun,
   BackupInfo,
   CalendarEvent,
   FocusSession,
@@ -448,6 +450,57 @@ const projectByPath = (path: string) => db.projects.find((p) => path.toLowerCase
 const risk = (cmd: string): CommandRisk => (/\b(rm|del|remove-item|format|rd|rmdir)\b|--force|reset --hard/i.test(cmd) ? "dangerous" : /^(git status|dir|ls|echo|npm run dev|node -v|npm -v)\b/i.test(cmd.trim()) ? "safe" : "normal");
 const DEMO_ONLY = "Na demo web isso não abre nada no seu computador — no app desktop abre de verdade.";
 
+// Automações da demo: exemplos fictícios; "executar" só simula o resultado.
+const safe = { risk: "safe" as const, reasons: [] };
+const demoAutomations: Omit<Automation, "lastRun">[] = [
+  {
+    id: "au1", name: "Verificar o projeto", description: "Lint, tipos e build, parando no primeiro erro.", projectId: "p1", enabled: true, createdAt: ago(60 * 24 * 3), updatedAt: ago(60 * 24 * 3),
+    steps: [
+      { kind: "command", command: "npm run lint", assessment: safe },
+      { kind: "command", command: "npm run typecheck", assessment: { risk: "normal", reasons: [] } },
+      { kind: "command", command: "npm run build", assessment: safe },
+    ],
+  },
+  {
+    id: "au2", name: "Abrir ambiente de trabalho", description: "Abre o projeto no VS Code e um terminal na pasta.", projectId: "p2", enabled: true, createdAt: ago(60 * 24 * 5), updatedAt: ago(60 * 24 * 5),
+    steps: [
+      { kind: "open", target: "vscode", assessment: safe },
+      { kind: "open", target: "terminal", assessment: safe },
+    ],
+  },
+  {
+    id: "au3", name: "Checagem do Git", description: null, projectId: "p3", enabled: false, createdAt: ago(60 * 24 * 9), updatedAt: ago(60 * 24 * 9),
+    steps: [
+      { kind: "command", command: "git fetch --prune", assessment: safe },
+      { kind: "command", command: "git status -sb", assessment: safe },
+    ],
+  },
+];
+const DEMO_OUTPUT: Record<string, string> = {
+  "npm run lint": "> eslint . --max-warnings 0\n",
+  "npm run typecheck": "> tsc --noEmit\n",
+  "npm run build": "> next build\n✓ Compiled successfully\n✓ Generating static pages (12/12)\n",
+};
+const demoRun = (a: Omit<Automation, "lastRun">, minutesAgo: number): AutomationRun => ({
+  id: uid(),
+  automationId: a.id,
+  startedAt: ago(minutesAgo),
+  finishedAt: ago(minutesAgo),
+  status: "success",
+  error: null,
+  steps: a.steps.map((st) => ({
+    step: st.kind === "command" ? { kind: "command", command: st.command } : { kind: "open", target: st.target },
+    status: "success",
+    exitCode: st.kind === "command" ? 0 : null,
+    stdout: st.kind === "command" ? DEMO_OUTPUT[st.command] ?? "" : "",
+    stderr: "",
+    durationMs: st.kind === "command" ? 1800 + Math.round(Math.random() * 2400) : 300,
+    risk: st.assessment.risk,
+  })),
+});
+const demoRuns: AutomationRun[] = [demoRun(demoAutomations[0], 50), demoRun(demoAutomations[1], 60 * 20)];
+const withLastRun = (a: Omit<Automation, "lastRun">): Automation => ({ ...a, lastRun: demoRuns.find((r) => r.automationId === a.id) ?? null });
+
 // Prompts salvos da demo: só na memória da aba.
 const demoPrompts: SavedPrompt[] = [];
 
@@ -565,14 +618,34 @@ export const workspaceMock: WorkspaceApi = {
     used: () => ok(undefined),
   },
   automations: {
-    list: () => ok([], 20),
+    list: () => ok(demoAutomations.map(withLastRun), 20),
     create: () => fail(DEMO_ONLY),
-    update: () => fail(DEMO_ONLY),
-    delete: () => ok(undefined),
-    run: () => fail(DEMO_ONLY),
+    update: async (id, patch) => {
+      const a = demoAutomations.find((x) => x.id === id);
+      if (!a) return fail("Automação não encontrada.");
+      if (patch.enabled !== undefined) a.enabled = patch.enabled;
+      return ok(withLastRun(a));
+    },
+    delete: async (id) => {
+      const i = demoAutomations.findIndex((x) => x.id === id);
+      if (i >= 0) demoAutomations.splice(i, 1);
+      return ok(undefined);
+    },
+    run: async (id) => {
+      const a = demoAutomations.find((x) => x.id === id);
+      if (!a) return fail("Automação não encontrada.");
+      // Simulação: nada roda de verdade na demo web.
+      const run = demoRun(a, 0);
+      demoRuns.unshift(run);
+      return ok(run, 900);
+    },
     cancel: () => ok(false),
-    runs: () => ok([]),
-    recentRuns: () => ok([]),
+    runs: (id) => ok(demoRuns.filter((r) => r.automationId === id)),
+    recentRuns: () =>
+      ok(demoRuns.slice(0, 6).map((r) => {
+        const a = demoAutomations.find((x) => x.id === r.automationId)!;
+        return { ...r, automationName: a.name, projectId: a.projectId };
+      })),
     suggest: () => ok([{ name: "Rodar testes", description: null, steps: [{ kind: "command", command: "npm test" }] }]),
     onProgress: () => () => undefined,
   },

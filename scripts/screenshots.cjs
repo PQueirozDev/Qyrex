@@ -84,10 +84,20 @@ app.whenReady().then(async () => {
     ["Agenda", "agenda"],
     ["Clientes", "clientes"],
     ["Marketing", "marketing"],
+    ["Automações", "automacoes"],
   ]) {
     await click(label);
     await shot(name);
   }
+
+  // Git visual: detalhes de um projeto com o diff de um arquivo aberto.
+  await click("Projetos");
+  await click("Detalhes");
+  await wait(800);
+  await click("src/app/assinaturas/page.tsx");
+  await shot("projeto-git");
+  await js(`document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); true`);
+  await wait(600);
 
   // Temas: escolhidos em Configurações → Aparência, fotografados no Início.
   for (const [label, name] of [

@@ -34,6 +34,10 @@ export const CHANGELOG: ChangelogEntry[] = [
             en: "Local backup in Settings → Backup: a verified copy (integrity and hash) of the database, profile photo and icons, automatic every day and before any update changes the database. Restoring first saves a copy of the current state.",
           },
           {
+            pt: "Sincronização entre PCs por uma pasta do OneDrive, Google Drive ou Dropbox: cada cópia vai cifrada com a sua senha, nada sincroniza sozinho e, se os dois PCs mudarem, você escolhe qual manter.",
+            en: "Sync between PCs through a OneDrive, Google Drive or Dropbox folder: each copy is encrypted with your password, nothing syncs on its own and, if both PCs change, you choose which to keep.",
+          },
+          {
             pt: "Exportar e importar configurações (sem pastas autorizadas e sem chaves).",
             en: "Export and import settings (without authorized folders and without keys).",
           },
@@ -67,8 +71,16 @@ export const CHANGELOG: ChangelogEntry[] = [
             en: "Customizable Home: choose which cards appear and in what order, with the new Focus and Automations cards.",
           },
           {
-            pt: "Nova animação de abertura: a capivara pousa num cartão que se abre até virar o app.",
-            en: "New opening animation: the capybara lands on a card that opens up into the app.",
+            pt: "Nova animação de abertura: só a capivara no centro, e o app se abre a partir dela.",
+            en: "New opening animation: just the capybara in the center, and the app opens up from it.",
+          },
+          {
+            pt: "Modo só terminais: esconde a barra lateral e deixa os terminais na janela inteira.",
+            en: "Terminals-only mode: hides the sidebar and gives the terminals the whole window.",
+          },
+          {
+            pt: "Instalador menor: saíram cópias do editor de código que nunca eram usadas.",
+            en: "Smaller installer: unused copies of the code editor's files were removed.",
           },
         ],
       },
@@ -78,6 +90,10 @@ export const CHANGELOG: ChangelogEntry[] = [
           {
             pt: "Arquivos com espaço ou acento no nome aparecem certos na lista de alterações do Git.",
             en: "Files with spaces or accents in their names now show correctly in the Git changes list.",
+          },
+          {
+            pt: "O equalizador do mini player não aparece mais \"cortado\" quando o Windows está com reduzir movimento.",
+            en: "The mini player's equalizer no longer looks \"cut off\" when Windows has reduced motion on.",
           },
         ],
       },
