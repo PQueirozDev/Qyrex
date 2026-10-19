@@ -19,6 +19,7 @@ import {
   CaseSensitive,
   Archive,
   ArchiveRestore,
+  Timer,
   ImagePlus,
   ScanSearch,
 } from "lucide-react";
@@ -29,6 +30,9 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Badge, Drawer, EmptyState, ErrorState, Field, LoadingRows, Menu, PageHeader, ProjectIcon, Segmented, Spinner } from "@/components/ui/primitives";
 import { TaskFormDialog } from "@/components/TaskFormDialog";
 import { GitPanel } from "@/components/GitPanel";
+import { useFocusSummary } from "@/components/Focus";
+import { formatUsage } from "@/components/AppUsage";
+import { useFocusStore } from "@/stores/useFocusStore";
 import { attempt, errorMessage, unwrap } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { relativeDay, timeAgo } from "@/lib/format";
@@ -383,12 +387,15 @@ function ProjectDrawer({
   const businessMode = useBusinessMode();
   const navigate = useUIStore((s) => s.navigate);
   const [taskOpen, setTaskOpen] = useState(false);
+  const setFocusDialog = useFocusStore((s) => s.setDialog);
 
   useEffect(() => {
     if (!tasksLoaded) void loadTasks();
   }, [tasksLoaded, loadTasks]);
 
   const projectTasks = tasks.filter((t) => t.projectId === project.id && t.status !== "concluido");
+  const focusSummary = useFocusSummary(7, project.id);
+  const focusSeconds = focusSummary?.byProject.find((p) => p.projectId === project.id)?.seconds ?? 0;
   const client = businessMode ? clients.find((c) => c.id === project.clientId) : undefined;
 
   return (
@@ -429,6 +436,13 @@ function ProjectDrawer({
         <div className="space-y-2">
           {project.description && <p className="text-sm text-text-muted">{project.description}</p>}
           <p className="break-all font-mono text-[11px] text-text-faint">{project.localPath}</p>
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-text-faint">
+            <span>{project.lastOpenedAt ? tr("Aberto {time}", { time: timeAgo(project.lastOpenedAt) }) : tr("Nunca aberto")}</span>
+            <span>{tr("Adicionado {time}", { time: timeAgo(project.createdAt) })}</span>
+            <button className="inline-flex items-center gap-1 hover:text-text" onClick={() => setFocusDialog("history")} title={tr("Histórico de foco")}>
+              <Timer size={11} /> {tr("Foco (7 dias): {time}", { time: formatUsage(focusSeconds) })}
+            </button>
+          </p>
           <div className="flex flex-wrap gap-1">
             {project.technologies.map((t) => (
               <Badge key={t}>{t}</Badge>

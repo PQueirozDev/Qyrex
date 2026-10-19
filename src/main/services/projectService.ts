@@ -204,10 +204,8 @@ export function setArchived(id: string, archived: boolean): Project {
         : "UPDATE projects SET archived_at = NULL WHERE id = ?"
     )
     .run(id);
-  const project = getProject(id);
-  if (!project) throw new Error("Projeto não encontrado.");
-  if (changes > 0) recordActivity("project", id, project.name);
-  return project;
+  if (changes === 0 && !getProject(id)) throw new Error("Projeto não encontrado.");
+  return getProject(id)!;
 }
 
 

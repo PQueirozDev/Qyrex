@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
 import { CommandPalette } from "@/components/CommandPalette";
+import { FocusDialogs } from "@/components/Focus";
 import { ConfirmHost, PromptHost, Toaster } from "@/components/Overlays";
 import { TaskFormDialog } from "@/components/TaskFormDialog";
 import { Spinner } from "@/components/ui/primitives";
@@ -231,6 +232,7 @@ export function App() {
       </div>
 
       <CommandPalette />
+      <FocusDialogs />
       <TaskFormDialog open={quickTaskOpen} onClose={() => setQuickTaskOpen(false)} />
       <ConfirmHost />
       <PromptHost />

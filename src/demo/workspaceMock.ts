@@ -17,6 +17,9 @@ import type {
   AppSettings,
   BackupInfo,
   CalendarEvent,
+  FocusSession,
+  FocusState,
+  FocusSummary,
   Client,
   CommandRisk,
   DirEntry,
@@ -138,6 +141,8 @@ function seed() {
     splashAnimation: true,
     businessMode: true,
     backup: { auto: true, intervalDays: 1, keep: 10 },
+    focus: { minutes: 25, dailyGoalMinutes: 120, notify: true },
+    dashboard: { order: [], hidden: [] },
     vscodePath: "C:\\Program Files\\Microsoft VS Code\\Code.exe",
   };
   const changes: Record<string, GitChangedFile[]> = {
@@ -457,6 +462,63 @@ const demoBackup = (): BackupInfo => ({
   problem: null,
 });
 
+// Foco da demo: relógio no navegador, sessões só na memória da aba.
+const demoFocus: FocusSession[] = [
+  { id: "f1", projectId: "p1", taskId: null, label: null, plannedMinutes: 25, startedAt: ago(60 * 3), endedAt: ago(60 * 3 - 25), focusedSeconds: 1500, resumedAt: null, status: "completed" },
+  { id: "f2", projectId: "p2", taskId: null, label: null, plannedMinutes: 50, startedAt: ago(60 * 26), endedAt: ago(60 * 26 - 50), focusedSeconds: 3000, resumedAt: null, status: "completed" },
+];
+const focusListeners = new Set<(s: FocusState) => void>();
+let focusTimer: ReturnType<typeof setTimeout> | null = null;
+const focusElapsed = (f: FocusSession) =>
+  Math.min(f.plannedMinutes * 60, Math.floor(f.focusedSeconds + (f.status === "running" && f.resumedAt ? (Date.now() - Date.parse(f.resumedAt)) / 1000 : 0)));
+const focusActive = () => demoFocus.find((f) => f.status === "running" || f.status === "paused") ?? null;
+const focusState = (): FocusState => {
+  const session = focusActive();
+  return { session: session ? { ...session } : null, elapsedSeconds: session ? focusElapsed(session) : 0 };
+};
+const focusEmit = () => {
+  if (focusTimer) clearTimeout(focusTimer);
+  const a = focusActive();
+  if (a?.status === "running") {
+    focusTimer = setTimeout(() => {
+      a.focusedSeconds = focusElapsed(a);
+      a.resumedAt = null;
+      a.status = "completed";
+      a.endedAt = new Date().toISOString();
+      focusEmit();
+    }, (a.plannedMinutes * 60 - focusElapsed(a)) * 1000);
+  }
+  const st = focusState();
+  focusListeners.forEach((l) => l(st));
+  return ok(st, 30);
+};
+const focusSummary = (days: number): FocusSummary => {
+  const keyOf = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const list = Array.from({ length: days }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (days - 1 - i));
+    return { day: keyOf(d), seconds: 0 };
+  });
+  const byProject = new Map<string | null, number>();
+  for (const f of demoFocus.filter((x) => x.status !== "cancelled")) {
+    const slot = list.find((d) => d.day === keyOf(new Date(f.startedAt)));
+    if (!slot) continue;
+    const secs = focusElapsed(f);
+    slot.seconds += secs;
+    byProject.set(f.projectId, (byProject.get(f.projectId) ?? 0) + secs);
+  }
+  const name = (id: string | null) => db.projects.find((p) => p.id === id)?.name ?? null;
+  return {
+    days: list,
+    todaySeconds: list[list.length - 1].seconds,
+    totalSeconds: list.reduce((a, d) => a + d.seconds, 0),
+    completedSessions: demoFocus.filter((f) => f.status === "completed").length,
+    byProject: Array.from(byProject, ([projectId, seconds]) => ({ projectId, name: name(projectId), seconds })).sort((a, b) => b.seconds - a.seconds),
+    recent: demoFocus.filter((f) => f.status === "completed").map((f) => ({ ...f, projectName: name(f.projectId) })).reverse(),
+    dailyGoalMinutes: db.settings.focus?.dailyGoalMinutes ?? 0,
+  };
+};
+
 export const workspaceMock: WorkspaceApi = {
   settings: {
     get: () => ok(db.settings, 20),
@@ -469,6 +531,52 @@ export const workspaceMock: WorkspaceApi = {
     removeAllowedDir: () => fail("Na demo não é possível remover a pasta de exemplo."),
     exportToFile: () => fail(DEMO_ONLY),
     readImport: () => fail(DEMO_ONLY),
+  },
+  focus: {
+    state: () => ok(focusState(), 10),
+    start: async (input) => {
+      if (focusActive()) return fail("Já existe uma sessão de foco em andamento.");
+      const now = new Date().toISOString();
+      demoFocus.push({ id: uid(), projectId: input.projectId ?? null, taskId: input.taskId ?? null, label: input.label ?? null, plannedMinutes: input.minutes, startedAt: now, endedAt: null, focusedSeconds: 0, resumedAt: now, status: "running" });
+      return focusEmit();
+    },
+    pause: async () => {
+      const a = focusActive();
+      if (!a || a.status !== "running") return fail("Nenhuma sessão de foco rodando.");
+      a.focusedSeconds = focusElapsed(a);
+      a.resumedAt = null;
+      a.status = "paused";
+      return focusEmit();
+    },
+    resume: async () => {
+      const a = focusActive();
+      if (!a || a.status !== "paused") return fail("Nenhuma sessão de foco pausada.");
+      a.resumedAt = new Date().toISOString();
+      a.status = "running";
+      return focusEmit();
+    },
+    finish: async () => {
+      const a = focusActive();
+      if (a) {
+        a.focusedSeconds = focusElapsed(a);
+        a.resumedAt = null;
+        a.status = "completed";
+        a.endedAt = new Date().toISOString();
+      }
+      return focusEmit();
+    },
+    cancel: async () => {
+      const a = focusActive();
+      if (!a) return fail("Nenhuma sessão de foco em andamento.");
+      a.status = "cancelled";
+      a.resumedAt = null;
+      return focusEmit();
+    },
+    summary: (days = 7) => ok(focusSummary(days), 40),
+    onChange: (cb) => {
+      focusListeners.add(cb);
+      return () => focusListeners.delete(cb);
+    },
   },
   backup: {
     list: () => ok([...demoBackups], 30),

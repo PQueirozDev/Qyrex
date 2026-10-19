@@ -310,6 +310,8 @@ const PORTABLE_KEYS = [
   "splashAnimation",
   "businessMode",
   "backup",
+  "focus",
+  "dashboard",
 ] as const satisfies readonly (keyof AppSettings)[];
 
 export function buildSettingsExport(settings = getSettings()): string {

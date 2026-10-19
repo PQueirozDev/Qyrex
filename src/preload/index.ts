@@ -16,6 +16,8 @@ import type {
   CommandAssessment,
   CommandRunResult,
   DiscordStatus,
+  FocusState,
+  FocusSummary,
   LocalMediaState,
   MediaAction,
   NotionItem,
@@ -90,6 +92,19 @@ const api = {
     exportToFile: () => invoke<string | null>("settings:export"),
     /** Lê (sem aplicar) um JSON exportado; a UI confirma e aplica com `update(patch)`. */
     readImport: () => invoke<SettingsImport | null>("settings:readImport"),
+  },
+  focus: {
+    state: () => invoke<FocusState>("focus:state"),
+    start: (input: { minutes: number; projectId?: string | null; taskId?: string | null; label?: string | null }) => invoke<FocusState>("focus:start", input),
+    pause: () => invoke<FocusState>("focus:pause"),
+    resume: () => invoke<FocusState>("focus:resume"),
+    /** Encerra contando o tempo focado até agora. */
+    finish: () => invoke<FocusState>("focus:finish"),
+    /** Descarta a sessão: o tempo não conta. */
+    cancel: () => invoke<FocusState>("focus:cancel"),
+    summary: (days?: number) => invoke<FocusSummary>("focus:summary", days),
+    /** O main avisa quando a sessão muda (inclusive quando termina sozinha). */
+    onChange: (callback: (state: FocusState) => void) => subscribe<FocusState>("focus:changed", callback),
   },
   backup: {
     list: () => invoke<BackupInfo[]>("backup:list"),

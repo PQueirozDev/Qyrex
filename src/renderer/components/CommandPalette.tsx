@@ -5,8 +5,8 @@ import {
   CalendarPlus,
   CheckSquare,
   Code2,
-  FileCode2,
   File,
+  FileCode2,
   Folder,
   FolderSearch,
   Megaphone,
@@ -16,6 +16,7 @@ import {
   Plus,
   Search,
   SquareTerminal,
+  Timer,
   UserPlus,
   Users,
   type LucideIcon,
@@ -27,6 +28,7 @@ import { fuzzyScore } from "@/lib/fuzzy";
 import { attempt } from "@/lib/api";
 import { BUSINESS_PAGES, useUIStore } from "@/stores/useUIStore";
 import { useProjectsStore } from "@/stores/useProjectsStore";
+import { useFocusStore } from "@/stores/useFocusStore";
 import { useClientsStore } from "@/stores/useClientsStore";
 import { useBusinessMode, useSettingsStore } from "@/stores/useSettingsStore";
 import { NAV_ITEMS } from "@/components/Sidebar";
@@ -123,6 +125,8 @@ export function CommandPalette() {
     const actions: Command[] = [
       { id: "new-task", group: "Ações", label: tr("Nova tarefa"), hint: tr("Ctrl Shift T"), icon: Plus, run: act(() => setQuickTaskOpen(true)) },
       { id: "new-project", group: "Ações", label: tr("Novo projeto"), icon: Code2, run: act(() => navigate("projetos", "new")) },
+      { id: "focus", group: "Ações", label: tr("Iniciar sessão de foco"), keywords: "pomodoro timer temporizador foco", icon: Timer, run: act(() => useFocusStore.getState().setDialog("start")) },
+      { id: "focus-history", group: "Ações", label: tr("Histórico de foco"), keywords: "pomodoro tempo produtividade", icon: Timer, run: act(() => useFocusStore.getState().setDialog("history")) },
       { id: "new-client", group: "Ações", label: tr("Novo cliente"), icon: UserPlus, business: true, run: act(() => navigate("clientes", "new")) },
       { id: "new-event", group: "Ações", label: tr("Novo evento na agenda"), icon: CalendarPlus, run: act(() => navigate("agenda", "new")) },
       { id: "new-content", group: "Ações", label: tr("Nova ideia de conteúdo"), icon: Megaphone, business: true, run: act(() => navigate("marketing", "new")) },

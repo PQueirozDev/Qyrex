@@ -5,6 +5,7 @@ import { attempt } from "@/lib/api";
 import { useUIStore, type Page } from "@/stores/useUIStore";
 import { Button } from "@/components/ui/Button";
 import { AILimitsIndicator } from "@/components/AILimits";
+import { FocusHeaderButton } from "@/components/Focus";
 import { Kbd, Spinner } from "@/components/ui/primitives";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/i18n";
@@ -79,7 +80,7 @@ export function Header() {
 
   return (
     <header className="drag-region titlebar-safe flex h-12 shrink-0 items-center gap-3 border-b border-border-subtle pl-5">
-      <div ref={boxRef} className="no-drag relative w-full max-w-md">
+      <div ref={boxRef} className="no-drag relative w-full min-w-0 max-w-md">
         <div
           className={cn(
             "flex items-center gap-2 rounded-lg border bg-bg-elevated px-2.5 py-1.5 transition-colors",
@@ -144,13 +145,14 @@ export function Header() {
         )}
       </div>
 
-      <div className="no-drag ml-auto flex items-center gap-2">
+      <div className="no-drag ml-auto flex shrink-0 items-center gap-2 whitespace-nowrap">
         {!online && (
           <span className="flex items-center gap-1.5 rounded-md border border-warning/30 bg-warning/10 px-2 py-1 text-[11px] font-medium text-warning">
             <WifiOff size={12} />{" "}{tr("Offline")}</span>
         )}
         <AILimitsIndicator />
         <span className="mx-0.5 h-4 w-px bg-border-subtle" />
+        <FocusHeaderButton />
         <Button variant="ghost" size="sm" onClick={() => setQuickTaskOpen(true)} title={tr("Nova tarefa (Ctrl+Shift+T)")}>
           <Plus size={14} />{" "}{tr("Tarefa")}</Button>
         <button

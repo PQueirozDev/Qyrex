@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { currentLanguage, tt } from "../i18n.js";
 import { tm } from "../../shared/i18n.js";
+import { DASHBOARD_WIDGETS } from "../../shared/types.js";
 
 /**
  * Schemas de validação de TODO input que chega do renderer via IPC.
@@ -103,8 +104,24 @@ export const settingsPatch = z
       intervalDays: z.number().int().min(1).max(30),
       keep: z.number().int().min(1).max(100),
     }),
+    focus: z.object({
+      minutes: z.number().int().min(1).max(240),
+      dailyGoalMinutes: z.number().int().min(0).max(960),
+      notify: z.boolean(),
+    }),
+    dashboard: z.object({
+      order: z.array(z.enum(DASHBOARD_WIDGETS)).max(DASHBOARD_WIDGETS.length),
+      hidden: z.array(z.enum(DASHBOARD_WIDGETS)).max(DASHBOARD_WIDGETS.length),
+    }),
   })
   .partial();
+
+export const focusStart = z.object({
+  minutes: z.number().int().min(1).max(240),
+  projectId: id.nullable().optional(),
+  taskId: id.nullable().optional(),
+  label: z.string().trim().max(200).nullable().optional().transform((v) => (v ? v : null)),
+});
 
 /** ID de backup: o nome da pasta em `<userData>/backups` (data + tipo). */
 export const backupId = z.string().regex(/^[\w-]{1,80}$/, "Backup inválido");

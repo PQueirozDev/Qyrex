@@ -3,6 +3,8 @@ import path from "node:path";
 import { registerIpcHandlers, setDevServerUrl, setSettingsChangedHook } from "./ipc/handlers.js";
 import { closeDb, getDb, getSettings, setBeforeMigrateHook } from "./database/db.js";
 import { startAutoBackup, stopAutoBackup, writeBackup } from "./services/backupService.js";
+import { pauseOnQuit as pauseFocusOnQuit, recoverOnStartup as recoverFocus, setFocusHooks } from "./services/focusService.js";
+import { showNotification } from "./services/notificationService.js";
 import { createLogger, initLogger } from "./logger.js";
 import { isProtocolAllowed } from "./security/commands.js";
 import { listProjects } from "./services/projectService.js";
@@ -308,6 +310,14 @@ app.whenReady().then(() => {
   startNotifications(navigate);
   startAppUsageTracker(() => mainWindow);
   startAutoBackup();
+  setFocusHooks({
+    changed: (state) => mainWindow?.webContents.send("focus:changed", state),
+    completed: (session) => {
+      if (!getSettings().focus.notify) return;
+      showNotification(tr("Sessão de foco concluída"), translate(getSettings().language, "{n} minutos de foco. Hora de uma pausa.", { n: session.plannedMinutes }), "inicio");
+    },
+  });
+  recoverFocus();
   log.info(`Qyrex ${app.getVersion()} iniciado${isDev ? " (dev)" : ""}`);
 
   // Sincronização do Google Calendar sob demanda: só se estiver conectado, e
@@ -332,6 +342,7 @@ app.on("before-quit", () => {
   isQuitting = true;
   stopNotifications();
   stopAutoBackup();
+  pauseFocusOnQuit();
   killAllTerminals();
   stopDiscord();
   stopLocalMedia();

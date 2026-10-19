@@ -2,7 +2,7 @@ import Database from "better-sqlite3";
 import fs from "node:fs";
 import path from "node:path";
 import { app } from "electron";
-import type { AppSettings, BackupPrefs, DiscordPrefs, NotificationPrefs } from "../../shared/types.js";
+import type { AppSettings, BackupPrefs, DashboardPrefs, DiscordPrefs, FocusPrefs, NotificationPrefs } from "../../shared/types.js";
 
 let db: Database.Database | null = null;
 
@@ -154,10 +154,14 @@ interface SettingsRow {
   allow_all_dirs: number;
   business_mode: number;
   backup: string;
+  focus: string;
+  dashboard: string;
 }
 
 const DEFAULT_DISCORD: DiscordPrefs = { enabled: false, clientId: null, showProject: false };
 export const DEFAULT_BACKUP: BackupPrefs = { auto: true, intervalDays: 1, keep: 10 };
+const DEFAULT_DASHBOARD: DashboardPrefs = { order: [], hidden: [] };
+const DEFAULT_FOCUS: FocusPrefs = { minutes: 25, dailyGoalMinutes: 0, notify: true };
 const DEFAULT_NOTIFICATIONS: NotificationPrefs = { tasks: true, events: true, billing: true, marketing: true };
 
 function parseJson<T>(raw: string, fallback: T): T {
@@ -191,6 +195,8 @@ export function getSettings(): AppSettings {
     splashAnimation: Boolean(row.splash_animation),
     businessMode: Boolean(row.business_mode),
     backup: { ...DEFAULT_BACKUP, ...parseJson<Partial<BackupPrefs>>(row.backup, {}) },
+    focus: { ...DEFAULT_FOCUS, ...parseJson<Partial<FocusPrefs>>(row.focus, {}) },
+    dashboard: { ...DEFAULT_DASHBOARD, ...parseJson<Partial<DashboardPrefs>>(row.dashboard, {}) },
   };
 }
 
@@ -205,7 +211,7 @@ export function updateSettings(partial: Partial<AppSettings>): AppSettings {
         ai_default_provider = ?, ai_default_model = ?,
         notifications = ?, onboarding_completed = ?, vscode_path = ?,
         language = ?, discord = ?, auto_update = ?, last_seen_version = ?,
-        splash_animation = ?, allow_all_dirs = ?, business_mode = ?, backup = ?
+        splash_animation = ?, allow_all_dirs = ?, business_mode = ?, backup = ?, focus = ?, dashboard = ?
        WHERE id = 1`
     )
     .run(
@@ -227,7 +233,9 @@ export function updateSettings(partial: Partial<AppSettings>): AppSettings {
       merged.splashAnimation ? 1 : 0,
       merged.allowAllDirs ? 1 : 0,
       merged.businessMode ? 1 : 0,
-      JSON.stringify(merged.backup)
+      JSON.stringify(merged.backup),
+      JSON.stringify(merged.focus),
+      JSON.stringify(merged.dashboard)
     );
 
   return merged;

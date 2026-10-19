@@ -418,7 +418,60 @@ export interface SearchResults {
   files: DirEntry[];
 }
 
-export type RecentItemType = "project" | "file" | "task_completed" | "client" | "commit";
+export type RecentItemType = "project" | "file" | "task_completed" | "client" | "commit" | "focus" | "automation";
+
+// --- Foco ------------------------------------------------------------------------
+
+export type FocusStatus = "running" | "paused" | "completed" | "cancelled";
+
+export interface FocusSession {
+  id: string;
+  projectId: string | null;
+  taskId: string | null;
+  label: string | null;
+  plannedMinutes: number;
+  startedAt: string;
+  endedAt: string | null;
+  /** Segundos já contados (sem o trecho que está rodando agora). */
+  focusedSeconds: number;
+  /** Início do trecho atual quando está rodando. */
+  resumedAt: string | null;
+  status: FocusStatus;
+}
+
+export interface FocusState {
+  session: FocusSession | null;
+  /** Segundos focados até o momento da leitura (nunca passa do planejado). */
+  elapsedSeconds: number;
+}
+
+export interface FocusSummary {
+  days: { day: string; seconds: number }[];
+  todaySeconds: number;
+  totalSeconds: number;
+  completedSessions: number;
+  byProject: { projectId: string | null; name: string | null; seconds: number }[];
+  recent: (FocusSession & { projectName: string | null })[];
+  dailyGoalMinutes: number;
+}
+
+export const DASHBOARD_WIDGETS = ["agenda", "tarefas", "atividade", "foco", "projetos", "cobrancas"] as const;
+export type DashboardWidgetId = (typeof DASHBOARD_WIDGETS)[number];
+
+export interface DashboardPrefs {
+  /** Ordem escolhida (widgets que faltarem entram no fim, na ordem padrão). */
+  order: DashboardWidgetId[];
+  hidden: DashboardWidgetId[];
+}
+
+export interface FocusPrefs {
+  /** Duração padrão de uma sessão, em minutos. */
+  minutes: number;
+  /** Meta diária opcional (0 = sem meta). */
+  dailyGoalMinutes: number;
+  /** Notificação do Windows ao terminar uma sessão. */
+  notify: boolean;
+}
 
 export interface RecentItem {
   id: string;
@@ -505,6 +558,8 @@ export interface AppSettings {
   /** Modo Negócio: mostra clientes, marketing e WhatsApp. Desligado = modo Dev (padrão). */
   businessMode: boolean;
   backup: BackupPrefs;
+  focus: FocusPrefs;
+  dashboard: DashboardPrefs;
   vscodePath: string | null;
 }
 

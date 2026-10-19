@@ -32,6 +32,7 @@ import * as profileService from "../services/profileService.js";
 import * as usageService from "../services/usageService.js";
 import * as appUsageService from "../services/appUsageService.js";
 import * as backupService from "../services/backupService.js";
+import * as focusService from "../services/focusService.js";
 import { getDiscordStatus, setDiscordActivity } from "../integrations/discord.js";
 
 const log = createLogger("ipc");
@@ -115,6 +116,18 @@ export function registerIpcHandlers(): void {
     const target = v.parse(v.filePath, dir);
     return updateSettings({ allowedProjectDirs: getSettings().allowedProjectDirs.filter((d) => d !== target) });
   });
+
+  // --- Foco ------------------------------------------------------------------------
+  handle("focus:state", () => focusService.getState());
+  handle("focus:start", (_e, input) => focusService.start(v.parse(v.focusStart, input)));
+  handle("focus:pause", () => focusService.pause());
+  handle("focus:resume", () => focusService.resume());
+  handle("focus:finish", () => {
+    focusService.finish();
+    return focusService.getState();
+  });
+  handle("focus:cancel", () => focusService.cancel());
+  handle("focus:summary", (_e, days) => focusService.getSummary(days === undefined ? 7 : v.parse(z.number().int().min(1).max(90), days)));
 
   // --- Backup ----------------------------------------------------------------------
   handle("backup:list", () => backupService.listBackups());

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   ArrowUpRight,
   Bot,
@@ -12,11 +12,13 @@ import {
   Github,
   MessageCircle,
   Plus,
+  Settings2,
   SquareTerminal,
+  Timer,
   UserPlus,
   Wallet,
 } from "lucide-react";
-import type { CalendarEvent, GitCommit, RecentItem } from "@shared/types";
+import type { CalendarEvent, DashboardWidgetId, GitCommit, RecentItem } from "@shared/types";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge, EmptyState, LoadingRows, ProjectIcon } from "@/components/ui/primitives";
@@ -34,12 +36,20 @@ import { getLocale, tr, trn } from "@/lib/i18n";
 import { AnimatedValue } from "@/components/ui/AnimatedValue";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { AppUsageButton } from "@/components/AppUsage";
+import { FocusCardBody } from "@/components/Focus";
+import { DashboardCustomizeDialog, dashboardOrder } from "@/components/DashboardCustomize";
+import { useFocusStore } from "@/stores/useFocusStore";
+
+/** Widgets que ocupam duas colunas na tela larga. */
+const WIDE_WIDGETS = new Set<DashboardWidgetId>(["projetos"]);
 const ACTIVITY_ICON: Record<string, typeof Code2> = {
   project: Code2,
   file: FileText,
   task_completed: CheckCircle2,
   client: UserPlus,
   commit: GitCommitHorizontal,
+  focus: Timer,
+  automation: Settings2,
 };
 
 const ACTIVITY_TEXT: Record<string, string> = {
@@ -48,6 +58,8 @@ const ACTIVITY_TEXT: Record<string, string> = {
   task_completed: tr("Tarefa concluída"),
   client: tr("Cliente aberto"),
   commit: tr("Commit"),
+  focus: tr("Sessão de foco"),
+  automation: tr("Automação executada"),
 };
 
 const TILE_TONES = {
@@ -119,6 +131,8 @@ export function Dashboard() {
   const { clients, load: loadClients } = useClientsStore();
   const settings = useSettingsStore((s) => s.settings);
   const businessMode = useBusinessMode();
+  const setFocusDialog = useFocusStore((s) => s.setDialog);
+  const [customizeOpen, setCustomizeOpen] = useState(false);
 
   const [events, setEvents] = useState<CalendarEvent[] | null>(null);
   const [activity, setActivity] = useState<RecentItem[]>([]);
@@ -187,82 +201,8 @@ export function Dashboard() {
     { label: tr("Perguntar para IA"), icon: Bot, run: () => navigate("ia") },
   ].filter((a) => businessMode || !a.business);
 
-  return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="flex items-center gap-4">
-          <ProfileAvatar size={54} className="shadow-card ring-2 ring-accent/30" />
-          <div>
-            <h1 className="text-[26px] font-semibold leading-tight tracking-tight text-text">
-              {greeting()}
-              {settings?.userName && (
-                <>
-                  {", "}
-                  <span className="bg-gradient-to-r from-accent to-accent-hover bg-clip-text text-transparent">{settings.userName}</span>
-                </>
-              )}
-            </h1>
-            <p className="mt-0.5 text-sm first-letter:uppercase text-text-muted">
-              {new Date().toLocaleDateString(getLocale(), { weekday: "long", day: "numeric", month: "long" })}
-              {" · "}
-              <span className="normal-case">
-                {trn(focusTasks.length, "{n} tarefa em foco", "{n} tarefas em foco")}
-                {" · "}
-                {trn(todayEvents.length, "{n} compromisso hoje", "{n} compromissos hoje")}
-              </span>
-            </p>
-          </div>
-        </div>
-        <AppUsageButton />
-      </div>
-
-      <div className={cn("grid grid-cols-2 gap-3", businessMode ? "xl:grid-cols-4" : "xl:grid-cols-3")}>
-        <StatTile
-          icon={CheckSquare}
-          label={tr("Tarefas em foco")}
-          value={focusTasks.length}
-          sub={overdue > 0 ? trn(overdue, "{n} atrasada", "{n} atrasadas") : trn(doneToday.length, "{n} concluída hoje", "{n} concluídas hoje")}
-          tone={overdue > 0 ? "danger" : "accent"}
-          onClick={() => navigate("tarefas")}
-        />
-        <StatTile
-          icon={CalendarDays}
-          label={tr("Compromissos hoje")}
-          value={todayEvents.length}
-          sub={nextToday ? tr("Próximo às {time}", { time: formatTime(nextToday.startsAt) }) : tr("Agenda livre")}
-          tone="success"
-          onClick={() => navigate("agenda")}
-        />
-        <StatTile
-          icon={Code2}
-          label={tr("Projetos")}
-          value={projects.length}
-          sub={pendingChanges > 0 ? tr("{n} com alterações no Git", { n: pendingChanges }) : tr("Tudo commitado")}
-          tone="warning"
-          onClick={() => navigate("projetos")}
-        />
-        {businessMode && (
-          <StatTile
-            icon={Wallet}
-            label={tr("Manutenção mensal")}
-            value={formatCurrency(monthlyTotal) || formatCurrency(0)}
-            sub={trn(activeClients, "{n} cliente ativo", "{n} clientes ativos")}
-            tone="neutral"
-            onClick={() => navigate("clientes")}
-          />
-        )}
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {quickActions.map((a) => (
-          <Button key={a.label} variant="secondary" size="sm" onClick={a.run}>
-            <a.icon size={13} className="text-text-faint" /> {a.label}
-          </Button>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        {/* Agenda */}
+  const widgets: Record<DashboardWidgetId, ReactNode> = {
+    agenda: (
         <Card>
           <CardHeader
             title={tr("Agenda de hoje")}
@@ -317,8 +257,8 @@ export function Dashboard() {
             )}
           </CardContent>
         </Card>
-
-        {/* Tarefas */}
+    ),
+    tarefas: (
         <Card>
           <CardHeader
             title={tr("Tarefas")}
@@ -368,8 +308,8 @@ export function Dashboard() {
             )}
           </CardContent>
         </Card>
-
-        {/* Atividade */}
+    ),
+    atividade: (
         <Card>
           <CardHeader title={tr("Atividade")} icon={<GitCommitHorizontal size={12} />} />
           <CardContent>
@@ -406,11 +346,23 @@ export function Dashboard() {
             )}
           </CardContent>
         </Card>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        {/* Projetos recentes */}
-        <Card className={businessMode ? "xl:col-span-2" : "xl:col-span-3"}>
+    ),
+    foco: (
+        <Card>
+          <CardHeader
+            title={tr("Foco")}
+            icon={<Timer size={12} />}
+            action={
+              <Button variant="ghost" size="xs" onClick={() => setFocusDialog("history")}>{tr("Histórico")}</Button>
+            }
+          />
+          <CardContent>
+            <FocusCardBody />
+          </CardContent>
+        </Card>
+    ),
+    projetos: (
+        <Card>
           <CardHeader
             title={tr("Projetos recentes")}
             icon={<Code2 size={12} />}
@@ -469,10 +421,9 @@ export function Dashboard() {
             )}
           </CardContent>
         </Card>
-
-        {/* Financeiro (só no Modo Negócio) */}
-        {businessMode && (
-          <Card>
+    ),
+    cobrancas: (
+        <Card>
             <CardHeader
               title={tr("Cobranças (7 dias)")}
               icon={<Wallet size={12} />}
@@ -500,7 +451,96 @@ export function Dashboard() {
               )}
             </CardContent>
           </Card>
+    ),
+  };
+  const visibleWidgets = dashboardOrder(settings?.dashboard).filter((id) => !settings?.dashboard.hidden.includes(id) && (businessMode || id !== "cobrancas"));
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="flex items-center gap-4">
+          <ProfileAvatar size={54} className="shadow-card ring-2 ring-accent/30" />
+          <div>
+            <h1 className="text-[26px] font-semibold leading-tight tracking-tight text-text">
+              {greeting()}
+              {settings?.userName && (
+                <>
+                  {", "}
+                  <span className="bg-gradient-to-r from-accent to-accent-hover bg-clip-text text-transparent">{settings.userName}</span>
+                </>
+              )}
+            </h1>
+            <p className="mt-0.5 text-sm first-letter:uppercase text-text-muted">
+              {new Date().toLocaleDateString(getLocale(), { weekday: "long", day: "numeric", month: "long" })}
+              {" · "}
+              <span className="normal-case">
+                {trn(focusTasks.length, "{n} tarefa em foco", "{n} tarefas em foco")}
+                {" · "}
+                {trn(todayEvents.length, "{n} compromisso hoje", "{n} compromissos hoje")}
+              </span>
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => setCustomizeOpen(true)} title={tr("Personalizar o Início")}>
+            <Settings2 size={13} /> {tr("Personalizar")}
+          </Button>
+          <AppUsageButton />
+        </div>
+      </div>
+      <DashboardCustomizeDialog open={customizeOpen} onClose={() => setCustomizeOpen(false)} />
+
+      <div className={cn("grid grid-cols-2 gap-3", businessMode ? "xl:grid-cols-4" : "xl:grid-cols-3")}>
+        <StatTile
+          icon={CheckSquare}
+          label={tr("Tarefas em foco")}
+          value={focusTasks.length}
+          sub={overdue > 0 ? trn(overdue, "{n} atrasada", "{n} atrasadas") : trn(doneToday.length, "{n} concluída hoje", "{n} concluídas hoje")}
+          tone={overdue > 0 ? "danger" : "accent"}
+          onClick={() => navigate("tarefas")}
+        />
+        <StatTile
+          icon={CalendarDays}
+          label={tr("Compromissos hoje")}
+          value={todayEvents.length}
+          sub={nextToday ? tr("Próximo às {time}", { time: formatTime(nextToday.startsAt) }) : tr("Agenda livre")}
+          tone="success"
+          onClick={() => navigate("agenda")}
+        />
+        <StatTile
+          icon={Code2}
+          label={tr("Projetos")}
+          value={projects.length}
+          sub={pendingChanges > 0 ? tr("{n} com alterações no Git", { n: pendingChanges }) : tr("Tudo commitado")}
+          tone="warning"
+          onClick={() => navigate("projetos")}
+        />
+        {businessMode && (
+          <StatTile
+            icon={Wallet}
+            label={tr("Manutenção mensal")}
+            value={formatCurrency(monthlyTotal) || formatCurrency(0)}
+            sub={trn(activeClients, "{n} cliente ativo", "{n} clientes ativos")}
+            tone="neutral"
+            onClick={() => navigate("clientes")}
+          />
         )}
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {quickActions.map((a) => (
+          <Button key={a.label} variant="secondary" size="sm" onClick={a.run}>
+            <a.icon size={13} className="text-text-faint" /> {a.label}
+          </Button>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 xl:grid-flow-row-dense xl:grid-cols-3">
+        {visibleWidgets.map((id) => (
+          <div key={id} className={cn("min-w-0 [&>*]:h-full", WIDE_WIDGETS.has(id) && "xl:col-span-2")}>
+            {widgets[id]}
+          </div>
+        ))}
       </div>
     </div>
   );
