@@ -13,6 +13,7 @@ export const WIDGET_LABEL: Record<DashboardWidgetId, string> = {
   atividade: tm("Atividade"),
   foco: tm("Foco"),
   projetos: tm("Projetos recentes"),
+  automacoes: tm("Automações"),
   cobrancas: tm("Cobranças (7 dias)"),
 };
 

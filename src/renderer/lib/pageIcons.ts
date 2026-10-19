@@ -14,6 +14,7 @@ import {
   Sparkles,
   SquareTerminal,
   Users,
+  Workflow,
   type LucideIcon,
 } from "lucide-react";
 import type { Page } from "@/stores/useUIStore";
@@ -24,6 +25,7 @@ export const PAGE_ICONS: Record<Page, LucideIcon> = {
   ia: Bot,
   projetos: Code2,
   terminal: SquareTerminal,
+  automacoes: Workflow,
   arquivos: FolderOpen,
   editor: FileCode2,
   tarefas: CheckSquare,

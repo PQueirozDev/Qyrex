@@ -5,6 +5,7 @@ import { closeDb, getDb, getSettings, setBeforeMigrateHook } from "./database/db
 import { startAutoBackup, stopAutoBackup, writeBackup } from "./services/backupService.js";
 import { pauseOnQuit as pauseFocusOnQuit, recoverOnStartup as recoverFocus, setFocusHooks } from "./services/focusService.js";
 import { showNotification } from "./services/notificationService.js";
+import { markInterruptedRuns, setProgressListener as setAutomationProgress } from "./services/automationService.js";
 import { createLogger, initLogger } from "./logger.js";
 import { isProtocolAllowed } from "./security/commands.js";
 import { listProjects } from "./services/projectService.js";
@@ -318,6 +319,8 @@ app.whenReady().then(() => {
     },
   });
   recoverFocus();
+  markInterruptedRuns();
+  setAutomationProgress((run) => mainWindow?.webContents.send("automations:progress", run));
   log.info(`Qyrex ${app.getVersion()} iniciado${isDev ? " (dev)" : ""}`);
 
   // Sincronização do Google Calendar sob demanda: só se estiver conectado, e

@@ -29,6 +29,7 @@ const WhatsApp = lazy(() => import("@/pages/WhatsApp").then((m) => ({ default: m
 const PatchNotes = lazy(() => import("@/pages/PatchNotes").then((m) => ({ default: m.PatchNotes })));
 const Notion = lazy(() => import("@/pages/Notion").then((m) => ({ default: m.Notion })));
 const TerminalPage = lazy(() => import("@/pages/TerminalPage").then((m) => ({ default: m.TerminalPage })));
+const Automations = lazy(() => import("@/pages/Automations").then((m) => ({ default: m.Automations })));
 const EditorPage = lazy(() => import("@/pages/EditorPage").then((m) => ({ default: m.EditorPage })));
 
 function PageView({ page }: { page: Page }) {
@@ -42,6 +43,8 @@ function PageView({ page }: { page: Page }) {
       return null; // ficam sempre montados (ver PersistentPage): shells e edições não salvas sobrevivem à troca de página
     case "tarefas":
       return <Tasks />;
+    case "automacoes":
+      return <Automations />;
     case "arquivos":
       return <FilesPage />;
     case "configuracoes":

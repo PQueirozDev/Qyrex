@@ -59,12 +59,19 @@ export async function runCommand(input: {
   }
 
   log.info(`Executando comando confirmado pelo usuário (risco: ${assessment.risk})`);
-  // O comando é um único argumento para o PowerShell: foi exibido ao usuário
-  // exatamente assim e confirmado por ele. Não há concatenação com outros dados.
+  return executeConfirmed(input.command, cwd);
+}
+
+/**
+ * Roda um comando JÁ confirmado pelo usuário, no PowerShell, na pasta `cwd`
+ * (já validada por quem chama). O comando é um único argumento: foi exibido ao
+ * usuário exatamente assim. Não há concatenação com outros dados.
+ */
+export async function executeConfirmed(command: string, cwd: string, signal?: AbortSignal): Promise<CommandRunResult> {
   const result = await runCapture(
     EXTERNAL_COMMANDS.powershell,
-    ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", input.command],
-    { cwd, timeoutMs: 5 * 60_000, maxOutputBytes: 200_000 }
+    ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", command],
+    { cwd, timeoutMs: 5 * 60_000, maxOutputBytes: 200_000, signal }
   );
   return { exitCode: result.code, stdout: result.stdout, stderr: result.stderr, timedOut: result.timedOut };
 }

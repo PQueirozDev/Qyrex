@@ -33,6 +33,7 @@ import * as usageService from "../services/usageService.js";
 import * as appUsageService from "../services/appUsageService.js";
 import * as backupService from "../services/backupService.js";
 import * as focusService from "../services/focusService.js";
+import * as automationService from "../services/automationService.js";
 import { getDiscordStatus, setDiscordActivity } from "../integrations/discord.js";
 
 const log = createLogger("ipc");
@@ -116,6 +117,23 @@ export function registerIpcHandlers(): void {
     const target = v.parse(v.filePath, dir);
     return updateSettings({ allowedProjectDirs: getSettings().allowedProjectDirs.filter((d) => d !== target) });
   });
+
+  // --- Automações -------------------------------------------------------------------
+  handle("automations:list", (_e, projectId) =>
+    automationService.listAutomations(projectId === undefined || projectId === null ? undefined : v.parse(v.id, projectId))
+  );
+  handle("automations:create", (_e, input) => automationService.createAutomation(v.parse(v.automationCreate, input)));
+  handle("automations:update", (_e, id, patch) => automationService.updateAutomation(v.parse(v.id, id), v.parse(v.automationUpdate, patch)));
+  handle("automations:delete", (_e, id) => automationService.deleteAutomation(v.parse(v.id, id)));
+  handle("automations:run", (_e, id, confirmed) => {
+    // Toda execução começa por um clique + confirmação na UI. Nunca automática.
+    requireConfirmation(confirmed);
+    return automationService.runAutomation(v.parse(v.id, id));
+  });
+  handle("automations:cancel", (_e, id) => automationService.cancelRun(v.parse(v.id, id)));
+  handle("automations:runs", (_e, id) => automationService.listRuns(v.parse(v.id, id)));
+  handle("automations:recentRuns", () => automationService.recentRuns());
+  handle("automations:suggest", (_e, projectId) => automationService.suggestAutomations(v.parse(v.id, projectId)));
 
   // --- Foco ------------------------------------------------------------------------
   handle("focus:state", () => focusService.getState());

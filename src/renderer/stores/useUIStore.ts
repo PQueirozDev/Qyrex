@@ -5,6 +5,7 @@ export type Page =
   | "ia"
   | "projetos"
   | "terminal"
+  | "automacoes"
   | "arquivos"
   | "editor"
   | "agenda"
@@ -22,6 +23,7 @@ export const PAGES: Page[] = [
   "ia",
   "projetos",
   "terminal",
+  "automacoes",
   "arquivos",
   "editor",
   "agenda",

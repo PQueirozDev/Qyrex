@@ -19,6 +19,7 @@ import {
   CaseSensitive,
   Archive,
   ArchiveRestore,
+  Workflow,
   Timer,
   ImagePlus,
   ScanSearch,
@@ -462,6 +463,8 @@ function ProjectDrawer({
               <SquareTerminal size={13} />{" "}{tr("Terminal")}</Button>
             <Button size="sm" variant="secondary" onClick={() => void open(project, "explorer")}>
               <FolderOpen size={13} />{" "}{tr("Explorer")}</Button>
+            <Button size="sm" variant="secondary" onClick={() => navigate("automacoes", project.id)} title={tr("Automações deste projeto")}>
+              <Workflow size={13} />{" "}{tr("Automações")}</Button>
             {project.githubUrl && (
               <Button size="sm" variant="secondary" onClick={() => void open(project, "github")}>
                 <Github size={13} />{" "}{tr("GitHub")}</Button>

@@ -532,6 +532,18 @@ export const workspaceMock: WorkspaceApi = {
     exportToFile: () => fail(DEMO_ONLY),
     readImport: () => fail(DEMO_ONLY),
   },
+  automations: {
+    list: () => ok([], 20),
+    create: () => fail(DEMO_ONLY),
+    update: () => fail(DEMO_ONLY),
+    delete: () => ok(undefined),
+    run: () => fail(DEMO_ONLY),
+    cancel: () => ok(false),
+    runs: () => ok([]),
+    recentRuns: () => ok([]),
+    suggest: () => ok([{ name: "Rodar testes", description: null, steps: [{ kind: "command", command: "npm test" }] }]),
+    onProgress: () => () => undefined,
+  },
   focus: {
     state: () => ok(focusState(), 10),
     start: async (input) => {

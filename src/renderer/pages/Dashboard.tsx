@@ -16,6 +16,7 @@ import {
   SquareTerminal,
   Timer,
   UserPlus,
+  Workflow,
   Wallet,
 } from "lucide-react";
 import type { CalendarEvent, DashboardWidgetId, GitCommit, RecentItem } from "@shared/types";
@@ -39,6 +40,43 @@ import { AppUsageButton } from "@/components/AppUsage";
 import { FocusCardBody } from "@/components/Focus";
 import { DashboardCustomizeDialog, dashboardOrder } from "@/components/DashboardCustomize";
 import { useFocusStore } from "@/stores/useFocusStore";
+import { RUN_STATUS } from "@/components/AutomationRun";
+import type { AutomationRun } from "@shared/types";
+
+/** Últimas execuções de automações (dados reais do histórico). */
+function AutomationRunsList() {
+  const navigate = useUIStore((s) => s.navigate);
+  const [runs, setRuns] = useState<(AutomationRun & { automationName: string; projectId: string })[] | null>(null);
+  useEffect(() => {
+    const load = () => void attempt(window.workspace.automations.recentRuns()).then((r) => setRuns(r ?? []));
+    load();
+    return window.workspace.automations.onProgress((r) => r.status !== "running" && load());
+  }, []);
+  if (runs === null) return <LoadingRows rows={2} />;
+  if (runs.length === 0) {
+    return (
+      <p className="py-3 text-sm text-text-faint">
+        {tr("Nenhuma automação executada ainda.")}{" "}
+        <button className="text-accent hover:underline" onClick={() => navigate("automacoes")}>
+          {tr("Criar uma")}
+        </button>
+      </p>
+    );
+  }
+  return (
+    <ul className="space-y-1">
+      {runs.map((r) => (
+        <li key={r.id}>
+          <button onClick={() => navigate("automacoes", r.projectId)} className="flex w-full items-center gap-2 rounded-md px-1 py-1.5 text-left hover:bg-bg-hover">
+            <span className="min-w-0 flex-1 truncate text-sm text-text">{r.automationName}</span>
+            <span className="shrink-0 text-[11px] text-text-faint">{timeAgo(r.startedAt)}</span>
+            <Badge tone={RUN_STATUS[r.status].tone}>{tr(RUN_STATUS[r.status].label)}</Badge>
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 /** Widgets que ocupam duas colunas na tela larga. */
 const WIDE_WIDGETS = new Set<DashboardWidgetId>(["projetos"]);
@@ -358,6 +396,20 @@ export function Dashboard() {
           />
           <CardContent>
             <FocusCardBody />
+          </CardContent>
+        </Card>
+    ),
+    automacoes: (
+        <Card>
+          <CardHeader
+            title={tr("Automações")}
+            icon={<Workflow size={12} />}
+            action={
+              <Button variant="ghost" size="xs" onClick={() => navigate("automacoes")}>{tr("Abrir")}</Button>
+            }
+          />
+          <CardContent>
+            <AutomationRunsList />
           </CardContent>
         </Card>
     ),

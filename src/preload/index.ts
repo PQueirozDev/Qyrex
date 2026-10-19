@@ -10,6 +10,10 @@ import type {
   AppCommand,
   AppSettings,
   AttachedFileRef,
+  Automation,
+  AutomationRun,
+  AutomationStep,
+  AutomationSuggestion,
   BackupInfo,
   CalendarEvent,
   Client,
@@ -92,6 +96,22 @@ const api = {
     exportToFile: () => invoke<string | null>("settings:export"),
     /** Lê (sem aplicar) um JSON exportado; a UI confirma e aplica com `update(patch)`. */
     readImport: () => invoke<SettingsImport | null>("settings:readImport"),
+  },
+  automations: {
+    list: (projectId?: string) => invoke<Automation[]>("automations:list", projectId),
+    create: (input: { name: string; description?: string | null; projectId: string; steps: AutomationStep[]; enabled?: boolean }) =>
+      invoke<Automation>("automations:create", input),
+    update: (id: string, patch: Partial<{ name: string; description: string | null; projectId: string; steps: AutomationStep[]; enabled: boolean }>) =>
+      invoke<Automation>("automations:update", id, patch),
+    delete: (id: string) => invoke<void>("automations:delete", id),
+    /** Só depois do diálogo que mostra os passos e o risco de cada um. */
+    run: (id: string, confirmed: true) => invoke<AutomationRun>("automations:run", id, confirmed),
+    cancel: (id: string) => invoke<boolean>("automations:cancel", id),
+    runs: (id: string) => invoke<AutomationRun[]>("automations:runs", id),
+    recentRuns: () => invoke<(AutomationRun & { automationName: string; projectId: string })[]>("automations:recentRuns"),
+    /** Modelos a partir dos scripts do package.json e do git do projeto. */
+    suggest: (projectId: string) => invoke<AutomationSuggestion[]>("automations:suggest", projectId),
+    onProgress: (callback: (run: AutomationRun) => void) => subscribe<AutomationRun>("automations:progress", callback),
   },
   focus: {
     state: () => invoke<FocusState>("focus:state"),

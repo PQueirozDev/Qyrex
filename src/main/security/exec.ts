@@ -18,6 +18,8 @@ export interface ExecOptions {
   timeoutMs?: number;
   maxOutputBytes?: number;
   env?: NodeJS.ProcessEnv;
+  /** Encerra o processo (ex.: cancelar uma automação). */
+  signal?: AbortSignal;
 }
 
 function assertNoShellMetaInExecutable(command: string): void {
@@ -168,6 +170,9 @@ export function runCapture(
     let stdout = "";
     let stderr = "";
     let timedOut = false;
+    const onAbort = () => child.kill();
+    if (options.signal?.aborted) child.kill();
+    else options.signal?.addEventListener("abort", onAbort, { once: true });
     const timer = options.timeoutMs
       ? setTimeout(() => {
           timedOut = true;
@@ -184,10 +189,12 @@ export function runCapture(
 
     child.on("error", (err) => {
       if (timer) clearTimeout(timer);
+      options.signal?.removeEventListener("abort", onAbort);
       reject(err);
     });
     child.on("close", (code) => {
       if (timer) clearTimeout(timer);
+      options.signal?.removeEventListener("abort", onAbort);
       resolve({ stdout, stderr, code, timedOut });
     });
   });

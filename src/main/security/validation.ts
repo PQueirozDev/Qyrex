@@ -116,6 +116,29 @@ export const settingsPatch = z
   })
   .partial();
 
+const automationStep = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("command"), command: z.string().trim().min(1, "Comando vazio").max(2000) }),
+  z.object({ kind: z.literal("open"), target: z.enum(["vscode", "explorer", "terminal"]) }),
+]);
+
+export const automationCreate = z.object({
+  name: nonEmpty(120),
+  description: z.string().trim().max(1000).nullable().optional().transform((v) => (v ? v : null)),
+  projectId: id,
+  steps: z.array(automationStep).min(1, "Adicione pelo menos um passo").max(20),
+  enabled: z.boolean().optional(),
+});
+
+export const automationUpdate = z
+  .object({
+    name: nonEmpty(120),
+    description: z.string().trim().max(1000).nullable().transform((v) => (v ? v : null)),
+    projectId: id,
+    steps: z.array(automationStep).min(1, "Adicione pelo menos um passo").max(20),
+    enabled: z.boolean(),
+  })
+  .partial();
+
 export const focusStart = z.object({
   minutes: z.number().int().min(1).max(240),
   projectId: id.nullable().optional(),

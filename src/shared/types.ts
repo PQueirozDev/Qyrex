@@ -420,6 +420,54 @@ export interface SearchResults {
 
 export type RecentItemType = "project" | "file" | "task_completed" | "client" | "commit" | "focus" | "automation";
 
+// --- Automações -------------------------------------------------------------------
+
+export type AutomationStep =
+  | { kind: "command"; command: string }
+  | { kind: "open"; target: "vscode" | "explorer" | "terminal" };
+
+export interface Automation {
+  id: string;
+  name: string;
+  description: string | null;
+  projectId: string;
+  /** Passos com o risco recalculado pelo main a cada leitura. */
+  steps: (AutomationStep & { assessment: CommandAssessment })[];
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+  lastRun: AutomationRun | null;
+}
+
+export type AutomationStepStatus = "pending" | "running" | "success" | "failed" | "skipped" | "cancelled";
+
+export interface AutomationStepResult {
+  step: AutomationStep;
+  status: AutomationStepStatus;
+  exitCode: number | null;
+  /** Fim da saída (os últimos ~20 mil caracteres). */
+  stdout: string;
+  stderr: string;
+  durationMs: number;
+  risk: CommandRisk;
+}
+
+export interface AutomationRun {
+  id: string;
+  automationId: string;
+  startedAt: string;
+  finishedAt: string | null;
+  status: "running" | "success" | "failed" | "cancelled";
+  steps: AutomationStepResult[];
+  error: string | null;
+}
+
+export interface AutomationSuggestion {
+  name: string;
+  description: string | null;
+  steps: AutomationStep[];
+}
+
 // --- Foco ------------------------------------------------------------------------
 
 export type FocusStatus = "running" | "paused" | "completed" | "cancelled";
@@ -455,7 +503,7 @@ export interface FocusSummary {
   dailyGoalMinutes: number;
 }
 
-export const DASHBOARD_WIDGETS = ["agenda", "tarefas", "atividade", "foco", "projetos", "cobrancas"] as const;
+export const DASHBOARD_WIDGETS = ["agenda", "tarefas", "atividade", "foco", "projetos", "automacoes", "cobrancas"] as const;
 export type DashboardWidgetId = (typeof DASHBOARD_WIDGETS)[number];
 
 export interface DashboardPrefs {

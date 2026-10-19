@@ -30,6 +30,7 @@ const SECTIONS: { title: string | null; business?: boolean; items: NavItem[] }[]
     items: [
       item("projetos", tr("Projetos"), "Ctrl Shift P"),
       item("terminal", tr("Terminal")),
+      item("automacoes", tr("Automações")),
       item("arquivos", tr("Arquivos")),
       item("editor", tr("Editor")),
       item("tarefas", tr("Tarefas")),
