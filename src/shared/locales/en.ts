@@ -1363,4 +1363,7 @@ export const EN: Record<string, string> = {
   "Nenhuma automação executada ainda.": "No automation run yet.",
   "Criar uma": "Create one",
   "Automações deste projeto": "This project's automations",
+
+  // --- Abertura (2.0) --------------------------------------------------------------
+  "Seu espaço de trabalho de dev": "Your dev workspace",
 };

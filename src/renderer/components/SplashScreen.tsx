@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import logoUrl from "@/assets/logo.svg";
+import { tr } from "@/lib/i18n";
 
 /** Espelho da preferência no localStorage: decide antes das configurações carregarem. */
 const SPLASH_KEY = "qrz.splash";
@@ -18,8 +19,10 @@ function storedEnabled(): boolean {
 }
 
 /**
- * Animação de abertura: a capivara entra com mola, o nome sobe letra a letra e
- * a tela se dissolve (blur + fade) no app quando as configurações carregam.
+ * Animação de abertura: a capivara cai e "pousa" (sombra e leve achatamento),
+ * com brilho laranja e vapor em pixels; o nome sobe letra a letra por uma
+ * máscara e a barrinha acompanha o carregamento real. A tela se dissolve no
+ * app quando as configurações carregam.
  * Desligável em Configurações → Aparência (a preferência manda, não o "reduzir
  * movimento" do Windows, que otimizadores costumam ligar).
  */
@@ -61,58 +64,120 @@ export function SplashScreen() {
       {visible && (
         <motion.div
           key="splash"
-          className="drag-region fixed inset-0 z-[200] flex flex-col items-center justify-center gap-4 bg-bg"
+          className="drag-region fixed inset-0 z-[200] flex items-center justify-center bg-[rgb(0_0_0)]"
           initial={{ opacity: 1 }}
-          exit={{ opacity: 0, filter: "blur(10px)", scale: 1.04 }}
-          transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+          // O fundo só some depois que o cartão já cobriu a tela: o app aparece por inteiro.
+          exit={{ opacity: 0, transition: { delay: 0.55, duration: 0.35, ease: "easeOut" } }}
           aria-hidden
           data-splash
         >
-          {started && <SplashContent />}
+          {/* Cartão pequeno no centro que, na saída, cresce até virar a janela do app. */}
+          <motion.div
+            className="relative flex items-center justify-center overflow-hidden border border-border-subtle bg-bg shadow-pop"
+            initial={{ width: 300, height: 300, borderRadius: 28, opacity: 0, scale: 0.94 }}
+            animate={{ width: 300, height: 300, borderRadius: 28, opacity: 1, scale: 1 }}
+            exit={{ width: "100vw", height: "100vh", borderRadius: 0, transition: { duration: 0.6, ease: [0.65, 0, 0.35, 1] } }}
+            transition={{ duration: 0.45, ease: "easeOut" }}
+          >
+            {started && <SplashContent ready={settings !== null} />}
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
   );
 }
 
-function SplashContent() {
+/** Pixels de vapor (o onsen do site): sobem atrás da capivara e somem. */
+const STEAM = [
+  { x: -22, delay: 0.9, size: 4 },
+  { x: -8, delay: 1.5, size: 3 },
+  { x: 10, delay: 1.15, size: 4 },
+  { x: 24, delay: 1.8, size: 3 },
+];
+
+function SplashContent({ ready }: { ready: boolean }) {
   return (
-    <>
-      <motion.img
-        src={logoUrl}
-        alt=""
-        draggable={false}
-        className="h-20 w-20 [image-rendering:pixelated] drop-shadow-[0_8px_24px_rgb(255_154_60/0.35)]"
-        initial={{ opacity: 0, scale: 0.7, y: 12 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 120, damping: 12, mass: 1.2 }}
+    <motion.div
+      className="relative flex flex-col items-center"
+      exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.2 } }}
+    >
+      {/* Brilho laranja da marca que acende atrás da capivara. */}
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute -top-8 h-36 w-36 rounded-full bg-[radial-gradient(circle,rgb(255_154_60/0.28),transparent_65%)] blur-xl"
+        initial={{ opacity: 0, scale: 0.6 }}
+        animate={{ opacity: [0, 1, 0.75], scale: [0.6, 1.1, 1] }}
+        transition={{ duration: 1.6, ease: "easeOut", times: [0, 0.55, 1] }}
       />
-      <div className="flex text-2xl font-semibold tracking-tight text-text">
+
+      <div className="relative h-16 w-16">
+        {STEAM.map((p, i) => (
+          <motion.span
+            key={i}
+            aria-hidden
+            className="absolute bottom-full left-1/2 bg-text/35"
+            style={{ width: p.size, height: p.size, marginLeft: p.x }}
+            initial={{ opacity: 0, y: 0 }}
+            animate={{ opacity: [0, 0.7, 0], y: -30 }}
+            transition={{ delay: p.delay, duration: 1.8, repeat: Infinity, repeatDelay: 0.6, ease: "easeOut" }}
+          />
+        ))}
+        <motion.img
+          src={logoUrl}
+          alt=""
+          draggable={false}
+          className="relative h-16 w-16 [image-rendering:pixelated] drop-shadow-[0_10px_28px_rgb(255_154_60/0.35)]"
+          initial={{ opacity: 0, y: -28 }}
+          animate={{ opacity: 1, y: [-28, 0, -4, 0], scaleY: [1, 0.9, 1.03, 1], scaleX: [1, 1.08, 0.98, 1] }}
+          transition={{ duration: 1.1, times: [0, 0.45, 0.7, 1], ease: "easeOut", opacity: { duration: 0.3 } }}
+          style={{ originY: 1 }}
+        />
+        {/* Sombra que encolhe e cresce com a queda: dá a sensação de pouso. */}
+        <motion.span
+          aria-hidden
+          className="absolute -bottom-1 left-1/2 h-1.5 w-12 -translate-x-1/2 rounded-[50%] bg-black/35 blur-[3px]"
+          initial={{ opacity: 0, scaleX: 0.3 }}
+          animate={{ opacity: [0, 0.9, 0.6, 0.7], scaleX: [0.3, 1.1, 0.85, 1] }}
+          transition={{ duration: 1.1, times: [0, 0.45, 0.7, 1], ease: "easeOut" }}
+        />
+      </div>
+
+      {/* Nome: cada letra sobe de dentro de uma "fresta" (máscara), em sequência. */}
+      <div className="mt-4 flex overflow-hidden text-[22px] font-semibold leading-tight tracking-tight text-text">
         {NAME.split("").map((letter, i) => (
           <motion.span
             key={i}
-            initial={{ opacity: 0, y: 10, filter: "blur(4px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            transition={{ delay: 0.6 + i * 0.12, type: "spring", stiffness: 160, damping: 18 }}
+            initial={{ y: "110%" }}
+            animate={{ y: "0%" }}
+            transition={{ delay: 0.75 + i * 0.07, type: "spring", stiffness: 260, damping: 24 }}
           >
             {letter}
           </motion.span>
         ))}
       </div>
-      {/* Barrinha que enche enquanto o app carrega por trás. */}
+      <motion.p
+        className="mt-0.5 text-[11px] tracking-wide text-text-faint"
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.3, duration: 0.5 }}
+      >
+        {tr("Seu espaço de trabalho de dev")}
+      </motion.p>
+
+      {/* Barrinha ligada ao carregamento real: anda até ~85% e só completa quando o app está pronto. */}
       <motion.div
-        className="h-[3px] w-24 overflow-hidden rounded-full bg-bg-hover"
+        className="mt-4 h-[3px] w-24 overflow-hidden rounded-full bg-bg-hover"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.1, duration: 0.3 }}
       >
         <motion.div
-          className="h-full rounded-full bg-accent"
+          className="h-full rounded-full bg-gradient-to-r from-accent to-[#ff9a3c]"
           initial={{ width: "0%" }}
-          animate={{ width: "100%" }}
-          transition={{ delay: 1.2, duration: 1.3, ease: [0.65, 0, 0.35, 1] }}
+          animate={{ width: ready ? "100%" : "85%" }}
+          transition={ready ? { duration: 0.5, ease: "easeOut" } : { delay: 1.2, duration: 1.6, ease: [0.65, 0, 0.35, 1] }}
         />
       </motion.div>
-    </>
+    </motion.div>
   );
 }
