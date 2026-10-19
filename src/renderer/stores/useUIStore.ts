@@ -78,16 +78,28 @@ interface UIState {
   toasts: Toast[];
   confirmState: Pending<boolean, ConfirmOptions> | null;
   promptState: Pending<string | null, PromptOptions> | null;
+  /** Modo "só terminais": na página Terminal, esconde a barra lateral e o cabeçalho. */
+  terminalOnly: boolean;
 
   navigate: (page: Page, param?: string | null) => void;
   setPaletteOpen: (open: boolean) => void;
   setQuickTaskOpen: (open: boolean) => void;
   setOnline: (online: boolean) => void;
+  setTerminalOnly: (on: boolean) => void;
   pushToast: (kind: Toast["kind"], message: string) => void;
   dismissToast: (id: number) => void;
 }
 
 let toastId = 0;
+
+const TERMINAL_ONLY_KEY = "qrz.terminalOnly";
+function readTerminalOnly(): boolean {
+  try {
+    return localStorage.getItem(TERMINAL_ONLY_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
 
 export const useUIStore = create<UIState>((set, get) => ({
   page: "inicio",
@@ -98,11 +110,20 @@ export const useUIStore = create<UIState>((set, get) => ({
   toasts: [],
   confirmState: null,
   promptState: null,
+  terminalOnly: readTerminalOnly(),
 
   navigate: (page, param = null) => set({ page, pageParam: param }),
   setPaletteOpen: (open) => set({ paletteOpen: open }),
   setQuickTaskOpen: (open) => set({ quickTaskOpen: open }),
   setOnline: (online) => set({ online }),
+  setTerminalOnly: (on) => {
+    try {
+      localStorage.setItem(TERMINAL_ONLY_KEY, on ? "1" : "0");
+    } catch {
+      // sem storage: vale só nesta sessão
+    }
+    set({ terminalOnly: on });
+  },
   pushToast: (kind, message) => {
     const id = ++toastId;
     set({ toasts: [...get().toasts.slice(-3), { id, kind, message }] });

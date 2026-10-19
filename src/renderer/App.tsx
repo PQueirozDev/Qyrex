@@ -98,6 +98,7 @@ const FULL_BLEED: Page[] = ["ia", "terminal", "editor", "notion"];
 
 export function App() {
   const page = useUIStore((s) => s.page);
+  const terminalOnlyPref = useUIStore((s) => s.terminalOnly);
   const navigate = useUIStore((s) => s.navigate);
   const setPaletteOpen = useUIStore((s) => s.setPaletteOpen);
   const quickTaskOpen = useUIStore((s) => s.quickTaskOpen);
@@ -208,12 +209,14 @@ export function App() {
   }
 
   const fullBleed = FULL_BLEED.includes(page);
+  // Modo "só terminais": a página Terminal ocupa a janela inteira.
+  const terminalOnly = terminalOnlyPref && page === "terminal";
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-bg text-text">
-      <Sidebar />
+      {!terminalOnly && <Sidebar />}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <Header />
+        {!terminalOnly && <Header />}
         <UpdateBanner />
         <main className={fullBleed ? "min-h-0 flex-1 overflow-hidden" : "app-ambient flex-1 overflow-y-auto"}>
           {page !== "terminal" && page !== "editor" && (

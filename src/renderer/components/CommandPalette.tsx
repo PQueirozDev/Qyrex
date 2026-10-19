@@ -77,6 +77,7 @@ export function CommandPalette() {
   const setQuickTaskOpen = useUIStore((s) => s.setQuickTaskOpen);
   const { projects: allProjects, loaded: projectsLoaded, load: loadProjects, open: openProject } = useProjectsStore();
   const projects = useMemo(() => allProjects.filter((p) => !p.archivedAt), [allProjects]);
+  const terminalOnly = useUIStore((s) => s.terminalOnly);
   const { clients, loaded: clientsLoaded, load: loadClients } = useClientsStore();
   const { settings, update: updateSettings } = useSettingsStore();
   const businessMode = useBusinessMode();
@@ -125,6 +126,18 @@ export function CommandPalette() {
     const actions: Command[] = [
       { id: "new-task", group: "Ações", label: tr("Nova tarefa"), hint: tr("Ctrl Shift T"), icon: Plus, run: act(() => setQuickTaskOpen(true)) },
       { id: "new-project", group: "Ações", label: tr("Novo projeto"), icon: Code2, run: act(() => navigate("projetos", "new")) },
+      {
+        id: "terminal-only",
+        group: "Ações",
+        label: terminalOnly ? tr("Mostrar barra lateral") : tr("Só terminais (esconde a barra lateral)"),
+        keywords: "tela cheia foco terminal sidebar",
+        icon: SquareTerminal,
+        run: act(() => {
+          const ui = useUIStore.getState();
+          ui.setTerminalOnly(!ui.terminalOnly);
+          if (!ui.terminalOnly) navigate("terminal");
+        }),
+      },
       { id: "focus", group: "Ações", label: tr("Iniciar sessão de foco"), keywords: "pomodoro timer temporizador foco", icon: Timer, run: act(() => useFocusStore.getState().setDialog("start")) },
       { id: "focus-history", group: "Ações", label: tr("Histórico de foco"), keywords: "pomodoro tempo produtividade", icon: Timer, run: act(() => useFocusStore.getState().setDialog("history")) },
       { id: "new-client", group: "Ações", label: tr("Novo cliente"), icon: UserPlus, business: true, run: act(() => navigate("clientes", "new")) },
@@ -182,7 +195,7 @@ export function CommandPalette() {
     }));
 
     return [...actions, ...projectCommands, ...clientCommands, ...navCommands].filter((c) => businessMode || !c.business);
-  }, [projects, clients, businessMode, lastProject, settings?.theme, navigate, openProject, setOpen, setQuickTaskOpen, updateSettings]);
+  }, [projects, clients, businessMode, lastProject, settings?.theme, navigate, openProject, setOpen, setQuickTaskOpen, updateSettings, terminalOnly]);
 
   const visible = useMemo(() => {
     const q = query.trim();

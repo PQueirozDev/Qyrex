@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
-import { ExternalLink, LayoutGrid, Plus, Rows2, SquareTerminal, X } from "lucide-react";
+import { ExternalLink, LayoutGrid, PanelLeftClose, PanelLeftOpen, Plus, Rows2, SquareTerminal, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState, Spinner } from "@/components/ui/primitives";
@@ -339,6 +339,8 @@ function TerminalView({
 
 /** `visible`: a página fica montada escondida quando o usuário está em outra aba (ver App). */
 export function TerminalPage({ visible = true }: { visible?: boolean }) {
+  const terminalOnly = useUIStore((s) => s.terminalOnly);
+  const setTerminalOnly = useUIStore((s) => s.setTerminalOnly);
   const pageParam = useUIStore((s) => s.pageParam);
   const navigate = useUIStore((s) => s.navigate);
   const { projects, loaded, load } = useProjectsStore();
@@ -480,6 +482,15 @@ export function TerminalPage({ visible = true }: { visible?: boolean }) {
           ))}
         </div>
       )}
+      <button
+        onClick={() => setTerminalOnly(!terminalOnly)}
+        title={terminalOnly ? tr("Mostrar barra lateral") : tr("Só terminais (esconde a barra lateral)")}
+        aria-label={terminalOnly ? tr("Mostrar barra lateral") : tr("Só terminais (esconde a barra lateral)")}
+        aria-pressed={terminalOnly}
+        className={cn("rounded-md border border-border-subtle p-1.5 transition-colors", terminalOnly ? "bg-bg-hover text-text" : "text-text-faint hover:text-text")}
+      >
+        {terminalOnly ? <PanelLeftOpen size={13} /> : <PanelLeftClose size={13} />}
+      </button>
     </div>
   );
 
@@ -513,7 +524,8 @@ export function TerminalPage({ visible = true }: { visible?: boolean }) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-3 border-b border-border-subtle px-4 py-2">
+      {/* No modo só terminais esta barra vira a barra de título: arrasta a janela e deixa espaço para minimizar/fechar. */}
+      <div className={cn("flex items-center gap-3 border-b border-border-subtle px-4", terminalOnly ? "drag-region titlebar-safe h-12" : "py-2")}>
         <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
           {tabs.map((t) => (
             <div

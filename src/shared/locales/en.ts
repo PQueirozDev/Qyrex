@@ -1455,4 +1455,8 @@ export const EN: Record<string, string> = {
   "Última sincronização deste PC: {date}": "This PC's last sync: {date}",
   "Este PC ainda não sincronizou.": "This PC has not synced yet.",
   "Não vão para a nuvem: pastas autorizadas, integrações e chaves, comandos liberados e tempo de uso.": "Not sent to the cloud: authorized folders, integrations and keys, allowed commands and usage time.",
+
+  // --- Só terminais (2.0) ----------------------------------------------------------
+  "Mostrar barra lateral": "Show sidebar",
+  "Só terminais (esconde a barra lateral)": "Terminals only (hides the sidebar)",
 };
