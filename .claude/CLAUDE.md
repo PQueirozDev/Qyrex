@@ -6,9 +6,9 @@ Sempre responda e comente o código em **português do Brasil**, com acentuaçã
 
 ## Estado atual (v2.0.0, ainda não publicada)
 
-`npm run check` passa (typecheck, lint sem warnings e 280 testes; 3 pulados). A auditoria e o plano do 2.0 estão em `docs/AUDITORIA_QYREX.md`.
+`npm run check` passa (typecheck, lint sem warnings e 285 testes; 3 pulados). E2E: 24/26 (Notion e Terminal falham igual na 1.13.0 neste PC: instabilidade do ambiente, não regressão). A auditoria e o plano do 2.0 estão em `docs/AUDITORIA_QYREX.md`.
 
-### Qyrex 2.0 (migrations 012–017)
+### Qyrex 2.0 (migrations 012–017; sincronização sem migration)
 - **Backup** (`services/backupService.ts`, 012): `<userData>/backups/<id>/` com `workspace.sqlite` (VACUUM INTO, `journal_mode=DELETE`), `files/` (avatar, ícones) e `manifest.json` (migrations, tamanho, SHA-256). A pasta só ganha o nome final depois do `integrity_check`; poda só depois. Automático (prefs `backup`, padrão 1×/dia, guarda 10) e "antes de migrar" (`setBeforeMigrateHook` em `db.ts`, ligado no `index.ts`; `getDb` tem trava `opening` contra recursão). Restaurar: copia o backup para `.restore-<id>`, faz backup "pre-restore", `replaceDatabaseFile` migra a CÓPIA antes de trocar e volta o `.previous` se não abrir; recusado com automação rodando. Exportar/importar só as chaves `PORTABLE_KEYS` (sem pastas, sem segredos), aplicadas pelo `settings:update`.
 - **Projetos** (013): `status` (ativo/pausado/concluido) e `archived_at`. Arquivado não consulta git, sai do Início/paleta/bandeja.
 - **Git** (`gitService.ts`): status com `-z` + `core.quotepath=false` (nomes com espaço/acento), `GIT_LITERAL_PATHSPECS=1`, diff com `--no-ext-diff --no-textconv`, arquivo novo lido via allowlist. Commit dos arquivos marcados (`files`), branches (trocar é recusado com alterações rastreadas), fetch, `push -u origin <branch>` sem upstream (nunca `--force`), conflitos e merge/rebase em andamento. UI em `components/GitPanel.tsx`.
@@ -16,6 +16,11 @@ Sempre responda e comente o código em **português do Brasil**, com acentuaçã
 - **Início** (015): widgets `DASHBOARD_WIDGETS` com ordem/ocultos em `settings.dashboard` (`components/DashboardCustomize.tsx`). Widget novo entra sozinho no fim.
 - **Automações** (`automationService.ts`, 016): passos `command` (PowerShell via `commandService.executeConfirmed`) ou `open` (vscode/explorer/terminal). Sem agendamento; `automations:run` exige `confirmed`; risco recalculado no main a cada leitura; para no primeiro erro; 5 min por comando; cancelar mata a árvore (`killTree` em `exec.ts`). Histórico (30/automação, fim da saída). Página `pages/Automations.tsx`, diálogo `components/AutomationRun.tsx`.
 - **Prompts** (`promptService.ts`, 017) + modelos fixos em `components/PromptLibrary.tsx`; inserir só preenche o campo.
+- **Sincronização** (`syncService.ts`): pasta da nuvem (`<pasta>/Qyrex-sync/latest.json` + `snapshots/<rev>.qyx`), estado local em `<userData>/sync.json` (fora do banco). Cópia sem `LOCAL_TABLES`/`LOCAL_SETTINGS` + VACUUM, cifrada (AES-256-GCM, scrypt, senha no cofre como `sync_passphrase`). Estado por revisão + `contentHash` lógico; conflito só com escolha do usuário; receber exige `confirmed`, faz backup `pre-sync` e reaplica os dados locais. Nunca automático.
+- **Só terminais**: `useUIStore.terminalOnly` (localStorage `qrz.terminalOnly`), vale só na página Terminal; a barra de abas vira barra de título (`drag-region titlebar-safe`).
+- **Build**: `scripts/vite-monaco-workers.ts` (nos dois configs do Vite) remove as cópias de workers que o Monaco declarava e nunca eram usadas; falha o build se o formato do Monaco mudar.
+- **Mini player**: o equalizador tem alturas fixas e `motion-reduce:animate-none` (a regra global de reduzir movimento achatava as barras).
+- **Linux**: fora deste ciclo por decisão do usuário; não declarar suporte.
 - **Abertura**: só o símbolo no centro (sem cartão) e, na saída, um círculo se abre a partir dele (máscara `--hole`); barrinha ligada ao carregamento real.
 - Verificação visual: o E2E (`npm run e2e`) cobre os fluxos antigos; os novos foram conferidos com um roteiro CDP no mesmo molde (perfil temporário).
 

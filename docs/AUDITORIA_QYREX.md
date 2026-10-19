@@ -116,8 +116,11 @@ Fica fora deste ciclo, com motivo registrado: sincronização entre computadores
 - Interface conferida no Electron real com perfil temporário (roteiro CDP no molde do E2E): Git/diff/branches, backup, foco (pausa realmente para o relógio), personalização do Início, automação executando `npm run lint` de verdade, prompts e abertura — **sem erros de console**.
 - Revisão independente pelo Codex: 14 apontamentos; 11 confirmados e corrigidos com teste de regressão (restauração, `--no-textconv`, symlink fora da allowlist, árvore de processos no cancelamento, pathspecs literais, renomeação no commit, diff fora de ordem, duração personalizada do foco, contagem dupla); 1 aceito como arquitetura (confirmação enviada pelo renderer, igual ao resto do app); 1 documentado como limitação (sessão de foco que atravessa a meia-noite conta no dia em que começou).
 
+### Segunda rodada
+- **Sincronização entre PCs** (`syncService.ts`): pasta da nuvem escolhida pelo usuário (a autenticação é do cliente da nuvem), cópia sem dados locais e cifrada com AES-256-GCM (chave scrypt da senha de sincronização no cofre do SO), conflito decidido pelo usuário com o lado descartado preservado, nada automático. Testada com dois "PCs" simulados (`tests/services/sync.test.ts`) e na interface.
+- **Workers duplicados do Monaco (P2)**: resolvido. O próprio Monaco declarava os workers e o Vite emitia cópias nunca usadas; `scripts/vite-monaco-workers.ts` as remove. Build do renderer: **28 MB → 19 MB**. Worker do TypeScript verificado no app.
+- **Modo só terminais**, **equalizador do mini player** (ficava "cortado" com reduzir movimento) e **telas do README/site** refeitas.
+
 ### Não feito (com motivo)
-- **Sincronização entre PCs**: exige estratégia de conflito e autenticação; fora deste ciclo.
-- **Suporte declarado a Linux**: nada foi testado em Linux.
-- **Workers duplicados do Monaco no build (P2)**: só aumentam o instalador; não investigado neste ciclo.
+- **Linux**: decisão do usuário (2026-10-19) de manter só Windows neste ciclo. Para portar: terminal e automações em bash, detecção de VS Code/gh/Claude/Codex fora do Windows, mini player via MPRIS, socket do Discord e alvo AppImage/deb; testar no WSL ou numa máquina Linux antes de declarar suporte.
 - **Benchmarks antes/depois**: não houve otimização de desempenho que justificasse medição; o ganho estrutural é projetos arquivados não rodarem `git`.
