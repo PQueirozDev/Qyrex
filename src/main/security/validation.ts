@@ -139,6 +139,9 @@ export const automationUpdate = z
   })
   .partial();
 
+export const promptInput = z.object({ title: nonEmpty(120), content: z.string().trim().min(1, "O prompt está vazio").max(MAX_TEXT) });
+export const promptPatch = promptInput.partial();
+
 export const focusStart = z.object({
   minutes: z.number().int().min(1).max(240),
   projectId: id.nullable().optional(),

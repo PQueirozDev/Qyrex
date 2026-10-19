@@ -33,6 +33,7 @@ import type {
   Project,
   ProjectWithGit,
   RecentItem,
+  SavedPrompt,
   Task,
 } from "../shared/types";
 
@@ -447,6 +448,9 @@ const projectByPath = (path: string) => db.projects.find((p) => path.toLowerCase
 const risk = (cmd: string): CommandRisk => (/\b(rm|del|remove-item|format|rd|rmdir)\b|--force|reset --hard/i.test(cmd) ? "dangerous" : /^(git status|dir|ls|echo|npm run dev|node -v|npm -v)\b/i.test(cmd.trim()) ? "safe" : "normal");
 const DEMO_ONLY = "Na demo web isso não abre nada no seu computador — no app desktop abre de verdade.";
 
+// Prompts salvos da demo: só na memória da aba.
+const demoPrompts: SavedPrompt[] = [];
+
 // Backups da demo: só na memória da aba (nada é gravado de verdade).
 const demoBackups: BackupInfo[] = [];
 const demoBackup = (): BackupInfo => ({
@@ -531,6 +535,26 @@ export const workspaceMock: WorkspaceApi = {
     removeAllowedDir: () => fail("Na demo não é possível remover a pasta de exemplo."),
     exportToFile: () => fail(DEMO_ONLY),
     readImport: () => fail(DEMO_ONLY),
+  },
+  prompts: {
+    list: () => ok([...demoPrompts], 20),
+    create: async (input) => {
+      const p = { id: uid(), title: input.title, content: input.content, usedCount: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+      demoPrompts.unshift(p);
+      return ok(p);
+    },
+    update: async (id, patch) => {
+      const p = demoPrompts.find((x) => x.id === id);
+      if (!p) return fail("Prompt não encontrado.");
+      Object.assign(p, patch);
+      return ok(p);
+    },
+    delete: async (id) => {
+      const i = demoPrompts.findIndex((x) => x.id === id);
+      if (i >= 0) demoPrompts.splice(i, 1);
+      return ok(undefined);
+    },
+    used: () => ok(undefined),
   },
   automations: {
     list: () => ok([], 20),

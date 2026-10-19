@@ -24,6 +24,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Badge, EmptyState, ErrorState, Field, Menu, Segmented, Spinner } from "@/components/ui/primitives";
 import { MessageBubble } from "@/components/MessageBubble";
 import { AttachFilesDialog } from "@/components/AttachFilesDialog";
+import { PromptLibraryButton } from "@/components/PromptLibrary";
 import { cn } from "@/lib/cn";
 import { timeAgo } from "@/lib/format";
 import { errorMessage, unwrap } from "@/lib/api";
@@ -360,6 +361,7 @@ function ChatView({ onNew }: { onNew: () => void }) {
               title={project ? tr("Anexar arquivos do projeto") : tr("Vincule um projeto à conversa para anexar arquivos")}
             >
               <Paperclip size={13} />{" "}{tr("Anexar")}</Button>
+            <PromptLibraryButton draft={draft} onInsert={setDraft} />
             <span className="ml-auto text-[11px] text-text-faint">{provider?.connected === false && tr("Provider desconectado")}</span>
             {isStreaming ? (
               <Button size="sm" variant="secondary" onClick={() => void interrupt()}>

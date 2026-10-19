@@ -34,6 +34,7 @@ import * as appUsageService from "../services/appUsageService.js";
 import * as backupService from "../services/backupService.js";
 import * as focusService from "../services/focusService.js";
 import * as automationService from "../services/automationService.js";
+import * as promptService from "../services/promptService.js";
 import { getDiscordStatus, setDiscordActivity } from "../integrations/discord.js";
 
 const log = createLogger("ipc");
@@ -117,6 +118,13 @@ export function registerIpcHandlers(): void {
     const target = v.parse(v.filePath, dir);
     return updateSettings({ allowedProjectDirs: getSettings().allowedProjectDirs.filter((d) => d !== target) });
   });
+
+  // --- Prompts salvos ---------------------------------------------------------------
+  handle("prompts:list", () => promptService.listPrompts());
+  handle("prompts:create", (_e, input) => promptService.createPrompt(v.parse(v.promptInput, input)));
+  handle("prompts:update", (_e, id, patch) => promptService.updatePrompt(v.parse(v.id, id), v.parse(v.promptPatch, patch)));
+  handle("prompts:delete", (_e, id) => promptService.deletePrompt(v.parse(v.id, id)));
+  handle("prompts:used", (_e, id) => promptService.markPromptUsed(v.parse(v.id, id)));
 
   // --- Automações -------------------------------------------------------------------
   handle("automations:list", (_e, projectId) =>

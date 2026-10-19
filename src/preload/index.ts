@@ -45,6 +45,7 @@ import type {
   ProjectDetection,
   ProjectWithGit,
   RecentItem,
+  SavedPrompt,
   SearchResults,
   SettingsImport,
   SpotifyPlayback,
@@ -96,6 +97,14 @@ const api = {
     exportToFile: () => invoke<string | null>("settings:export"),
     /** Lê (sem aplicar) um JSON exportado; a UI confirma e aplica com `update(patch)`. */
     readImport: () => invoke<SettingsImport | null>("settings:readImport"),
+  },
+  prompts: {
+    list: () => invoke<SavedPrompt[]>("prompts:list"),
+    create: (input: { title: string; content: string }) => invoke<SavedPrompt>("prompts:create", input),
+    update: (id: string, patch: Partial<{ title: string; content: string }>) => invoke<SavedPrompt>("prompts:update", id, patch),
+    delete: (id: string) => invoke<void>("prompts:delete", id),
+    /** Conta o uso (os mais usados aparecem primeiro). */
+    used: (id: string) => invoke<void>("prompts:used", id),
   },
   automations: {
     list: (projectId?: string) => invoke<Automation[]>("automations:list", projectId),

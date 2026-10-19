@@ -420,6 +420,15 @@ export interface SearchResults {
 
 export type RecentItemType = "project" | "file" | "task_completed" | "client" | "commit" | "focus" | "automation";
 
+export interface SavedPrompt {
+  id: string;
+  title: string;
+  content: string;
+  usedCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // --- Automações -------------------------------------------------------------------
 
 export type AutomationStep =

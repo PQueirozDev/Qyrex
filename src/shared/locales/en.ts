@@ -1366,4 +1366,33 @@ export const EN: Record<string, string> = {
 
   // --- Abertura (2.0) --------------------------------------------------------------
   "Seu espaço de trabalho de dev": "Your dev workspace",
+
+  // --- Prompts (2.0) ---------------------------------------------------------------
+  "O prompt está vazio": "The prompt is empty",
+  "Prompt não encontrado.": "Prompt not found.",
+  "Explicar código": "Explain code",
+  "Explique o que este código faz, passo a passo, e aponte pontos que podem dar problema:\n\n": "Explain what this code does, step by step, and point out parts that could cause problems:\n\n",
+  "Corrigir um erro": "Fix an error",
+  "Recebi este erro. Explique a causa provável e proponha a correção mínima:\n\nErro:\n\nCódigo relacionado:\n": "I got this error. Explain the likely cause and propose the minimal fix:\n\nError:\n\nRelated code:\n",
+  "Analisar log": "Analyze log",
+  "Analise este log. Resuma o que aconteceu, destaque erros e avisos relevantes e sugira o próximo passo:\n\n": "Analyze this log. Summarize what happened, highlight relevant errors and warnings and suggest the next step:\n\n",
+  "Planejar tarefa": "Plan a task",
+  "Quero implementar o seguinte. Quebre em passos pequenos e verificáveis, com os arquivos que provavelmente mudam:\n\n": "I want to implement the following. Break it into small, verifiable steps, with the files likely to change:\n\n",
+  "Sugerir melhorias": "Suggest improvements",
+  "Revise este trecho e sugira melhorias de legibilidade, desempenho e segurança, sem mudar o comportamento:\n\n": "Review this snippet and suggest readability, performance and security improvements without changing behavior:\n\n",
+  "Resumir alterações": "Summarize changes",
+  "Resuma estas alterações (diff) em linguagem simples e sugira uma mensagem de commit curta:\n\n": "Summarize these changes (diff) in plain language and suggest a short commit message:\n\n",
+  "Prompt salvo": "Prompt saved",
+  "Editar prompt": "Edit prompt",
+  "Salvar como prompt": "Save as prompt",
+  "Texto": "Text",
+  "Excluir o prompt \"{name}\"?": "Delete the prompt \"{name}\"?",
+  "Prompts reutilizáveis": "Reusable prompts",
+  "Prompts": "Prompts",
+  "Escolha um modelo para preencher a mensagem. Nada é enviado até você clicar em Enviar.": "Pick a template to fill in the message. Nothing is sent until you click Send.",
+  "Escreva uma mensagem para salvar": "Write a message to save",
+  "Salvar mensagem atual como prompt": "Save current message as prompt",
+  "Modelos": "Templates",
+  "Meus prompts": "My prompts",
+  "Nenhum prompt salvo. Escreva uma mensagem e salve para reaproveitar depois.": "No saved prompts. Write a message and save it to reuse later.",
 };
