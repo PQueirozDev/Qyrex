@@ -10,14 +10,19 @@ import { tr } from "@/lib/i18n";
 const SPRING = { type: "spring", stiffness: 420, damping: 34, mass: 0.9 } as const;
 
 /** Barrinhas de equalizador animadas enquanto toca. */
+/** Alturas das barras paradas: formato de equalizador (e não pontinhos). */
+const EQ_HEIGHTS = [7, 11, 5, 9];
+
 function Equalizer({ playing }: { playing: boolean }) {
   return (
     <span className="flex h-3 items-end gap-[2px]" aria-hidden>
-      {[0, 1, 2, 3].map((i) => (
+      {EQ_HEIGHTS.map((h, i) => (
         <span
           key={i}
-          className={cn("w-[2.5px] rounded-full bg-accent", playing ? "animate-eq" : "h-[3px]")}
-          style={playing ? { animationDelay: `${i * 0.13}s` } : undefined}
+          // Com "reduzir movimento" no Windows as animações viram 0,01 ms e as barras
+          // ficavam presas em 3 px (pareciam cortadas): aí elas ficam paradas no formato.
+          className={cn("w-[2.5px] rounded-full bg-accent", playing ? "animate-eq motion-reduce:animate-none" : "opacity-60")}
+          style={{ height: playing ? h : Math.max(3, Math.round(h / 2)), animationDelay: playing ? `${i * 0.13}s` : undefined }}
         />
       ))}
     </span>
