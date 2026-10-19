@@ -536,6 +536,14 @@ export const workspaceMock: WorkspaceApi = {
     exportToFile: () => fail(DEMO_ONLY),
     readImport: () => fail(DEMO_ONLY),
   },
+  sync: {
+    status: () => ok({ state: "not-configured", folder: null, deviceName: "PC da demo", hasPassphrase: false, lastSyncAt: null, remote: null }, 20),
+    pickFolder: () => fail(DEMO_ONLY),
+    setDeviceName: () => fail(DEMO_ONLY),
+    setPassphrase: () => fail(DEMO_ONLY),
+    disconnect: () => fail(DEMO_ONLY),
+    now: () => fail(DEMO_ONLY),
+  },
   prompts: {
     list: () => ok([...demoPrompts], 20),
     create: async (input) => {

@@ -5,6 +5,7 @@ import {
   Bot,
   Briefcase,
   Check,
+  Cloud,
   Code2,
   DatabaseBackup,
   Download,
@@ -30,7 +31,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import type { AIProviderId, AppSettings, BackupInfo, BackupKind, DiscordStatus, NotificationPrefs } from "@shared/types";
+import type { AIProviderId, AppSettings, BackupInfo, BackupKind, DiscordStatus, NotificationPrefs, SyncStatus } from "@shared/types";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge, EmptyState, Spinner, Switch } from "@/components/ui/primitives";
@@ -59,6 +60,7 @@ const SECTIONS: { id: string; label: string; icon: LucideIcon }[] = [
   { id: "notificacoes", label: tr("Notificações"), icon: Bell },
   { id: "discord", label: tr("Discord"), icon: Gamepad2 },
   { id: "backup", label: tr("Backup"), icon: DatabaseBackup },
+  { id: "sincronizacao", label: tr("Sincronização"), icon: Cloud },
   { id: "atualizacoes", label: tr("Atualizações"), icon: RefreshCw },
   { id: "privacidade", label: tr("Privacidade"), icon: Shield },
   { id: "sobre", label: tr("Sobre"), icon: Info },
@@ -263,6 +265,7 @@ const BACKUP_KIND: Record<BackupKind, string> = {
   auto: tm("Automático"),
   "pre-restore": tm("Antes de restaurar"),
   "pre-migration": tm("Antes de atualizar"),
+  "pre-sync": tm("Antes de sincronizar"),
 };
 
 function BackupSection() {
@@ -442,6 +445,154 @@ function BackupSection() {
           </Button>
         </div>
       </Row>
+    </Section>
+  );
+}
+
+const SYNC_STATE: Record<SyncStatus["state"], { label: string; tone: "neutral" | "success" | "warning" | "danger" | "accent" }> = {
+  "not-configured": { label: tm("Desligada"), tone: "neutral" },
+  "folder-missing": { label: tm("Pasta não encontrada"), tone: "danger" },
+  "remote-empty": { label: tm("Pronta para o primeiro envio"), tone: "accent" },
+  "remote-newer-app": { label: tm("Atualize o Qyrex para sincronizar"), tone: "danger" },
+  "in-sync": { label: tm("Em dia"), tone: "success" },
+  push: { label: tm("Alterações deste PC para enviar"), tone: "accent" },
+  pull: { label: tm("Dados mais novos de outro PC"), tone: "warning" },
+  conflict: { label: tm("Os dois PCs mudaram"), tone: "danger" },
+};
+
+function SyncSection() {
+  const [status, setStatus] = useState<SyncStatus | null>(null);
+  const [name, setName] = useState("");
+  const [pass, setPass] = useState("");
+  const [pass2, setPass2] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const apply = (s: SyncStatus | undefined) => {
+    if (!s) return;
+    setStatus(s);
+    setName(s.deviceName);
+  };
+  useEffect(() => void attempt(window.workspace.sync.status()).then(apply), []);
+
+  if (!status) return null;
+  const configured = status.state !== "not-configured";
+  const st = SYNC_STATE[status.state];
+
+  async function run(resolve?: "push" | "pull") {
+    if (!status) return;
+    const receiving = resolve === "pull" || (!resolve && status.state === "pull");
+    if (receiving) {
+      const ok = await confirmAction({
+        title: tr("Receber os dados do outro PC?"),
+        description: tr(
+          "Projetos, tarefas, conversas e demais dados deste PC são trocados pelos da nuvem. Antes, o Qyrex guarda um backup do estado atual (tipo “Antes de sincronizar”). Pastas autorizadas, integrações e chaves deste PC continuam como estão."
+        ),
+        detail: status.remote ? `${status.remote.deviceName} · ${new Date(status.remote.createdAt).toLocaleString()}` : undefined,
+        danger: true,
+        confirmLabel: tr("Receber"),
+      });
+      if (!ok) return;
+    }
+    setBusy(true);
+    const result = await attempt(window.workspace.sync.now(resolve, receiving ? true : undefined));
+    setBusy(false);
+    if (!result) return;
+    apply(result);
+    if (result.state === "conflict" && !resolve) return;
+    toast.success(tr("Sincronizado"));
+    // Recebeu dados: a interface inteira recarrega a partir do banco novo.
+    if (receiving) setTimeout(() => window.location.reload(), 800);
+  }
+
+  async function savePass() {
+    const s = await attempt(window.workspace.sync.setPassphrase(pass), tr("Senha de sincronização salva neste PC"));
+    if (s) {
+      apply(s);
+      setPass("");
+      setPass2("");
+    }
+  }
+
+  async function disconnect() {
+    const ok = await confirmAction({
+      title: tr("Desligar a sincronização neste PC?"),
+      description: tr("O Qyrex esquece a pasta e a senha neste PC. Os dados daqui e as cópias na pasta da nuvem não são apagados."),
+      confirmLabel: tr("Desligar"),
+    });
+    if (ok) apply(await attempt(window.workspace.sync.disconnect()));
+  }
+
+  return (
+    <Section
+      id="sincronizacao"
+      title={tr("Sincronização entre PCs")}
+      description={tr(
+        "Usa uma pasta do OneDrive, Google Drive ou Dropbox para levar seus dados a outro PC. Cada cópia vai cifrada com a sua senha de sincronização; sem ela, ninguém lê os arquivos na nuvem. Nada sincroniza sozinho e nada é mesclado: se os dois PCs mudarem, você escolhe qual manter, e o outro lado fica guardado."
+      )}
+    >
+      <Row label={tr("Estado")} hint={status.remote && tr("Última cópia na nuvem: {name}, {date}", { name: status.remote.fromThisDevice ? tr("este PC") : status.remote.deviceName, date: new Date(status.remote.createdAt).toLocaleString() })}>
+        <Badge tone={st.tone}>{tr(st.label)}</Badge>
+      </Row>
+      <Row label={tr("Pasta de sincronização")} hint={status.folder ?? tr("Escolha uma pasta que o OneDrive/Drive/Dropbox já sincroniza.")}>
+        <Button size="sm" variant="secondary" onClick={() => void attempt(window.workspace.sync.pickFolder()).then(apply)}>
+          <FolderPlus size={13} /> {status.folder ? tr("Trocar") : tr("Escolher pasta")}
+        </Button>
+      </Row>
+      {configured && (
+        <>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label>
+              <span className="label">{tr("Nome deste PC")}</span>
+              <div className="flex gap-2">
+                <input className="input" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} />
+                <Button variant="secondary" size="md" disabled={!name.trim() || name.trim() === status.deviceName} onClick={() => void attempt(window.workspace.sync.setDeviceName(name.trim())).then(apply)}>
+                  {tr("Salvar")}
+                </Button>
+              </div>
+            </label>
+            <label>
+              <span className="label">{status.hasPassphrase ? tr("Trocar senha de sincronização") : tr("Senha de sincronização")}</span>
+              <div className="flex gap-2">
+                <input className="input" type="password" autoComplete="new-password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder={tr("8+ caracteres")} />
+                <input className="input" type="password" autoComplete="new-password" value={pass2} onChange={(e) => setPass2(e.target.value)} placeholder={tr("repita")} aria-label={tr("Repita a senha")} />
+                <Button variant="secondary" size="md" disabled={pass.length < 8 || pass !== pass2} onClick={() => void savePass()}>
+                  {tr("Salvar")}
+                </Button>
+              </div>
+              <span className="mt-1 block text-[11px] text-text-faint">{tr("Use a mesma senha nos dois PCs. Ela fica no cofre do Windows e não tem como ser recuperada pelo Qyrex.")}</span>
+            </label>
+          </div>
+
+          {status.state === "conflict" ? (
+            <div className="space-y-2 rounded-lg border border-danger/30 bg-danger/10 p-3 text-xs text-text">
+              <p>
+                {tr("Este PC e {name} mudaram desde a última sincronização. Escolha qual versão vale; a outra continua guardada.", { name: status.remote?.deviceName ?? tr("outro PC") })}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="secondary" loading={busy} onClick={() => void run("push")}>
+                  <Upload size={13} /> {tr("Manter este PC e enviar")}
+                </Button>
+                <Button size="sm" variant="secondary" loading={busy} onClick={() => void run("pull")}>
+                  <Download size={13} /> {tr("Usar a do outro PC")}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" onClick={() => void run()} loading={busy} disabled={!status.hasPassphrase || status.state === "in-sync" || status.state === "folder-missing" || status.state === "remote-newer-app"}>
+                <RefreshCw size={13} /> {tr("Sincronizar agora")}
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => void disconnect()}>
+                {tr("Desligar neste PC")}
+              </Button>
+            </div>
+          )}
+          <p className="text-[11px] text-text-faint">
+            {status.lastSyncAt ? tr("Última sincronização deste PC: {date}", { date: new Date(status.lastSyncAt).toLocaleString() }) : tr("Este PC ainda não sincronizou.")}{" "}
+            {tr("Não vão para a nuvem: pastas autorizadas, integrações e chaves, comandos liberados e tempo de uso.")}
+          </p>
+        </>
+      )}
     </Section>
   );
 }
@@ -754,6 +905,8 @@ export function Settings() {
         <DiscordSection />
 
         <BackupSection />
+
+        <SyncSection />
 
         <section id="settings-atualizacoes" className="scroll-mt-4">
           <h2 className="mb-2 px-1 text-[15px] font-semibold tracking-tight text-text">{tr("Atualizações")}</h2>

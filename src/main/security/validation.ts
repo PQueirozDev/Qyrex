@@ -142,6 +142,9 @@ export const automationUpdate = z
 export const promptInput = z.object({ title: nonEmpty(120), content: z.string().trim().min(1, "O prompt está vazio").max(MAX_TEXT) });
 export const promptPatch = promptInput.partial();
 
+export const syncPassphrase = z.string().min(8, "A senha precisa de pelo menos 8 caracteres").max(200);
+export const syncDeviceName = nonEmpty(60);
+
 export const focusStart = z.object({
   minutes: z.number().int().min(1).max(240),
   projectId: id.nullable().optional(),

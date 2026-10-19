@@ -35,6 +35,7 @@ import * as backupService from "../services/backupService.js";
 import * as focusService from "../services/focusService.js";
 import * as automationService from "../services/automationService.js";
 import * as promptService from "../services/promptService.js";
+import * as syncService from "../services/syncService.js";
 import { getDiscordStatus, setDiscordActivity } from "../integrations/discord.js";
 
 const log = createLogger("ipc");
@@ -117,6 +118,24 @@ export function registerIpcHandlers(): void {
   handle("settings:removeAllowedDir", (_e, dir) => {
     const target = v.parse(v.filePath, dir);
     return updateSettings({ allowedProjectDirs: getSettings().allowedProjectDirs.filter((d) => d !== target) });
+  });
+
+  // --- Sincronização entre PCs ------------------------------------------------------
+  handle("sync:status", () => syncService.getStatus());
+  handle("sync:pickFolder", (e) => syncService.pickFolder(windowOf(e)));
+  handle("sync:setDeviceName", (_e, name) => syncService.setDeviceName(v.parse(v.syncDeviceName, name)));
+  handle("sync:setPassphrase", (_e, value) => syncService.setPassphrase(v.parse(v.syncPassphrase, value)));
+  handle("sync:disconnect", () => syncService.disconnect());
+  handle("sync:now", (_e, resolve, confirmed) => {
+    const choice = resolve === undefined || resolve === null ? undefined : v.parse(z.enum(["push", "pull"]), resolve);
+    // Receber troca os dados deste PC (com backup antes): exige confirmação, como restaurar.
+    if (choice === "pull" || syncService.getStatus().state === "pull") requireConfirmation(confirmed);
+    if (automationService.anyRunning()) throw new Error("Espere as automações em andamento terminarem (ou cancele) antes de sincronizar.");
+    const status = syncService.syncNow(choice);
+    focusService.recoverOnStartup();
+    focusService.notifyChanged();
+    settingsChangedHook?.();
+    return status;
   });
 
   // --- Prompts salvos ---------------------------------------------------------------

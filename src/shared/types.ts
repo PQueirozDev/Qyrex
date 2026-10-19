@@ -556,7 +556,18 @@ export interface BackupPrefs {
   keep: number;
 }
 
-export type BackupKind = "manual" | "auto" | "pre-restore" | "pre-migration";
+export type BackupKind = "manual" | "auto" | "pre-restore" | "pre-migration" | "pre-sync";
+
+/** Sincronização entre PCs por pasta (ver services/syncService.ts). */
+export interface SyncStatus {
+  /** not-configured: sem pasta; remote-empty: pasta sem nada ainda; push/pull: só um lado mudou; conflict: os dois mudaram. */
+  state: "not-configured" | "folder-missing" | "remote-empty" | "remote-newer-app" | "in-sync" | "push" | "pull" | "conflict";
+  folder: string | null;
+  deviceName: string;
+  hasPassphrase: boolean;
+  lastSyncAt: string | null;
+  remote: { deviceName: string; createdAt: string; appVersion: string; fromThisDevice: boolean } | null;
+}
 
 export interface BackupInfo {
   id: string;

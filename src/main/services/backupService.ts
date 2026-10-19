@@ -70,7 +70,7 @@ function newId(kind: BackupKind, now = new Date()): string {
 }
 
 /** Abre a cópia, confere integridade e lê as migrations. Lança se o arquivo não servir. */
-function inspectDatabase(file: string): string[] {
+export function inspectDatabase(file: string): string[] {
   const copy = new Database(file, { fileMustExist: true });
   try {
     // A cópia fica num arquivo só (sem -wal/-shm), fácil de mover e restaurar.

@@ -47,6 +47,7 @@ import type {
   RecentItem,
   SavedPrompt,
   SearchResults,
+  SyncStatus,
   SettingsImport,
   SpotifyPlayback,
   SystemInfo,
@@ -97,6 +98,16 @@ const api = {
     exportToFile: () => invoke<string | null>("settings:export"),
     /** Lê (sem aplicar) um JSON exportado; a UI confirma e aplica com `update(patch)`. */
     readImport: () => invoke<SettingsImport | null>("settings:readImport"),
+  },
+  sync: {
+    status: () => invoke<SyncStatus>("sync:status"),
+    /** Seletor nativo: a pasta nunca vem do renderer. */
+    pickFolder: () => invoke<SyncStatus>("sync:pickFolder"),
+    setDeviceName: (name: string) => invoke<SyncStatus>("sync:setDeviceName", name),
+    setPassphrase: (value: string) => invoke<SyncStatus>("sync:setPassphrase", value),
+    disconnect: () => invoke<SyncStatus>("sync:disconnect"),
+    /** Em conflito, sem `resolve` não faz nada; receber dados exige `confirmed`. */
+    now: (resolve?: "push" | "pull", confirmed?: true) => invoke<SyncStatus>("sync:now", resolve, confirmed),
   },
   prompts: {
     list: () => invoke<SavedPrompt[]>("prompts:list"),

@@ -6,6 +6,7 @@ import { startAutoBackup, stopAutoBackup, writeBackup } from "./services/backupS
 import { pauseOnQuit as pauseFocusOnQuit, recoverOnStartup as recoverFocus, setFocusHooks } from "./services/focusService.js";
 import { showNotification } from "./services/notificationService.js";
 import { markInterruptedRuns, setProgressListener as setAutomationProgress } from "./services/automationService.js";
+import { getStatus as getSyncStatus } from "./services/syncService.js";
 import { createLogger, initLogger } from "./logger.js";
 import { isProtocolAllowed } from "./security/commands.js";
 import { listProjects } from "./services/projectService.js";
@@ -320,6 +321,21 @@ app.whenReady().then(() => {
   });
   recoverFocus();
   markInterruptedRuns();
+  // Só avisa: receber dados de outro PC é sempre uma escolha do usuário.
+  setTimeout(() => {
+    try {
+      const sync = getSyncStatus();
+      if (sync.state === "pull" || sync.state === "conflict") {
+        showNotification(
+          tr("Sincronização"),
+          translate(getSettings().language, "Há dados mais novos de {name}. Abra Configurações → Sincronização.", { name: sync.remote?.deviceName ?? "" }),
+          "configuracoes"
+        );
+      }
+    } catch (err) {
+      log.warn("Checagem da sincronização falhou:", err);
+    }
+  }, 20_000).unref();
   setAutomationProgress((run) => mainWindow?.webContents.send("automations:progress", run));
   log.info(`Qyrex ${app.getVersion()} iniciado${isDev ? " (dev)" : ""}`);
 
