@@ -1,6 +1,7 @@
 import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
+import { monacoWorkersFromEnvironment } from "./scripts/vite-monaco-workers";
 
 // CSP do build de produção (carregado via file://, onde cabeçalhos HTTP não se
 // aplicam). Em dev, o main process envia uma CSP equivalente via cabeçalho,
@@ -35,7 +36,7 @@ function cspMeta(): Plugin {
 export default defineConfig({
   root: path.resolve(__dirname, "src/renderer"),
   base: "./",
-  plugins: [react(), cspMeta()],
+  plugins: [react(), cspMeta(), monacoWorkersFromEnvironment()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src/renderer"),

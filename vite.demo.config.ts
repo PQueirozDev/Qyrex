@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
+import { monacoWorkersFromEnvironment } from "./scripts/vite-monaco-workers";
 
 // Build da DEMO WEB do Qyrex (vai para o site do portfólio): a interface real
 // do renderer com `window.workspace` simulado (src/demo/workspaceMock.ts).
@@ -9,7 +10,7 @@ export default defineConfig({
   root: path.resolve(__dirname, "src/demo"),
   base: "./",
   publicDir: false,
-  plugins: [react()],
+  plugins: [react(), monacoWorkersFromEnvironment()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src/renderer"),
