@@ -13,7 +13,7 @@ Projetos, tarefas, arquivos, IA, clientes, marketing e agenda num app desktop s�
 [![Licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-6b7280?style=flat-square)](LICENSE)
 
 [**⬇ Baixar para Windows**](https://github.com/PQueirozDev/QrzSpace-releases/releases/latest/download/Qyrex-Setup.exe) ·
-[Site](https://qyrexapp.vercel.app) ·
+[Site](https://qyrex.pqueirozdev.com.br) ·
 [Novidades](https://github.com/PQueirozDev/QrzSpace-releases/releases)
 
 <br>
@@ -187,7 +187,7 @@ src/
 tests/           # vitest: segurança, banco, IPC, arquivos e integrações
 scripts/         # testes no Electron, E2E, release, ícones e screenshots
 build/           # ícone e artes do instalador
-site/            # site estático (qyrexapp.vercel.app)
+site/            # site estático (qyrex.pqueirozdev.com.br)
 docs/            # imagens do README
 ```
 
