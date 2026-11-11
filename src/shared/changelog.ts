@@ -22,6 +22,43 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "2.1.0",
+    date: "2026-11-10",
+    title: { pt: "Qyrex 2.1: 100% para desenvolvedores", en: "Qyrex 2.1: 100% for developers" },
+    sections: [
+      {
+        kind: "improved",
+        items: [
+          {
+            pt: "O Qyrex agora é só para desenvolvimento: saíram Clientes, cobranças e manutenção mensal, Marketing e WhatsApp, junto com o seletor de modo Dev/Negócio.",
+            en: "Qyrex is now development only: Clients, billing and monthly maintenance, Marketing and WhatsApp are gone, along with the Dev/Business mode switch.",
+          },
+          {
+            pt: "Os dados de clientes e de conteúdo são apagados na atualização. Antes disso o app guarda um backup automático em Configurações → Backup; se o backup falhar, a atualização do banco não acontece.",
+            en: "Client and content data are deleted by the update. Before that the app saves an automatic backup in Settings → Backup; if the backup fails, the database update does not run.",
+          },
+          {
+            pt: "Projetos, tarefas, foco, automações e histórico continuam como estavam; só o vínculo com cliente sai.",
+            en: "Projects, tasks, focus, automations and history stay as they were; only the link to a client is removed.",
+          },
+        ],
+      },
+      {
+        kind: "fixed",
+        items: [
+          {
+            pt: "Tarefa com horário logo depois da meia-noite agora recebe o aviso antecipado na noite anterior.",
+            en: "A task due just after midnight now gets its early reminder the night before.",
+          },
+          {
+            pt: "Exportações de configurações antigas voltam a importar mesmo citando o card de cobranças do Início.",
+            en: "Old settings exports import again even when they mention the Home billing card.",
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: "2.0.0",
     date: "2026-10-19",
     title: { pt: "Qyrex 2.0: backup, Git visual, foco e automações", en: "Qyrex 2.0: backup, visual Git, focus and automations" },

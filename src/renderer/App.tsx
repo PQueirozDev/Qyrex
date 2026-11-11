@@ -8,7 +8,7 @@ import { TaskFormDialog } from "@/components/TaskFormDialog";
 import { Spinner } from "@/components/ui/primitives";
 import { Dashboard } from "@/pages/Dashboard";
 import { Onboarding } from "@/pages/Onboarding";
-import { BUSINESS_PAGES, PAGES, useUIStore, type Page } from "@/stores/useUIStore";
+import { PAGES, useUIStore, type Page } from "@/stores/useUIStore";
 import { applyTheme, useSettingsStore } from "@/stores/useSettingsStore";
 import { useProjectsStore } from "@/stores/useProjectsStore";
 import { UpdateBanner, WhatsNewDialog } from "@/components/UpdateBanner";
@@ -22,10 +22,7 @@ const FilesPage = lazy(() => import("@/pages/FilesPage").then((m) => ({ default:
 const Settings = lazy(() => import("@/pages/Settings").then((m) => ({ default: m.Settings })));
 const AICenter = lazy(() => import("@/pages/AICenter").then((m) => ({ default: m.AICenter })));
 const Integrations = lazy(() => import("@/pages/Integrations").then((m) => ({ default: m.Integrations })));
-const Clients = lazy(() => import("@/pages/Clients").then((m) => ({ default: m.Clients })));
-const Marketing = lazy(() => import("@/pages/Marketing").then((m) => ({ default: m.Marketing })));
 const Agenda = lazy(() => import("@/pages/Agenda").then((m) => ({ default: m.Agenda })));
-const WhatsApp = lazy(() => import("@/pages/WhatsApp").then((m) => ({ default: m.WhatsApp })));
 const PatchNotes = lazy(() => import("@/pages/PatchNotes").then((m) => ({ default: m.PatchNotes })));
 const Notion = lazy(() => import("@/pages/Notion").then((m) => ({ default: m.Notion })));
 const TerminalPage = lazy(() => import("@/pages/TerminalPage").then((m) => ({ default: m.TerminalPage })));
@@ -53,12 +50,6 @@ function PageView({ page }: { page: Page }) {
       return <AICenter />;
     case "agenda":
       return <Agenda />;
-    case "clientes":
-      return <Clients />;
-    case "marketing":
-      return <Marketing />;
-    case "whatsapp":
-      return <WhatsApp />;
     case "notion":
       return <Notion />;
     case "integracoes":
@@ -113,12 +104,6 @@ export function App() {
   }, [load, loadSystem, loadAvatar]);
 
   useEffect(() => (settings ? applyTheme(settings.theme) : undefined), [settings?.theme, settings]);
-
-  // Modo Dev: áreas de negócio ficam fechadas (atalho, notificação ou modo desligado com a aba aberta).
-  const businessMode = settings?.businessMode ?? false;
-  useEffect(() => {
-    if (settings && !businessMode && BUSINESS_PAGES.includes(page)) navigate("inicio");
-  }, [settings, businessMode, page, navigate]);
 
   // Idioma salvo no banco manda: se diferente do atual, recarrega a janela.
   useEffect(() => {
@@ -228,7 +213,7 @@ export function App() {
                   </div>
                 }
               >
-                <PageView page={!businessMode && BUSINESS_PAGES.includes(page) ? "inicio" : page} />
+                <PageView page={page} />
               </Suspense>
             </div>
           )}

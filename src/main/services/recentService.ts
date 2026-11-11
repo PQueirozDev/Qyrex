@@ -17,7 +17,7 @@ export function recordActivity(itemType: RecentItemType, itemId: string, label: 
   const db = getDb();
   db.transaction(() => {
     // Para "abrir" algo, mantém só a ocorrência mais recente de cada item.
-    if (itemType === "project" || itemType === "file" || itemType === "client") {
+    if (itemType === "project" || itemType === "file") {
       db.prepare("DELETE FROM recent_items WHERE item_type = ? AND item_id = ?").run(itemType, itemId);
     }
     db.prepare(

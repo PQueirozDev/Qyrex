@@ -10,9 +10,6 @@ export type Page =
   | "editor"
   | "agenda"
   | "tarefas"
-  | "clientes"
-  | "marketing"
-  | "whatsapp"
   | "notion"
   | "integracoes"
   | "novidades"
@@ -28,17 +25,11 @@ export const PAGES: Page[] = [
   "editor",
   "agenda",
   "tarefas",
-  "clientes",
-  "marketing",
-  "whatsapp",
   "notion",
   "integracoes",
   "novidades",
   "configuracoes",
 ];
-
-/** Áreas que só aparecem com o Modo Negócio ligado (ver `useBusinessMode`). */
-export const BUSINESS_PAGES: readonly Page[] = ["clientes", "marketing", "whatsapp"];
 
 export interface Toast {
   id: number;

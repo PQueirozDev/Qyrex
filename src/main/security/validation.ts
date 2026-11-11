@@ -46,11 +46,8 @@ export const fileSave = z.object({
 
 export const taskStatus = z.enum(["pendente", "em_andamento", "concluido"]);
 export const taskPriority = z.enum(["baixa", "normal", "alta", "urgente"]);
-export const clientStatus = z.enum(["ativo", "inativo", "prospecto"]);
-export const marketingType = z.enum(["post", "story", "reel"]);
-export const marketingStatus = z.enum(["ideia", "produzindo", "pronto", "publicado"]);
 export const aiProvider = z.enum(["anthropic", "openai", "google"]);
-export const integrationId = z.enum(["anthropic", "openai", "google", "github", "google_calendar", "spotify", "notion", "whatsapp"]);
+export const integrationId = z.enum(["anthropic", "openai", "google", "github", "google_calendar", "spotify", "notion"]);
 
 /** ID de página/banco do Notion (UUID, com ou sem hífens). */
 export const notionId = z.string().regex(/^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i, "ID do Notion inválido");
@@ -92,13 +89,10 @@ export const settingsPatch = z
     notifications: z.object({
       tasks: z.boolean(),
       events: z.boolean(),
-      billing: z.boolean(),
-      marketing: z.boolean(),
     }),
     onboardingCompleted: z.boolean(),
     splashAnimation: z.boolean(),
     allowAllDirs: z.boolean(),
-    businessMode: z.boolean(),
     backup: z.object({
       auto: z.boolean(),
       intervalDays: z.number().int().min(1).max(30),
@@ -162,7 +156,6 @@ export const projectCreate = z.object({
   localPath: filePath,
   technologies: tags.optional(),
   githubUrl: url.optional().or(z.literal("").transform(() => undefined)),
-  clientId: id.optional().or(z.literal("").transform(() => undefined)),
 });
 
 export const projectUpdate = z
@@ -171,7 +164,6 @@ export const projectUpdate = z
     description: nullableText(2000),
     technologies: tags,
     githubUrl: url.nullable().or(z.literal("").transform(() => null)),
-    clientId: id.nullable().or(z.literal("").transform(() => null)),
     status: z.enum(["ativo", "pausado", "concluido"]),
   })
   .partial();
@@ -186,7 +178,6 @@ export const taskCreate = z.object({
   status: taskStatus.optional(),
   priority: taskPriority.optional(),
   projectId: id.optional(),
-  clientId: id.optional(),
   dueDate: isoDate.optional(),
   dueTime: time.optional(),
   tags: tags.optional(),
@@ -199,59 +190,9 @@ export const taskUpdate = z
     status: taskStatus,
     priority: taskPriority,
     projectId: id.nullable(),
-    clientId: id.nullable(),
     dueDate: isoDate.nullable(),
     dueTime: time.nullable(),
     tags,
-  })
-  .partial();
-
-// --- Clients ---
-const clientFields = {
-  name: nonEmpty(160),
-  company: nullableText(160),
-  phone: nullableText(40),
-  whatsapp: nullableText(40),
-  instagram: nullableText(80),
-  email: z
-    .string()
-    .trim()
-    .max(200)
-    .nullable()
-    .refine((v) => v === null || v === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), "Email inválido")
-    .transform((v) => (v ? v : null)),
-  notes: nullableText(10_000),
-  status: clientStatus,
-  monthlyValue: z.number().min(0).max(1_000_000_000).nullable(),
-  nextBillingDate: isoDate.nullable(),
-  filesPath: filePath.nullable(),
-};
-
-export const clientCreate = z.object(clientFields).partial().required({ name: true });
-export const clientUpdate = z.object(clientFields).partial();
-
-// --- Marketing ---
-export const marketingCreate = z.object({
-  title: nonEmpty(300),
-  type: marketingType,
-  clientId: id.optional(),
-  description: optionalText(5000),
-  caption: optionalText(5000),
-  status: marketingStatus.optional(),
-  scheduledDate: isoDate.optional(),
-  files: z.array(filePath).max(50).optional(),
-});
-
-export const marketingUpdate = z
-  .object({
-    title: nonEmpty(300),
-    type: marketingType,
-    clientId: id.nullable(),
-    description: nullableText(5000),
-    caption: nullableText(5000),
-    status: marketingStatus,
-    scheduledDate: isoDate.nullable(),
-    files: z.array(filePath).max(50),
   })
   .partial();
 
@@ -346,11 +287,6 @@ export const gitRemoteOp = z.object({ projectPath: filePath, confirmed: z.litera
 export const oauthClientConfig = z.object({
   clientId: z.string().trim().min(8).max(300),
   clientSecret: z.string().trim().max(300).optional(),
-});
-
-export const whatsappLink = z.object({
-  phone: z.string().trim().min(8).max(40),
-  message: z.string().max(2000).optional(),
 });
 
 export const spotifyAction = z.enum(["play", "pause", "next", "previous"]);

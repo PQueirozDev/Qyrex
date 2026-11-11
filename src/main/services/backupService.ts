@@ -7,6 +7,7 @@ import { DB_FILE_NAME, getDb, getSettings, replaceDatabaseFile } from "../databa
 import { createLogger } from "../logger.js";
 import { settingsPatch } from "../security/validation.js";
 import { tt } from "../i18n.js";
+import { DASHBOARD_WIDGETS } from "../../shared/types.js";
 import type { AppSettings, BackupInfo, BackupKind, SettingsImport } from "../../shared/types.js";
 
 const log = createLogger("backup");
@@ -322,7 +323,6 @@ const PORTABLE_KEYS = [
   "aiDefaultModel",
   "notifications",
   "splashAnimation",
-  "businessMode",
   "backup",
   "focus",
   "dashboard",
@@ -348,6 +348,16 @@ export function parseSettingsExport(raw: string, file: string): SettingsImport {
   const portable: Record<string, unknown> = {};
   for (const key of PORTABLE_KEYS) {
     if (key in data.settings) portable[key] = (data.settings as Record<string, unknown>)[key];
+  }
+  // Exportações antigas podem citar widgets que saíram do app (ex.: "cobrancas"): descarta só esses.
+  const dash = portable.dashboard as { order?: unknown; hidden?: unknown } | undefined;
+  if (dash && typeof dash === "object") {
+    const known = (v: unknown) => (DASHBOARD_WIDGETS as readonly unknown[]).includes(v);
+    portable.dashboard = {
+      ...dash,
+      order: Array.isArray(dash.order) ? dash.order.filter(known) : dash.order,
+      hidden: Array.isArray(dash.hidden) ? dash.hidden.filter(known) : dash.hidden,
+    };
   }
   const parsed = settingsPatch.safeParse(portable);
   if (!parsed.success) throw new Error("O arquivo tem configurações inválidas.");

@@ -8,7 +8,7 @@ import type { CommandAssessment } from "../../shared/types.js";
 export const ALLOWED_PROTOCOLS = ["https:", "http:", "mailto:", "tel:"] as const;
 
 /** Protocolos de apps desktop que o Workspace pode abrir (sem parâmetros arbitrários). */
-export const ALLOWED_APP_URLS = ["whatsapp://", "spotify:"] as const;
+export const ALLOWED_APP_URLS = ["spotify:"] as const;
 
 export function isProtocolAllowed(url: string): boolean {
   try {

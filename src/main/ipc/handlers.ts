@@ -7,8 +7,6 @@ import * as taskService from "../services/taskService.js";
 import * as fileService from "../services/fileService.js";
 import * as systemService from "../services/systemService.js";
 import * as aiService from "../services/aiService.js";
-import * as clientService from "../services/clientService.js";
-import * as marketingService from "../services/marketingService.js";
 import * as calendarService from "../services/calendarService.js";
 import * as gitService from "../services/gitService.js";
 import * as searchService from "../services/searchService.js";
@@ -264,16 +262,6 @@ export function registerIpcHandlers(): void {
     const error = await shell.openPath(dir);
     if (error) throw new Error(error);
   });
-  handle("system:openWhatsApp", (_e, target) => systemService.openWhatsApp(v.parse(z.enum(["desktop", "web"]), target)));
-  handle("system:whatsappStatus", () => ({ desktopInstalled: systemService.isWhatsAppDesktopInstalled() }));
-  handle("system:openWhatsAppChat", (_e, input, preferDesktop) => {
-    const { phone, message } = v.parse(v.whatsappLink, input);
-    return systemService.openWhatsAppChat(phone, message, preferDesktop === true);
-  });
-  handle("system:whatsappUrl", (_e, input) => {
-    const { phone, message } = v.parse(v.whatsappLink, input);
-    return systemService.buildWhatsAppUrl(phone, message);
-  });
   handle("system:openSpotifyApp", () => systemService.openSpotifyApp());
 
   // --- Projetos ----------------------------------------------------------------------
@@ -333,7 +321,7 @@ export function registerIpcHandlers(): void {
     taskService.listTasks(
       filter === undefined || filter === null
         ? undefined
-        : v.parse(z.object({ status: v.taskStatus.optional(), projectId: v.id.optional(), clientId: v.id.optional() }), filter)
+        : v.parse(z.object({ status: v.taskStatus.optional(), projectId: v.id.optional() }), filter)
     )
   );
   handle("tasks:create", (_e, input) => taskService.createTask(v.parse(v.taskCreate, input)));
@@ -377,29 +365,6 @@ export function registerIpcHandlers(): void {
   handle("activity:list", (_e, limit) =>
     recentService.listActivity(limit === undefined ? 20 : v.parse(z.number().int().min(1).max(100), limit))
   );
-
-  // --- Clientes --------------------------------------------------------------------------
-  handle("clients:list", (_e, search) =>
-    clientService.listClients(search === undefined || search === null ? undefined : v.parse(z.string().max(200), search))
-  );
-  handle("clients:get", (_e, id) => clientService.getClient(v.parse(v.id, id)));
-  handle("clients:create", (_e, input) => clientService.createClient(v.parse(v.clientCreate, input)));
-  handle("clients:update", (_e, id, patch) => clientService.updateClient(v.parse(v.id, id), v.parse(v.clientUpdate, patch)));
-  handle("clients:delete", (_e, id) => clientService.deleteClient(v.parse(v.id, id)));
-
-  // --- Marketing ---------------------------------------------------------------------------
-  handle("marketing:list", (_e, filter) =>
-    marketingService.listMarketingContent(
-      filter === undefined || filter === null
-        ? undefined
-        : v.parse(z.object({ clientId: v.id.optional(), from: v.isoDate.optional(), to: v.isoDate.optional() }), filter)
-    )
-  );
-  handle("marketing:create", (_e, input) => marketingService.createMarketingContent(v.parse(v.marketingCreate, input)));
-  handle("marketing:update", (_e, id, patch) =>
-    marketingService.updateMarketingContent(v.parse(v.id, id), v.parse(v.marketingUpdate, patch))
-  );
-  handle("marketing:delete", (_e, id) => marketingService.deleteMarketingContent(v.parse(v.id, id)));
 
   // --- Agenda ----------------------------------------------------------------------------------
   handle("calendar:list", (_e, range) =>

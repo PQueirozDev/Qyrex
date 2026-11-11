@@ -76,14 +76,12 @@ app.whenReady().then(async () => {
 
   await shot("inicio");
   await click("IA");
-  await click("Ideias para a página"); // conversa de exemplo da demo
+  await click("Cache do catálogo"); // conversa de exemplo da demo
   await shot("ia");
   for (const [label, name] of [
     ["Projetos", "projetos"],
     ["Tarefas", "tarefas"],
     ["Agenda", "agenda"],
-    ["Clientes", "clientes"],
-    ["Marketing", "marketing"],
     ["Automações", "automacoes"],
   ]) {
     await click(label);
@@ -94,7 +92,7 @@ app.whenReady().then(async () => {
   await click("Projetos");
   await click("Detalhes");
   await wait(800);
-  await click("src/app/assinaturas/page.tsx");
+  await click("src/webhooks/retry.ts");
   await shot("projeto-git");
   await js(`document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); true`);
   await wait(600);

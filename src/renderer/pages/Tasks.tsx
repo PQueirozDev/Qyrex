@@ -10,8 +10,6 @@ import { relativeDay, todayISO } from "@/lib/format";
 import { fuzzyFilter } from "@/lib/fuzzy";
 import { useTasksStore } from "@/stores/useTasksStore";
 import { useProjectsStore } from "@/stores/useProjectsStore";
-import { useClientsStore } from "@/stores/useClientsStore";
-import { useBusinessMode } from "@/stores/useSettingsStore";
 import { useUIStore } from "@/stores/useUIStore";
 import { tr, trn } from "@/lib/i18n";
 import { PAGE_ICONS } from "@/lib/pageIcons";
@@ -25,13 +23,10 @@ const MetaDot = () => <span className="shrink-0 text-text-faint/50">•</span>;
 function TaskRow({ task, onEdit }: { task: Task; onEdit: (t: Task) => void }) {
   const { toggleDone, update } = useTasksStore();
   const projects = useProjectsStore((s) => s.projects);
-  const clients = useClientsStore((s) => s.clients);
-  const businessMode = useBusinessMode();
   const today = todayISO();
   const project = projects.find((p) => p.id === task.projectId);
-  const client = businessMode ? clients.find((c) => c.id === task.clientId) : undefined;
   const done = task.status === "concluido";
-  const meta = [project?.name, client?.name].filter((part): part is string => Boolean(part));
+  const meta = [project?.name].filter((part): part is string => Boolean(part));
 
   return (
     <div className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-bg-hover/50">
@@ -49,7 +44,6 @@ function TaskRow({ task, onEdit }: { task: Task; onEdit: (t: Task) => void }) {
         </div>
         {(meta.length > 0 || task.tags.length > 0 || task.description) && (
           <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[11px] text-text-faint">
-            {/* Separador só entre itens que existem (antes sobrava "· Cliente" quando não havia projeto). */}
             {meta.map((part, i) => (
               <Fragment key={part}>
                 {i > 0 && <MetaDot />}
@@ -200,8 +194,6 @@ function Kanban({ tasks, onEdit }: { tasks: Task[]; onEdit: (t: Task) => void })
 export function Tasks() {
   const { tasks, loaded, loading, error, load, create } = useTasksStore();
   const { loaded: projectsLoaded, load: loadProjects, projects } = useProjectsStore();
-  const { loaded: clientsLoaded, load: loadClients } = useClientsStore();
-  const businessMode = useBusinessMode();
   const pageParam = useUIStore((s) => s.pageParam);
 
   const [view, setView] = useState<View>("hoje");
@@ -215,8 +207,7 @@ export function Tasks() {
   useEffect(() => {
     void load();
     if (!projectsLoaded) void loadProjects();
-    if (businessMode && !clientsLoaded) void loadClients();
-  }, [load, projectsLoaded, clientsLoaded, businessMode, loadProjects, loadClients]);
+  }, [load, projectsLoaded, loadProjects]);
 
   // Abrir uma tarefa específica vinda da busca/Dashboard.
   useEffect(() => {

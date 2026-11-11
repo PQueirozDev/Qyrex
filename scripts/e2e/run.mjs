@@ -250,8 +250,7 @@ await step("perfil de teste (pasta autorizada, onboarding)", async () => {
   const r = await ev(`
     const w = window.workspace;
     const a = await w.settings.addAllowedDir(${JSON.stringify(WORK)});
-    // Modo Negócio ligado para o E2E cobrir também clientes, marketing e WhatsApp.
-    const s = await w.settings.update({ onboardingCompleted: true, userName: "E2E", businessMode: true });
+    const s = await w.settings.update({ onboardingCompleted: true, userName: "E2E" });
     return [a.ok || a.error, s.ok || s.error].join(",");`);
   await send("Page.reload");
   await sleep(2000);
@@ -516,23 +515,6 @@ await step("Tarefas: excluir pelo diálogo de edição", async () => {
   if (still) throw new Error("tarefa continua no banco");
 });
 
-await step("Clientes: cadastrar cliente", async () => {
-  await nav("Clientes");
-  await click("Novo cliente");
-  await waitFor(`document.querySelector("[data-drawer]")`, { label: "painel do cliente" });
-  await type(`$$("input", document.querySelector("[data-drawer]")).find((i) => !i.readOnly && (i.type === "text" || !i.getAttribute("type")))`, "Cliente E2E");
-  await click("Criar cliente", `document.querySelector("[data-drawer]")`);
-  await waitFor(`textOf(document.querySelector("main")).includes("Cliente E2E")`, { label: "cliente na lista" });
-  const saved = await ev(`return (await window.workspace.clients.list()).data.some((c) => c.name === "Cliente E2E")`);
-  if (!saved) throw new Error("cliente não salvo no banco");
-});
-
-await step("Marketing: ideia rápida", async () => {
-  await nav("Marketing");
-  await type(`$$("input").find((i) => i.placeholder.startsWith("Anotar uma IDEIA"))`, "Ideia do E2E", { enter: true });
-  await waitFor(`textOf(document.querySelector("main")).includes("Ideia do E2E")`, { label: "ideia no quadro" });
-});
-
 await step("Projetos: excluir pelo card sem apagar a pasta", async () => {
   const dir = path.join(WORK, "descartavel");
   fs.mkdirSync(dir, { recursive: true });
@@ -593,11 +575,11 @@ await step("interface em inglês: sem texto em português", async () => {
   await sleep(3500);
   await connect();
   await waitFor(`$$("aside nav button").length > 5`, { label: "recarregar em inglês" });
-  const SEEDED = ["e2e.apps.googleusercontent.com", "Português (Brasil)", "Bom dia! 3 tarefas para hoje.", "Demo E2E", "Tarefa do E2E", "Cliente E2E", "Ideia do E2E", "Evento criado no E2E", "Reunião Google E2E", "Feriado E2E", "Faixa de Teste", "Segunda Faixa", "Banda E2E", "Álbum Simulado", "Ouvinte E2E", "Resposta do", "Síntese do", "Olá, tudo bem", "Conteúdo secreto", "Primeiro commit", "Commit pelo E2E", "Bug no login", "PR: melhora", "Adicionar modo escuro", "Repositório simulado", "Qual a melhor stack", "leia o anexo", "me passe um comando", "responda devagar"];
+  const SEEDED = ["e2e.apps.googleusercontent.com", "qyrex.pqueirozdev.com.br", "Português (Brasil)", "Bom dia! 3 tarefas para hoje.", "Demo E2E", "Tarefa do E2E", "Evento criado no E2E", "Reunião Google E2E", "Feriado E2E", "Faixa de Teste", "Segunda Faixa", "Banda E2E", "Álbum Simulado", "Ouvinte E2E", "Resposta do", "Síntese do", "Olá, tudo bem", "Conteúdo secreto", "Primeiro commit", "Commit pelo E2E", "Bug no login", "PR: melhora", "Adicionar modo escuro", "Repositório simulado", "Qual a melhor stack", "leia o anexo", "me passe um comando", "responda devagar"];
   // Inglês não tem acentos nem cedilha: qualquer um fora dos dados de teste é texto sem tradução.
   const PT = /[ãõçáéíóúâêôà]|\b(não|você|para|com|sem|mais|nenhum|nenhuma|tarefa|projeto|cliente|conectado|desconectado|erro)\b/i;
   const leftovers = {};
-  for (const label of ["Home", "AI", "Projects", "Terminal", "Files", "Tasks", "Calendar", "Clients", "Marketing", "WhatsApp", "Notion", "What's New", "Integrations", "Settings"]) {
+  for (const label of ["Home", "AI", "Projects", "Terminal", "Files", "Tasks", "Calendar", "Notion", "What's New", "Integrations", "Settings"]) {
     await nav(label);
     await sleep(900);
     const texts = await ev(`

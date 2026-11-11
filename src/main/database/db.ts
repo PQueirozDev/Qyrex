@@ -2,7 +2,8 @@ import Database from "better-sqlite3";
 import fs from "node:fs";
 import path from "node:path";
 import { app } from "electron";
-import type { AppSettings, BackupPrefs, DashboardPrefs, DiscordPrefs, FocusPrefs, NotificationPrefs } from "../../shared/types.js";
+import { DASHBOARD_WIDGETS } from "../../shared/types.js";
+import type { AppSettings, BackupPrefs, DashboardPrefs, DashboardWidgetId, DiscordPrefs, FocusPrefs, NotificationPrefs } from "../../shared/types.js";
 
 let db: Database.Database | null = null;
 
@@ -56,6 +57,16 @@ export function runMigrations(database: Database.Database, dir = migrationsDir()
     database.exec(sql);
     database.prepare("INSERT INTO _migrations (name) VALUES (?)").run(file);
   });
+  // Migration que reconstrói tabela (cria a nova, copia, apaga a antiga e renomeia) precisa
+  // das chaves estrangeiras desligadas: com elas ligadas, apagar a tabela antiga dispara os
+  // ON DELETE das outras. O PRAGMA não muda dentro de transação, então é trocado fora dela,
+  // e a integridade é conferida antes de confirmar.
+  const applyWithoutForeignKeys = database.transaction((file: string, sql: string) => {
+    database.exec(sql);
+    const broken = database.pragma("foreign_key_check") as unknown[];
+    if (broken.length > 0) throw new Error(`A migration ${file} deixou ${broken.length} referências quebradas.`);
+    database.prepare("INSERT INTO _migrations (name) VALUES (?)").run(file);
+  });
 
   const pending = files.filter((f) => !applied.has(f));
   if (pending.length > 0 && applied.size > 0 && beforeMigrateHook) beforeMigrateHook(database, pending);
@@ -63,7 +74,16 @@ export function runMigrations(database: Database.Database, dir = migrationsDir()
   const newlyApplied: string[] = [];
   for (const file of files) {
     if (applied.has(file)) continue;
-    applyOne(file, fs.readFileSync(path.join(dir, file), "utf-8"));
+    const sql = fs.readFileSync(path.join(dir, file), "utf-8");
+    if (/^-- qyrex: foreign_keys off\s*$/m.test(sql.split("\n", 1)[0] ?? "")) {
+      const wasOn = Boolean(database.pragma("foreign_keys", { simple: true }));
+      database.pragma("foreign_keys = OFF");
+      try {
+        applyWithoutForeignKeys(file, sql);
+      } finally {
+        if (wasOn) database.pragma("foreign_keys = ON");
+      }
+    } else applyOne(file, sql);
     newlyApplied.push(file);
   }
   return newlyApplied;
@@ -176,7 +196,6 @@ interface SettingsRow {
   last_seen_version: string | null;
   splash_animation: number;
   allow_all_dirs: number;
-  business_mode: number;
   backup: string;
   focus: string;
   dashboard: string;
@@ -186,7 +205,7 @@ const DEFAULT_DISCORD: DiscordPrefs = { enabled: false, clientId: null, showProj
 export const DEFAULT_BACKUP: BackupPrefs = { auto: true, intervalDays: 1, keep: 10 };
 const DEFAULT_DASHBOARD: DashboardPrefs = { order: [], hidden: [] };
 const DEFAULT_FOCUS: FocusPrefs = { minutes: 25, dailyGoalMinutes: 0, notify: true };
-const DEFAULT_NOTIFICATIONS: NotificationPrefs = { tasks: true, events: true, billing: true, marketing: true };
+const DEFAULT_NOTIFICATIONS: NotificationPrefs = { tasks: true, events: true };
 
 function parseJson<T>(raw: string, fallback: T): T {
   try {
@@ -194,6 +213,23 @@ function parseJson<T>(raw: string, fallback: T): T {
   } catch {
     return fallback;
   }
+}
+
+/** Só as chaves que existem hoje (configurações antigas podiam trazer billing/marketing). */
+function pickNotifications(raw: Partial<NotificationPrefs>): NotificationPrefs {
+  return {
+    tasks: typeof raw.tasks === "boolean" ? raw.tasks : DEFAULT_NOTIFICATIONS.tasks,
+    events: typeof raw.events === "boolean" ? raw.events : DEFAULT_NOTIFICATIONS.events,
+  };
+}
+
+/** Descarta widgets que não existem mais (ex.: "cobrancas"), para a validação aceitar a próxima gravação. */
+function pickDashboard(raw: Partial<DashboardPrefs>): DashboardPrefs {
+  const known = (v: unknown): v is DashboardWidgetId => (DASHBOARD_WIDGETS as readonly unknown[]).includes(v);
+  return {
+    order: Array.isArray(raw.order) ? raw.order.filter(known) : DEFAULT_DASHBOARD.order,
+    hidden: Array.isArray(raw.hidden) ? raw.hidden.filter(known) : DEFAULT_DASHBOARD.hidden,
+  };
 }
 
 export function getSettings(): AppSettings {
@@ -209,7 +245,7 @@ export function getSettings(): AppSettings {
     defaultTerminal: row.default_terminal as AppSettings["defaultTerminal"],
     aiDefaultProvider: row.ai_default_provider as AppSettings["aiDefaultProvider"],
     aiDefaultModel: row.ai_default_model,
-    notifications: { ...DEFAULT_NOTIFICATIONS, ...parseJson<Partial<NotificationPrefs>>(row.notifications, {}) },
+    notifications: pickNotifications(parseJson<Partial<NotificationPrefs>>(row.notifications, {})),
     onboardingCompleted: Boolean(row.onboarding_completed),
     vscodePath: row.vscode_path,
     language: row.language === "en" ? "en" : "pt",
@@ -217,10 +253,9 @@ export function getSettings(): AppSettings {
     autoUpdate: Boolean(row.auto_update),
     lastSeenVersion: row.last_seen_version,
     splashAnimation: Boolean(row.splash_animation),
-    businessMode: Boolean(row.business_mode),
     backup: { ...DEFAULT_BACKUP, ...parseJson<Partial<BackupPrefs>>(row.backup, {}) },
     focus: { ...DEFAULT_FOCUS, ...parseJson<Partial<FocusPrefs>>(row.focus, {}) },
-    dashboard: { ...DEFAULT_DASHBOARD, ...parseJson<Partial<DashboardPrefs>>(row.dashboard, {}) },
+    dashboard: pickDashboard(parseJson<Partial<DashboardPrefs>>(row.dashboard, {})),
   };
 }
 
@@ -235,7 +270,7 @@ export function updateSettings(partial: Partial<AppSettings>): AppSettings {
         ai_default_provider = ?, ai_default_model = ?,
         notifications = ?, onboarding_completed = ?, vscode_path = ?,
         language = ?, discord = ?, auto_update = ?, last_seen_version = ?,
-        splash_animation = ?, allow_all_dirs = ?, business_mode = ?, backup = ?, focus = ?, dashboard = ?
+        splash_animation = ?, allow_all_dirs = ?, backup = ?, focus = ?, dashboard = ?
        WHERE id = 1`
     )
     .run(
@@ -256,7 +291,6 @@ export function updateSettings(partial: Partial<AppSettings>): AppSettings {
       merged.lastSeenVersion,
       merged.splashAnimation ? 1 : 0,
       merged.allowAllDirs ? 1 : 0,
-      merged.businessMode ? 1 : 0,
       JSON.stringify(merged.backup),
       JSON.stringify(merged.focus),
       JSON.stringify(merged.dashboard)

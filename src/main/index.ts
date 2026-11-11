@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, Tray, nativeImage, session, shell } from "electron";
+import { app, BrowserWindow, dialog, Menu, Tray, nativeImage, session, shell } from "electron";
 import path from "node:path";
 import { registerIpcHandlers, setDevServerUrl, setSettingsChangedHook } from "./ipc/handlers.js";
 import { closeDb, getDb, getSettings, setBeforeMigrateHook } from "./database/db.js";
@@ -280,13 +280,18 @@ app.on("web-contents-created", (_event, contents) => {
 app.on("second-instance", showWindow);
 
 // Atualização que muda o esquema do banco: guarda uma cópia antes de migrar.
-// Se a cópia falhar, o app segue abrindo (não deixar o usuário sem o app).
+// Se a cópia falhar, o app segue abrindo (não deixar o usuário sem o app), exceto
+// quando a migration apaga dados: aí não migra sem a cópia.
+const DESTRUCTIVE_MIGRATIONS = ["018_dev_only.sql"];
 setBeforeMigrateHook((database, pending) => {
   try {
     writeBackup(database, "pre-migration");
     log.info(`Backup antes das migrations ${pending.join(", ")}`);
   } catch (err) {
     log.error("Backup antes das migrations falhou:", err);
+    if (pending.some((name) => DESTRUCTIVE_MIGRATIONS.includes(name))) {
+      throw new Error("Não foi possível fazer o backup antes de atualizar o banco. Nada foi alterado; libere espaço em disco e abra o Qyrex de novo.");
+    }
   }
 });
 
@@ -295,7 +300,10 @@ app.whenReady().then(() => {
     getDb(); // aplica migrations na primeira execução
   } catch (err) {
     log.error("Falha ao abrir o banco de dados:", err);
-    throw err;
+    // Sem banco o app não funciona: avisa o motivo em vez de fechar calado.
+    dialog.showErrorBox("Qyrex", err instanceof Error ? err.message : String(err));
+    app.exit(1);
+    return;
   }
   configureSession();
   setDevServerUrl(isDev ? DEV_SERVER_URL : null);

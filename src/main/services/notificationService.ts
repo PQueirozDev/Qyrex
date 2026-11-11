@@ -54,7 +54,7 @@ export interface Reminder {
 
 /** Calcula os lembretes devidos em `now` — função pura sobre o banco, testável. */
 export function dueReminders(now: Date): Reminder[] {
-  const { notifications: prefs, language, businessMode } = getSettings();
+  const { notifications: prefs, language } = getSettings();
   const tr = (text: string, vars?: Record<string, string | number>) => translate(language, text, vars);
   const db = getDb();
   const today = localDate(now);
@@ -65,13 +65,14 @@ export function dueReminders(now: Date): Reminder[] {
   if (prefs.tasks) {
     const timed = db
       .prepare(
-        `SELECT id, title, due_time FROM tasks
-         WHERE status != 'concluido' AND due_date = ? AND due_time IS NOT NULL
+        `SELECT id, title, due_date, due_time FROM tasks
+         WHERE status != 'concluido' AND due_date IN (?, ?) AND due_time IS NOT NULL
            AND (due_date || 'T' || due_time || ':00') BETWEEN ? AND ?`
       )
-      .all(today, nowStr, soon) as { id: string; title: string; due_time: string }[];
+      // Hoje e o dia de `soon`: perto da meia-noite, a janela de aviso alcança o dia seguinte.
+      .all(today, soon.slice(0, 10), nowStr, soon) as { id: string; title: string; due_date: string; due_time: string }[];
     for (const t of timed) {
-      reminders.push({ key: `task:${t.id}:${today}`, title: tr("Tarefa vencendo"), body: `${t.due_time} · ${t.title}`, page: "tarefas" });
+      reminders.push({ key: `task:${t.id}:${t.due_date}`, title: tr("Tarefa vencendo"), body: `${t.due_time} · ${t.title}`, page: "tarefas" });
     }
     // Resumo matinal das tarefas do dia sem horário.
     if (now.getHours() >= 8) {
@@ -101,31 +102,6 @@ export function dueReminders(now: Date): Reminder[] {
         title: tr("Compromisso em breve"),
         body: `${e.starts_at.slice(11, 16)} · ${e.title}`,
         page: "agenda",
-      });
-    }
-  }
-
-  // Cobranças e marketing só existem no Modo Negócio (no modo Dev essas áreas ficam ocultas).
-  if (businessMode && prefs.billing && now.getHours() >= 9) {
-    const clients = db
-      .prepare("SELECT id, name, monthly_value FROM clients WHERE status = 'ativo' AND next_billing_date = ?")
-      .all(today) as { id: string; name: string; monthly_value: number | null }[];
-    for (const c of clients) {
-      const value = c.monthly_value != null ? ` · R$ ${c.monthly_value.toFixed(2).replace(".", ",")}` : "";
-      reminders.push({ key: `billing:${c.id}:${today}`, title: tr("Cobrança hoje"), body: `${c.name}${value}`, page: "clientes" });
-    }
-  }
-
-  if (businessMode && prefs.marketing && now.getHours() >= 8) {
-    const items = db
-      .prepare("SELECT id, title, type FROM marketing_content WHERE scheduled_date = ? AND status != 'publicado'")
-      .all(today) as { id: string; title: string; type: string }[];
-    for (const m of items) {
-      reminders.push({
-        key: `marketing:${m.id}:${today}`,
-        title: tr("Conteúdo programado para hoje"),
-        body: `${m.type.toUpperCase()} · ${m.title}`,
-        page: "marketing",
       });
     }
   }

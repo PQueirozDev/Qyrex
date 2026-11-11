@@ -22,7 +22,6 @@ import type {
   FocusSession,
   FocusState,
   FocusSummary,
-  Client,
   CommandRisk,
   DirEntry,
   GitChangedFile,
@@ -30,7 +29,6 @@ import type {
   IntegrationStatus,
   IpcResult,
   LocalMediaState,
-  MarketingContent,
   NotionItem,
   Project,
   ProjectWithGit,
@@ -85,44 +83,32 @@ const ROOT = "C:\\Projetos";
 const params = new URLSearchParams(location.search);
 
 function seed() {
-  const clients: Client[] = [
-    { id: "c1", name: "Café Aurora", company: "Aurora Cafés Especiais", phone: null, whatsapp: "11900000001", instagram: "@cafe.aurora", email: "contato@cafeaurora.com", notes: "Quer loja virtual até dezembro.", status: "ativo", monthlyValue: 450, nextBillingDate: day(2), filesPath: null, createdAt: ago(60 * 24 * 90) },
-    { id: "c2", name: "Studio Nova Pilates", company: null, phone: null, whatsapp: "11900000002", instagram: "@novapilates", email: null, notes: "Posts 3x por semana.", status: "ativo", monthlyValue: 320, nextBillingDate: day(6), filesPath: null, createdAt: ago(60 * 24 * 60) },
-    { id: "c3", name: "Mecânica Veloz", company: "Veloz Auto Center", phone: "1130000000", whatsapp: "11900000003", instagram: null, email: null, notes: null, status: "prospecto", monthlyValue: null, nextBillingDate: null, filesPath: null, createdAt: ago(60 * 24 * 7) },
-    { id: "c4", name: "Doce Lar Confeitaria", company: null, phone: null, whatsapp: "11900000004", instagram: "@docelar", email: null, notes: null, status: "ativo", monthlyValue: 180, nextBillingDate: day(18), filesPath: null, createdAt: ago(60 * 24 * 120) },
-  ];
   const projects: Project[] = [
-    { id: "p1", name: "Loja Café Aurora", description: "E-commerce com assinatura de cafés.", localPath: `${ROOT}\\cafe-aurora`, technologies: ["Next.js", "TypeScript", "Stripe"], githubUrl: "https://github.com/exemplo/cafe-aurora", clientId: "c1", favorite: true, iconMode: "auto", status: "ativo", archivedAt: null, createdAt: ago(60 * 24 * 40), lastOpenedAt: ago(35) },
-    { id: "p2", name: "App Nova Pilates", description: "Agendamento de aulas e planos.", localPath: `${ROOT}\\nova-pilates`, technologies: ["React", "Supabase"], githubUrl: "https://github.com/exemplo/nova-pilates", clientId: "c2", favorite: false, iconMode: "auto", status: "ativo", archivedAt: null, createdAt: ago(60 * 24 * 20), lastOpenedAt: ago(60 * 26) },
-    { id: "p3", name: "Bot de Orçamentos", description: "Bot de WhatsApp que monta orçamentos.", localPath: `${ROOT}\\bot-orcamentos`, technologies: ["Node.js", "Prisma"], githubUrl: null, clientId: null, favorite: false, iconMode: "auto", status: "ativo", archivedAt: null, createdAt: ago(60 * 24 * 10), lastOpenedAt: null },
+    { id: "p1", name: "api-pagamentos", description: "API de pagamentos com webhooks e fila de retentativas.", localPath: `${ROOT}\\api-pagamentos`, technologies: ["Node.js", "TypeScript", "Fastify", "PostgreSQL"], githubUrl: "https://github.com/exemplo/api-pagamentos", favorite: true, iconMode: "auto", status: "ativo", archivedAt: null, createdAt: ago(60 * 24 * 40), lastOpenedAt: ago(35) },
+    { id: "p2", name: "dashboard-admin", description: "Painel interno de métricas e usuários.", localPath: `${ROOT}\\dashboard-admin`, technologies: ["React", "Vite", "TypeScript"], githubUrl: "https://github.com/exemplo/dashboard-admin", favorite: false, iconMode: "auto", status: "ativo", archivedAt: null, createdAt: ago(60 * 24 * 20), lastOpenedAt: ago(60 * 26) },
+    { id: "p3", name: "bot-discord", description: "Bot de deploy e alertas do time no Discord.", localPath: `${ROOT}\\bot-discord`, technologies: ["Node.js", "discord.js"], githubUrl: null, favorite: false, iconMode: "auto", status: "ativo", archivedAt: null, createdAt: ago(60 * 24 * 10), lastOpenedAt: null },
   ];
   const tasks: Task[] = [
-    { id: "t1", title: "Publicar página de assinaturas", description: "Checkout com plano mensal e trimestral.", status: "em_andamento", priority: "urgente", projectId: "p1", clientId: "c1", dueDate: day(0), dueTime: "18:00", tags: ["site"], createdAt: ago(60 * 30), completedAt: null },
-    { id: "t2", title: "Responder orçamento da Mecânica Veloz", description: null, status: "pendente", priority: "alta", projectId: null, clientId: "c3", dueDate: day(0), dueTime: null, tags: ["cliente"], createdAt: ago(60 * 5), completedAt: null },
-    { id: "t3", title: "Carrossel: 5 exercícios para a lombar", description: null, status: "pendente", priority: "normal", projectId: null, clientId: "c2", dueDate: day(1), dueTime: null, tags: ["instagram"], createdAt: ago(60 * 20), completedAt: null },
-    { id: "t4", title: "Corrigir fuso horário das reservas", description: null, status: "pendente", priority: "alta", projectId: "p2", clientId: "c2", dueDate: day(-1), dueTime: null, tags: ["bug"], createdAt: ago(60 * 48), completedAt: null },
-    { id: "t5", title: "Configurar domínio do Café Aurora", description: null, status: "concluido", priority: "normal", projectId: "p1", clientId: "c1", dueDate: day(-2), dueTime: null, tags: [], createdAt: ago(60 * 72), completedAt: ago(90) },
+    { id: "t1", title: "Retentativa com backoff nos webhooks", description: "Fila com 5 tentativas e dead letter.", status: "em_andamento", priority: "urgente", projectId: "p1", dueDate: day(0), dueTime: "18:00", tags: ["backend"], createdAt: ago(60 * 30), completedAt: null },
+    { id: "t2", title: "Revisar PR #51: cache do catálogo", description: null, status: "pendente", priority: "alta", projectId: "p1", dueDate: day(0), dueTime: null, tags: ["review"], createdAt: ago(60 * 5), completedAt: null },
+    { id: "t3", title: "Atualizar dependências do bot", description: null, status: "pendente", priority: "normal", projectId: "p3", dueDate: day(1), dueTime: null, tags: ["manutenção"], createdAt: ago(60 * 20), completedAt: null },
+    { id: "t4", title: "Corrigir fuso horário nos gráficos", description: null, status: "pendente", priority: "alta", projectId: "p2", dueDate: day(-1), dueTime: null, tags: ["bug"], createdAt: ago(60 * 48), completedAt: null },
+    { id: "t5", title: "Configurar CI com testes e lint", description: null, status: "concluido", priority: "normal", projectId: "p1", dueDate: day(-2), dueTime: null, tags: ["ci"], createdAt: ago(60 * 72), completedAt: ago(90) },
   ];
   const events: CalendarEvent[] = [
     { id: "e1", title: "Aula — Estrutura de Dados", description: null, startsAt: at(0, "19:00"), endsAt: at(0, "22:00"), location: "Senac", source: "local", externalId: null, createdAt: ago(1000) },
-    { id: "e2", title: "Call com Café Aurora", description: "Aprovar layout da home", startsAt: at(0, "15:30"), endsAt: at(0, "16:00"), location: "Google Meet", source: "google", externalId: "g1", createdAt: ago(1000) },
-    { id: "e3", title: "Entrega do App Nova Pilates", description: null, startsAt: at(2, "10:00"), endsAt: null, location: null, source: "local", externalId: null, createdAt: ago(1000) },
-    { id: "e4", title: "Gravar vídeos da confeitaria", description: null, startsAt: at(4, "14:00"), endsAt: at(4, "17:00"), location: "Doce Lar", source: "google", externalId: "g2", createdAt: ago(1000) },
-  ];
-  const marketing: MarketingContent[] = [
-    { id: "m1", clientId: "c2", type: "post", title: "5 exercícios para a lombar", description: null, caption: "Sua coluna agradece 🙌", status: "produzindo", scheduledDate: day(1), files: [], createdAt: ago(2000) },
-    { id: "m2", clientId: "c4", type: "reel", title: "Bastidores: bolo de pistache", description: null, caption: null, status: "ideia", scheduledDate: day(3), files: [], createdAt: ago(2000) },
-    { id: "m3", clientId: "c1", type: "story", title: "Lançamento das assinaturas", description: null, caption: null, status: "pronto", scheduledDate: day(0), files: [], createdAt: ago(2000) },
-    { id: "m4", clientId: "c1", type: "post", title: "Métodos de preparo: V60", description: null, caption: null, status: "publicado", scheduledDate: day(-3), files: [], createdAt: ago(5000) },
+    { id: "e2", title: "Daily do time", description: "Status da fila de webhooks", startsAt: at(0, "15:30"), endsAt: at(0, "15:45"), location: "Google Meet", source: "google", externalId: "g1", createdAt: ago(1000) },
+    { id: "e3", title: "Deploy da v2.3 do dashboard", description: null, startsAt: at(2, "10:00"), endsAt: null, location: null, source: "local", externalId: null, createdAt: ago(1000) },
+    { id: "e4", title: "Pareamento: migração para Postgres 17", description: null, startsAt: at(4, "14:00"), endsAt: at(4, "16:00"), location: "Discord", source: "google", externalId: "g2", createdAt: ago(1000) },
   ];
   const conversations: AIConversation[] = [
-    { id: "a1", title: "Ideias para a página de assinaturas", provider: "anthropic", model: "opus", projectId: "p1", createdAt: ago(60 * 3) },
+    { id: "a1", title: "Cache do catálogo da API", provider: "anthropic", model: "opus", projectId: "p1", createdAt: ago(60 * 3) },
   ];
   const messages: AIMessage[] = [
-    { id: "am1", conversationId: "a1", role: "user", content: "Me dê 3 ideias de seção para a página de assinaturas do Café Aurora.", attachedFiles: [], createdAt: ago(60 * 3) },
+    { id: "am1", conversationId: "a1", role: "user", content: "Como cachear o GET /catalogo sem servir preço desatualizado?", attachedFiles: [], createdAt: ago(60 * 3) },
     {
       id: "am2", conversationId: "a1", role: "assistant", attachedFiles: [], createdAt: ago(60 * 3 - 1),
-      content: "Boa! Três seções que costumam converter bem:\n\n1. **Monte sua caixa** — o cliente escolhe torra, moagem e frequência, vendo o preço mudar na hora.\n2. **Do grão à xícara** — fotos da fazenda e do processo, com o nome do produtor de cada lote.\n3. **Perguntas frequentes** — pausar, pular um mês e cancelar sem burocracia.\n\nPara rodar o projeto e testar:\n\n```powershell\nnpm run dev\n```",
+      content: "Três camadas que funcionam bem juntas:\n\n1. **ETag + `Cache-Control: max-age=60`** — o cliente revalida barato e o servidor responde 304.\n2. **Cache em memória por chave de catálogo**, invalidado no evento `preco.atualizado` em vez de por tempo.\n3. **Stale-while-revalidate** no CDN para picos, com no máximo 5 min de atraso.\n\nQuer que eu escreva o middleware do Fastify?",
     },
   ];
   const settings: AppSettings = {
@@ -139,10 +125,9 @@ function seed() {
     defaultTerminal: "powershell",
     aiDefaultProvider: "anthropic",
     aiDefaultModel: null,
-    notifications: { tasks: true, events: true, billing: true, marketing: true },
+    notifications: { tasks: true, events: true },
     onboardingCompleted: true,
     splashAnimation: true,
-    businessMode: true,
     backup: { auto: true, intervalDays: 1, keep: 10 },
     focus: { minutes: 25, dailyGoalMinutes: 120, notify: true },
     dashboard: { order: [], hidden: [] },
@@ -150,26 +135,26 @@ function seed() {
   };
   const changes: Record<string, GitChangedFile[]> = {
     p1: [
-      { status: "M", path: "src/app/assinaturas/page.tsx", oldPath: null, staged: false, untracked: false, conflict: false },
-      { status: "??", path: "src/components/PlanPicker.tsx", oldPath: null, staged: false, untracked: true, conflict: false },
+      { status: "M", path: "src/webhooks/retry.ts", oldPath: null, staged: false, untracked: false, conflict: false },
+      { status: "??", path: "src/webhooks/dead-letter.ts", oldPath: null, staged: false, untracked: true, conflict: false },
     ],
     p2: [],
-    p3: [{ status: "M", path: "src/flows/orcamento.ts", oldPath: null, staged: false, untracked: false, conflict: false }],
+    p3: [{ status: "M", path: "src/commands/deploy.ts", oldPath: null, staged: false, untracked: false, conflict: false }],
   };
   const commits: Record<string, GitCommit[]> = {
     p1: [
-      { hash: "a1b2c3d4e5", shortHash: "a1b2c3d", author: "Visitante", date: ago(60 * 5), subject: "Checkout com plano trimestral" },
-      { hash: "b2c3d4e5f6", shortHash: "b2c3d4e", author: "Visitante", date: ago(60 * 30), subject: "Home com vitrine de cafés" },
+      { hash: "a1b2c3d4e5", shortHash: "a1b2c3d", author: "Visitante", date: ago(60 * 5), subject: "Fila de retentativas para webhooks" },
+      { hash: "b2c3d4e5f6", shortHash: "b2c3d4e", author: "Visitante", date: ago(60 * 30), subject: "Valida assinatura HMAC do provedor" },
     ],
-    p2: [{ hash: "c3d4e5f6a7", shortHash: "c3d4e5f", author: "Visitante", date: ago(60 * 26), subject: "Reserva de aulas em lote" }],
-    p3: [{ hash: "d4e5f6a7b8", shortHash: "d4e5f6a", author: "Visitante", date: ago(60 * 50), subject: "Primeiro commit" }],
+    p2: [{ hash: "c3d4e5f6a7", shortHash: "c3d4e5f", author: "Visitante", date: ago(60 * 26), subject: "Gráfico de latência por rota" }],
+    p3: [{ hash: "d4e5f6a7b8", shortHash: "d4e5f6a", author: "Visitante", date: ago(60 * 50), subject: "Comando /deploy com confirmação" }],
   };
   const activity: RecentItem[] = [
-    { id: "r2", itemType: "task_completed", itemId: "t5", label: "Configurar domínio do Café Aurora", openedAt: ago(90) },
-    { id: "r3", itemType: "project", itemId: "p1", label: "Loja Café Aurora", openedAt: ago(35) },
+    { id: "r2", itemType: "task_completed", itemId: "t5", label: "Configurar CI com testes e lint", openedAt: ago(90) },
+    { id: "r3", itemType: "project", itemId: "p1", label: "api-pagamentos", openedAt: ago(35) },
   ];
   const branch: Record<string, string> = {};
-  return { clients, projects, tasks, events, marketing, conversations, messages, settings, changes, commits, branch, activity, allowedCommands: [] as string[] };
+  return { projects, tasks, events, conversations, messages, settings, changes, commits, branch, activity, allowedCommands: [] as string[] };
 }
 
 const KEY = "qrz-demo-state";
@@ -258,26 +243,23 @@ function answerFor(provider: AIProviderId, prompt: string, kind: "chat" | "counc
   const p = prompt.toLowerCase();
   const who = PROVIDER_LABELS[provider];
   if (kind === "synthesis") {
-    return "**Síntese do conselho**\n\nOs três modelos concordam no essencial: comece pelo que traz receita recorrente e deixe o resto para uma segunda fase.\n\n- **Consenso:** assinatura com checkout simples e opção de pausar.\n- **Divergência:** o Gemini sugere app; Claude e OpenAI preferem PWA no início.\n- **Recomendação:** lance o site com assinaturas em 2 semanas e valide antes de investir em app.";
+    return "**Síntese do conselho**\n\nOs três modelos concordam no essencial: invalidar por evento é mais seguro do que confiar só no tempo de expiração.\n\n- **Consenso:** ETag no cliente e invalidação no evento `preco.atualizado`.\n- **Divergência:** Redis desde já ou cache em memória até ter mais de uma instância.\n- **Próximo passo:** medir a taxa de acerto por uma semana antes de trocar de solução.";
   }
   if (kind === "council") {
     const takes: Record<AIProviderId, string> = {
-      anthropic: "Eu priorizaria **assinaturas** primeiro: receita previsível e dá para medir retenção desde o primeiro mês. Um PWA resolve o \"app\" sem custo extra de loja.",
-      openai: "Comece pelo **checkout de assinatura** com Stripe e um painel simples para o cliente pausar ou trocar o café. App nativo só depois de 300 assinantes.",
-      google: "Vale considerar um **app** desde o início para notificações de entrega, mas com uma versão web enxuta primeiro para validar o preço.",
+      anthropic: "Eu começaria com **cache em memória** invalidado por evento: com uma instância só, Redis é custo de operação sem ganho. Meça a taxa de acerto antes de mudar.",
+      openai: "Vá direto de **Redis**: quando a API escalar para duas instâncias, cache em memória vira inconsistência. Use chaves com a versão do catálogo.",
+      google: "Antes de qualquer cache no servidor, ative **ETag e stale-while-revalidate** no CDN. Muitas vezes isso já resolve o pico sem tocar no código.",
     };
     return takes[provider];
   }
   if (/comando|terminal|rodar|instalar|git/.test(p)) {
     return `Claro! No terminal do projeto:\n\n\`\`\`powershell\ngit status\n\`\`\`\n\nE para subir o ambiente de desenvolvimento:\n\n\`\`\`powershell\nnpm run dev\n\`\`\`\n\nClique em **Executar** em qualquer bloco: o Qyrex avalia o risco e pede sua permissão antes de rodar.`;
   }
-  if (/post|instagram|marketing|legenda/.test(p)) {
-    return "Três ideias de post:\n\n1. **Antes e depois** em carrossel, com o passo a passo no último slide.\n2. **Bastidores** em reel curto (15 s) com música em alta.\n3. **Pergunta da semana** nos stories, respondida no feed na sexta.\n\nQuer que eu escreva as legendas?";
+  if (/teste|bug|erro|falha/.test(p)) {
+    return "Para isolar o bug, rode só o teste da área afetada:\n\n```powershell\nnpm test -- webhooks\n```\n\nSe ele passar sozinho e falhar na suíte inteira, o problema costuma ser estado compartilhado entre testes (um mock de data ou uma fila que não foi limpa).";
   }
-  if (/orçamento|preço|cobrar|valor/.test(p)) {
-    return "Uma forma simples de montar o orçamento:\n\n| Item | Horas | Valor |\n|---|---|---|\n| Layout | 8 | R$ 800 |\n| Desenvolvimento | 20 | R$ 2.000 |\n| Publicação | 2 | R$ 200 |\n\n**Total: R$ 3.000**, com manutenção mensal opcional de R$ 250.";
-  }
-  return `Aqui é o ${who} na demo do Qyrex. 👋\n\nNo app de verdade eu respondo pela sua **assinatura** (Claude Code / Codex) ou por API key, com o contexto do projeto e dos arquivos que você anexar.\n\nExperimente pedir: *"me passe um comando para rodar o projeto"*, *"ideias de post"* ou *"monte um orçamento"*.`;
+  return `Aqui é o ${who} na demo do Qyrex. 👋\n\nNo app de verdade eu respondo pela sua **assinatura** (Claude Code / Codex) ou por API key, com o contexto do projeto e dos arquivos que você anexar.\n\nExperimente pedir: *"me passe um comando para rodar o projeto"*, *"como isolo esse bug?"* ou *"qual teste devo rodar?"*.`;
 }
 
 async function runStream(requestId: string, provider: AIProviderId, model: string, text: string, source: AIUsageRecord["source"], onDone?: (full: string) => void) {
@@ -400,8 +382,8 @@ function termRun(id: string, cmd: string) {
   let out = "";
   if (!c) out = "";
   else if (/^(ls|dir)$/i.test(c)) out = "\r\n    Diretório: " + t.cwd + "\r\n\r\nMode   Name\r\n----   ----\r\nd----  src\r\nd----  public\r\n-a---  package.json\r\n-a---  README.md";
-  else if (/^git status$/i.test(c)) out = "\r\nOn branch main\r\nChanges not staged for commit:\r\n  \x1b[31mmodified:   src/app/assinaturas/page.tsx\x1b[0m";
-  else if (/^npm run dev$/i.test(c)) out = "\r\n\x1b[32m▲ Next.js 15\x1b[0m\r\n- Local:  http://localhost:3000\r\n\x1b[32m✓ Ready in 1.2s\x1b[0m";
+  else if (/^git status$/i.test(c)) out = "\r\nOn branch main\r\nChanges not staged for commit:\r\n  \x1b[31mmodified:   src/webhooks/retry.ts\x1b[0m";
+  else if (/^npm run dev$/i.test(c)) out = "\r\n\x1b[32m▲ Fastify 5\x1b[0m\r\n- Local:  http://localhost:3000\r\n\x1b[32m✓ Ready in 1.2s\x1b[0m";
   else if (/^echo /i.test(c)) out = "\r\n" + c.slice(5);
   else if (/^(cls|clear)$/i.test(c)) { termData.emit({ id, data: "\x1b[2J\x1b[H" + prompt(t.cwd).slice(2) }); return; }
   else out = `\r\n\x1b[33m(demo)\x1b[0m No app de verdade este é um PowerShell real. Tente: dir, git status, npm run dev, echo olá, cls`;
@@ -410,8 +392,8 @@ function termRun(id: string, cmd: string) {
 
 const FILES: Record<string, DirEntry[]> = {};
 const entry = (dir: string, name: string, isDirectory: boolean, size = 0): DirEntry => ({ name, path: `${dir}\\${name}`, isDirectory, size, modifiedAt: ago(Math.round(Math.random() * 5000)) });
-FILES[ROOT] = ["cafe-aurora", "nova-pilates", "bot-orcamentos"].map((n) => entry(ROOT, n, true));
-for (const p of ["cafe-aurora", "nova-pilates", "bot-orcamentos"]) {
+FILES[ROOT] = ["api-pagamentos", "dashboard-admin", "bot-discord"].map((n) => entry(ROOT, n, true));
+for (const p of ["api-pagamentos", "dashboard-admin", "bot-discord"]) {
   const dir = `${ROOT}\\${p}`;
   FILES[dir] = [entry(dir, "src", true), entry(dir, "public", true), entry(dir, "package.json", false, 1480), entry(dir, "README.md", false, 2210), entry(dir, "logo.png", false, 48_200)];
   FILES[`${dir}\\src`] = [entry(`${dir}\\src`, "app", true), entry(`${dir}\\src`, "index.ts", false, 920)];
@@ -427,9 +409,9 @@ const EDITED: Record<string, { content: string; mtimeMs: number }> = {};
 // ---------------------------------------------------------------------------------
 
 const notionPages: (NotionItem & { markdown: string })[] = [
-  { id: "11111111-1111-4111-8111-111111111111", type: "page", title: "Briefing — Loja Café Aurora", icon: "☕", url: "https://www.notion.so", lastEditedAt: ago(40), markdown: "# Objetivo\n\nVender assinaturas mensais de café especial.\n\n## Público\n\n- Quem trabalha em casa\n- Presentes corporativos\n\n## Entregas\n\n- [x] Home com vitrine\n- [ ] Página de assinaturas\n- [ ] Cupom de desconto\n\n> Prazo combinado: fim do mês." },
-  { id: "22222222-2222-4222-8222-222222222222", type: "page", title: "Ideias de conteúdo — outubro", icon: "💡", url: "https://www.notion.so", lastEditedAt: ago(60 * 20), markdown: "## Nova Pilates\n\n- Carrossel: 5 exercícios para a lombar\n- Reel: rotina de 10 minutos\n\n## Doce Lar\n\n- Bastidores do bolo de pistache\n- Enquete: sabor do mês" },
-  { id: "33333333-3333-4333-8333-333333333333", type: "database", title: "Clientes & Propostas", icon: "🗂️", url: "https://www.notion.so", lastEditedAt: ago(60 * 5), markdown: "" },
+  { id: "11111111-1111-4111-8111-111111111111", type: "page", title: "RFC: retentativas de webhooks", icon: "📐", url: "https://www.notion.so", lastEditedAt: ago(40), markdown: "# Problema\n\nWebhooks perdidos quando o provedor fica fora do ar.\n\n## Proposta\n\n- Fila com 5 tentativas e backoff exponencial\n- Dead letter depois da última\n\n## Tarefas\n\n- [x] Validar assinatura HMAC\n- [ ] Fila de retentativas\n- [ ] Painel de dead letter\n\n> Revisão na daily de quinta." },
+  { id: "22222222-2222-4222-8222-222222222222", type: "page", title: "Notas da sprint 14", icon: "💡", url: "https://www.notion.so", lastEditedAt: ago(60 * 20), markdown: "## Feito\n\n- CI com testes e lint\n- Gráfico de latência por rota\n\n## Pendências\n\n- Fuso horário nos gráficos\n- Atualizar dependências do bot" },
+  { id: "33333333-3333-4333-8333-333333333333", type: "database", title: "Roadmap e bugs", icon: "🗂️", url: "https://www.notion.so", lastEditedAt: ago(60 * 5), markdown: "" },
   { id: "44444444-4444-4444-8444-444444444444", type: "page", title: "Checklist de publicação de site", icon: "✅", url: "https://www.notion.so", lastEditedAt: ago(60 * 72), markdown: "- [ ] Domínio apontado\n- [ ] HTTPS ativo\n- [ ] Favicon e prévia (og:image)\n- [ ] Google Analytics\n- [ ] Testar no celular" },
 ];
 const notionItem = ({ markdown: _m, ...item }: (typeof notionPages)[number]): NotionItem => item;
@@ -745,10 +727,6 @@ export const workspaceMock: WorkspaceApi = {
     pickVSCode: () => ok(null),
     detectVSCode: () => ok(db.settings.vscodePath),
     openLogs: () => fail(DEMO_ONLY),
-    openWhatsApp: () => fail(DEMO_ONLY),
-    whatsappStatus: () => ok({ desktopInstalled: true }),
-    openWhatsAppChat: () => fail(DEMO_ONLY),
-    whatsappUrl: (input) => ok(`https://wa.me/${input.phone}`),
     openSpotifyApp: () => fail(DEMO_ONLY),
   },
   projects: {
@@ -814,13 +792,13 @@ export const workspaceMock: WorkspaceApi = {
     diff: (input) => {
       const change = (db.changes[projectByPath(input.projectPath)?.id ?? ""] ?? []).find((c) => c.path === input.file);
       const diff = change?.untracked
-        ? "@@ -0,0 +1,3 @@\n+export function cupom(codigo: string) {\n+  return codigo.trim().toUpperCase();\n+}"
-        : "@@ -12,7 +12,8 @@ export function Checkout() {\n   const total = useTotal();\n-  const frete = 15;\n+  const frete = total > 150 ? 0 : 15;\n+  // frete grátis acima de R$ 150 (pedido do cliente)\n   return (\n     <Resumo total={total} frete={frete} />\n   );";
+        ? "@@ -0,0 +1,3 @@\n+export function deadLetter(evento: Evento) {\n+  return fila.add(\"dead-letter\", evento);\n+}"
+        : "@@ -12,7 +12,8 @@ export async function entregar(evento: Evento) {\n   const resposta = await enviar(evento);\n-  if (!resposta.ok) throw new Error(\"falhou\");\n+  if (!resposta.ok) return reagendar(evento, tentativa + 1);\n+  // até 5 tentativas, com backoff exponencial\n   return resposta;\n }";
       return ok({ file: input.file, diff, truncated: false, binary: false, untracked: Boolean(change?.untracked) }, 150);
     },
     branches: (path) => {
       const current = db.branch[projectByPath(path)?.id ?? ""] ?? "main";
-      const names = Array.from(new Set(["main", "feat/assinaturas", current]));
+      const names = Array.from(new Set(["main", "feat/retentativas", current]));
       return ok(names.map((name) => ({ name, current: name === current, upstream: `origin/${name}`, lastCommitAt: ago(60) })));
     },
     fetch: (path) => {
@@ -850,10 +828,10 @@ export const workspaceMock: WorkspaceApi = {
       ok({
         repo: { fullName: url.replace("https://github.com/", ""), description: "Repositório de exemplo da demo", defaultBranch: "main", stars: 12, openIssues: 2, htmlUrl: url, private: true },
         issues: [
-          { number: 14, title: "Cupom de desconto no checkout", state: "open", author: "cliente-aurora", htmlUrl: url, updatedAt: ago(300) },
-          { number: 11, title: "Fotos dos cafés carregando lentas", state: "open", author: "visitante", htmlUrl: url, updatedAt: ago(2000) },
+          { number: 14, title: "Webhook duplicado em timeout do provedor", state: "open", author: "ana-dev", htmlUrl: url, updatedAt: ago(300) },
+          { number: 11, title: "GET /catalogo lento sem cache", state: "open", author: "visitante", htmlUrl: url, updatedAt: ago(2000) },
         ],
-        pulls: [{ number: 15, title: "Página de assinaturas", state: "open", author: "visitante", htmlUrl: url, updatedAt: ago(60) }],
+        pulls: [{ number: 15, title: "Fila de retentativas para webhooks", state: "open", author: "visitante", htmlUrl: url, updatedAt: ago(60) }],
       }, 400),
     connect: () => fail("Na demo o GitHub já vem conectado."),
     ghCliAvailable: () => ok(true),
@@ -863,9 +841,9 @@ export const workspaceMock: WorkspaceApi = {
   },
   tasks: {
     list: (filter) =>
-      ok(db.tasks.filter((t) => (!filter?.status || t.status === filter.status) && (!filter?.projectId || t.projectId === filter.projectId) && (!filter?.clientId || t.clientId === filter.clientId))),
+      ok(db.tasks.filter((t) => (!filter?.status || t.status === filter.status) && (!filter?.projectId || t.projectId === filter.projectId))),
     create: async (input) => {
-      const t: Task = { id: uid(), title: input.title, description: input.description ?? null, status: input.status ?? "pendente", priority: input.priority ?? "normal", projectId: input.projectId ?? null, clientId: input.clientId ?? null, dueDate: input.dueDate ?? null, dueTime: input.dueTime ?? null, tags: input.tags ?? [], createdAt: new Date().toISOString(), completedAt: null };
+      const t: Task = { id: uid(), title: input.title, description: input.description ?? null, status: input.status ?? "pendente", priority: input.priority ?? "normal", projectId: input.projectId ?? null, dueDate: input.dueDate ?? null, dueTime: input.dueTime ?? null, tags: input.tags ?? [], createdAt: new Date().toISOString(), completedAt: null };
       db.tasks.unshift(t);
       save();
       return ok(t);
@@ -950,54 +928,11 @@ export const workspaceMock: WorkspaceApi = {
       return ok({
         projects: db.projects.filter((p) => has(p.name) || has(p.description)),
         tasks: db.tasks.filter((t) => has(t.title)),
-        clients: db.clients.filter((c) => has(c.name) || has(c.company)),
-        marketing: db.marketing.filter((m) => has(m.title)),
         files: allFiles().filter((f) => has(f.name)).slice(0, 8),
       });
     },
   },
   activity: { list: (limit) => ok(db.activity.slice(0, limit ?? 20)) },
-  clients: {
-    list: (search) => ok(db.clients.filter((c) => !search || `${c.name} ${c.company ?? ""}`.toLowerCase().includes(search.toLowerCase()))),
-    get: (id) => ok(db.clients.find((c) => c.id === id) ?? null),
-    create: async (input) => {
-      const c: Client = { id: uid(), company: null, phone: null, whatsapp: null, instagram: null, email: null, notes: null, status: "ativo", monthlyValue: null, nextBillingDate: null, filesPath: null, createdAt: new Date().toISOString(), ...input } as Client;
-      db.clients.unshift(c);
-      save();
-      return ok(c);
-    },
-    update: async (id, patch) => {
-      const c = db.clients.find((x) => x.id === id)!;
-      Object.assign(c, patch);
-      save();
-      return ok(c);
-    },
-    delete: async (id) => {
-      db.clients = db.clients.filter((c) => c.id !== id);
-      save();
-      return ok(undefined);
-    },
-  },
-  marketing: {
-    list: (filter) => ok(db.marketing.filter((m) => !filter?.clientId || m.clientId === filter.clientId)),
-    create: async (input) => {
-      const m: MarketingContent = { id: uid(), clientId: input.clientId ?? null, type: input.type, title: input.title, description: input.description ?? null, caption: input.caption ?? null, status: input.status ?? "ideia", scheduledDate: input.scheduledDate ?? null, files: input.files ?? [], createdAt: new Date().toISOString() };
-      db.marketing.unshift(m);
-      save();
-      return ok(m);
-    },
-    update: async (id, patch) => {
-      const m = db.marketing.find((x) => x.id === id)!;
-      Object.assign(m, patch);
-      save();
-      return ok(m);
-    },
-    delete: async (id) => {
-      db.marketing = db.marketing.filter((m) => m.id !== id);
-      save();
-      return ok(undefined);
-    },
-  },
   calendar: {
     // Como o calendarService: só o intervalo pedido, em ordem de horário.
     list: (range) =>
@@ -1121,9 +1056,9 @@ export const workspaceMock: WorkspaceApi = {
       await wait(700);
       const c = input.command.trim();
       const stdout = /^git status/i.test(c)
-        ? "On branch main\nChanges not staged for commit:\n  modified:   src/app/assinaturas/page.tsx"
+        ? "On branch main\nChanges not staged for commit:\n  modified:   src/webhooks/retry.ts"
         : /^npm run dev/i.test(c)
-          ? "▲ Next.js 15\n- Local: http://localhost:3000\n✓ Ready in 1.2s"
+          ? "▲ Fastify 5\n- Local: http://localhost:3000\n✓ Ready in 1.2s"
           : `(demo) Comando simulado: ${c}\nNo app de verdade ele roda no PowerShell, na pasta do projeto.`;
       return ok({ exitCode: 0, stdout, stderr: "", timedOut: false });
     },
@@ -1185,7 +1120,6 @@ export const workspaceMock: WorkspaceApi = {
         { id: "google_calendar", state: "connected", detail: null, info: { clientId: "demo.apps.googleusercontent.com", lastSync: new Date().toISOString() } },
         { id: "spotify", state: "disconnected", detail: null, info: {} },
         { id: "notion", state: "connected", detail: null, info: { workspace: "Workspace de exemplo", maskedKey: "ntn_••••demo" } },
-        { id: "whatsapp", state: "connected", detail: null, info: {} },
       ]),
   },
   notion: {

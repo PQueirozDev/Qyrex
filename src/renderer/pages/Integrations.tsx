@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { Bot, CalendarDays, Github, KeyRound, MessageCircle, Music, ExternalLink, NotebookPen, ShieldCheck, Sparkles } from "lucide-react";
+import { Bot, CalendarDays, Github, KeyRound, Music, ExternalLink, NotebookPen, ShieldCheck, Sparkles } from "lucide-react";
 import type { AIProviderStatus, IntegrationId, IntegrationStatus, SubscriptionCliStatus } from "@shared/types";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -12,7 +12,6 @@ import { confirmAction, toast, useUIStore } from "@/stores/useUIStore";
 
 import { tr, trn } from "@/lib/i18n";
 import { PAGE_ICONS } from "@/lib/pageIcons";
-import { useBusinessMode } from "@/stores/useSettingsStore";
 const SPOTIFY_REDIRECT = "http://127.0.0.1:43821/callback";
 
 interface Meta {
@@ -29,7 +28,6 @@ const META: Record<IntegrationId, Meta> = {
   google_calendar: { label: tr("Google Agenda"), icon: CalendarDays, description: tr("Traz seus eventos para a Agenda (somente leitura).") },
   notion: { label: tr("Notion"), icon: NotebookPen, description: tr("Busque, leia e crie páginas do Notion, e mande páginas para a IA.") },
   spotify: { label: tr("Spotify"), icon: Music, description: tr("Opcional: o mini player já mostra e controla o que toca no PC, sem conectar conta.") },
-  whatsapp: { label: tr("WhatsApp"), icon: MessageCircle, description: tr("Conversas pelos links oficiais (wa.me / app desktop).") },
 };
 
 const KEY_LINKS: Partial<Record<IntegrationId, string>> = {
@@ -535,35 +533,12 @@ function SpotifyCard({ status, reload }: { status: IntegrationStatus | undefined
   );
 }
 
-function WhatsAppCard({ status }: { status: IntegrationStatus | undefined }) {
-  const navigate = useUIStore((s) => s.navigate);
-  const [desktop, setDesktop] = useState<boolean | null>(null);
-  useEffect(() => {
-    void attempt(window.workspace.system.whatsappStatus()).then((s) => setDesktop(s?.desktopInstalled ?? false));
-  }, []);
-  return (
-    <IntegrationCard
-      id="whatsapp"
-      status={status}
-      actions={
-        <Button size="xs" variant="secondary" onClick={() => navigate("whatsapp")}>{tr("Abrir WhatsApp")}</Button>
-      }
-    >
-      <p className="text-xs text-text-muted">
-        {desktop === null ? tr("Verificando...") : desktop ? tr("WhatsApp Desktop encontrado.") : tr("WhatsApp Desktop não encontrado — usa o WhatsApp Web.")}
-      </p>
-      <p className="text-[11px] text-text-faint">{tr("Sem credenciais: só links oficiais. A WhatsApp Cloud API entra numa fase futura.")}</p>
-    </IntegrationCard>
-  );
-}
-
 // --- Página ----------------------------------------------------------------------------------
 
 export function Integrations() {
   const [statuses, setStatuses] = useState<IntegrationStatus[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const providers = useAIStore((s) => s.providers);
-  const businessMode = useBusinessMode();
   const [clis, setClis] = useState<SubscriptionCliStatus[] | null>(null);
 
   const loadProviders = useAIStore((s) => s.loadProviders);
@@ -617,7 +592,6 @@ export function Integrations() {
               <NotionCard status={get("notion")} reload={reload} />
               <GoogleCalendarCard status={get("google_calendar")} reload={reload} />
               <SpotifyCard status={get("spotify")} reload={reload} />
-              {businessMode && <WhatsAppCard status={get("whatsapp")} />}
             </div>
           </section>
         </div>

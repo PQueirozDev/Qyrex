@@ -130,51 +130,6 @@ export async function openExternalUrl(url: string): Promise<void> {
   await shell.openExternal(url);
 }
 
-/** Normaliza um telefone brasileiro/internacional para o formato do wa.me (só dígitos, com DDI). */
-export function normalizeWhatsAppNumber(phone: string): string {
-  let digits = phone.replace(/\D/g, "");
-  if (digits.startsWith("00")) digits = digits.slice(2);
-  // Número brasileiro sem DDI (10 ou 11 dígitos com DDD): prefixa 55.
-  if (digits.length === 10 || digits.length === 11) digits = `55${digits}`;
-  if (digits.length < 11 || digits.length > 15) {
-    throw new Error("Número de WhatsApp inválido. Use DDD + número (ex.: 11 91234-5678).");
-  }
-  return digits;
-}
-
-/** URL oficial de "clique para conversar" do WhatsApp. */
-export function buildWhatsAppUrl(phone: string, message?: string): string {
-  const base = `https://wa.me/${normalizeWhatsAppNumber(phone)}`;
-  return message?.trim() ? `${base}?text=${encodeURIComponent(message.trim())}` : base;
-}
-
-export function isWhatsAppDesktopInstalled(): boolean {
-  try {
-    return Boolean(app.getApplicationNameForProtocol("whatsapp://"));
-  } catch {
-    return false;
-  }
-}
-
-export async function openWhatsApp(target: "desktop" | "web"): Promise<void> {
-  if (target === "desktop") {
-    if (!isWhatsAppDesktopInstalled()) throw new Error("WhatsApp Desktop não está instalado. Use o WhatsApp Web.");
-    await shell.openExternal("whatsapp://");
-  } else {
-    await shell.openExternal("https://web.whatsapp.com/");
-  }
-}
-
-export async function openWhatsAppChat(phone: string, message: string | undefined, preferDesktop: boolean): Promise<void> {
-  const digits = normalizeWhatsAppNumber(phone);
-  if (preferDesktop && isWhatsAppDesktopInstalled()) {
-    const text = message?.trim() ? `&text=${encodeURIComponent(message.trim())}` : "";
-    await shell.openExternal(`whatsapp://send?phone=${digits}${text}`);
-    return;
-  }
-  await shell.openExternal(buildWhatsAppUrl(digits, message));
-}
-
 export async function openSpotifyApp(): Promise<void> {
   try {
     if (app.getApplicationNameForProtocol("spotify:")) {

@@ -5,8 +5,6 @@ import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/primitives";
 import { useTasksStore } from "@/stores/useTasksStore";
 import { useProjectsStore } from "@/stores/useProjectsStore";
-import { useClientsStore } from "@/stores/useClientsStore";
-import { useBusinessMode } from "@/stores/useSettingsStore";
 import { confirmAction } from "@/stores/useUIStore";
 import type { Task, TaskPriority, TaskStatus } from "@shared/types";
 import { tr } from "@/lib/i18n";
@@ -19,7 +17,7 @@ interface Props {
   onClose: () => void;
   /** Tarefa existente para edição; ausente = criar nova. */
   task?: Task | null;
-  defaults?: Partial<Pick<Task, "projectId" | "clientId" | "dueDate" | "status">>;
+  defaults?: Partial<Pick<Task, "projectId" | "dueDate" | "status">>;
 }
 
 /** Pede confirmação e exclui a tarefa. Devolve true se ela foi excluída. */
@@ -38,15 +36,12 @@ export async function confirmDeleteTask(task: Task): Promise<boolean> {
 export function TaskFormDialog({ open, onClose, task, defaults }: Props) {
   const { create, update } = useTasksStore();
   const { projects, loaded: projectsLoaded, load: loadProjects } = useProjectsStore();
-  const { clients, loaded: clientsLoaded, load: loadClients } = useClientsStore();
-  const businessMode = useBusinessMode();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<TaskStatus>("pendente");
   const [priority, setPriority] = useState<TaskPriority>("normal");
   const [projectId, setProjectId] = useState("");
-  const [clientId, setClientId] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [dueTime, setDueTime] = useState("");
   const [tags, setTags] = useState("");
@@ -55,13 +50,11 @@ export function TaskFormDialog({ open, onClose, task, defaults }: Props) {
   useEffect(() => {
     if (!open) return;
     if (!projectsLoaded) void loadProjects();
-    if (businessMode && !clientsLoaded) void loadClients();
     setTitle(task?.title ?? "");
     setDescription(task?.description ?? "");
     setStatus(task?.status ?? defaults?.status ?? "pendente");
     setPriority(task?.priority ?? "normal");
     setProjectId(task?.projectId ?? defaults?.projectId ?? "");
-    setClientId(task?.clientId ?? defaults?.clientId ?? "");
     setDueDate(task?.dueDate ?? defaults?.dueDate ?? "");
     setDueTime(task?.dueTime ?? "");
     setTags(task?.tags.join(", ") ?? "");
@@ -82,7 +75,6 @@ export function TaskFormDialog({ open, onClose, task, defaults }: Props) {
           status,
           priority,
           projectId: projectId || null,
-          clientId: clientId || null,
           dueDate: dueDate || null,
           dueTime: dueDate && dueTime ? dueTime : null,
           tags: tagList,
@@ -93,7 +85,6 @@ export function TaskFormDialog({ open, onClose, task, defaults }: Props) {
           status,
           priority,
           projectId: projectId || undefined,
-          clientId: clientId || undefined,
           dueDate: dueDate || undefined,
           dueTime: dueDate && dueTime ? dueTime : undefined,
           tags: tagList,
@@ -181,21 +172,9 @@ export function TaskFormDialog({ open, onClose, task, defaults }: Props) {
               ))}
             </select>
           </Field>
-          {businessMode && (
-            <Field label={tr("Cliente")}>
-              <select className="input" value={clientId} onChange={(e) => setClientId(e.target.value)}>
-                <option value="">{tr("Nenhum")}</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </Field>
-          )}
         </div>
         <Field label={tr("Tags")} hint={tr("Separe por vírgula: site, urgente, instagram")}>
-          <input className="input" value={tags} onChange={(e) => setTags(e.target.value)} placeholder={tr("site, cliente")} />
+          <input className="input" value={tags} onChange={(e) => setTags(e.target.value)} placeholder={tr("frontend, bug")} />
         </Field>
       </div>
     </Dialog>

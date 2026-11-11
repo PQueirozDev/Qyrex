@@ -50,7 +50,6 @@ describe("IPC", () => {
     expect((await call("tasks:create", { title: "ok", dueDate: "10/10/2030" })).ok).toBe(false);
     expect((await call("tasks:create", null)).ok).toBe(false);
     expect((await call("tasks:create", { title: "ok", dueDate: "2030-10-10", dueTime: "09:30" })).ok).toBe(true);
-    expect((await call("clients:create", { name: "X", email: "não-é-email" })).ok).toBe(false);
     expect((await call("settings:update", { theme: "neon" })).ok).toBe(false);
   });
 

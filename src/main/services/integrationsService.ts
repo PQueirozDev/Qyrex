@@ -22,7 +22,6 @@ export const ALL_INTEGRATIONS: IntegrationId[] = [
   "google_calendar",
   "spotify",
   "notion",
-  "whatsapp",
 ];
 
 export function setIntegrationState(
@@ -90,8 +89,6 @@ export function listIntegrationStatus(): IntegrationStatus[] {
     // Conexão pela assinatura (Claude Code / Codex) não tem segredo guardado no app.
     const viaSubscription = info.authMode === "subscription";
     if (secret && state === "connected" && !viaSubscription && !hasSecret(secret)) state = "disconnected";
-    // WhatsApp não tem credencial: funciona via links oficiais (wa.me / app desktop).
-    if (id === "whatsapp") state = "connected";
     return { id, state, detail: state === "error" ? lastError ?? "Erro desconhecido" : null, info: publicInfo };
   });
 }

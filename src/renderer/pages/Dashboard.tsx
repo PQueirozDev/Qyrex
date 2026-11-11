@@ -10,14 +10,11 @@ import {
   FolderOpen,
   GitCommitHorizontal,
   Github,
-  MessageCircle,
   Plus,
   Settings2,
   SquareTerminal,
   Timer,
-  UserPlus,
   Workflow,
-  Wallet,
 } from "lucide-react";
 import type { CalendarEvent, DashboardWidgetId, GitCommit, RecentItem } from "@shared/types";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
@@ -25,11 +22,10 @@ import { Button } from "@/components/ui/Button";
 import { Badge, EmptyState, LoadingRows, ProjectIcon } from "@/components/ui/primitives";
 import { useTasksStore } from "@/stores/useTasksStore";
 import { useProjectsStore } from "@/stores/useProjectsStore";
-import { useBusinessMode, useSettingsStore } from "@/stores/useSettingsStore";
-import { useClientsStore } from "@/stores/useClientsStore";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useUIStore } from "@/stores/useUIStore";
 import { attempt } from "@/lib/api";
-import { addDays, toLocalDateTime, formatCurrency, formatDate, formatTime, greeting, shortDay, timeAgo, todayISO, toLocalDate } from "@/lib/format";
+import { addDays, toLocalDateTime, formatTime, greeting, shortDay, timeAgo, todayISO, toLocalDate } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { PRIORITY_LABEL } from "@/components/TaskFormDialog";
 
@@ -84,7 +80,6 @@ const ACTIVITY_ICON: Record<string, typeof Code2> = {
   project: Code2,
   file: FileText,
   task_completed: CheckCircle2,
-  client: UserPlus,
   commit: GitCommitHorizontal,
   focus: Timer,
   automation: Settings2,
@@ -94,7 +89,6 @@ const ACTIVITY_TEXT: Record<string, string> = {
   project: tr("Projeto aberto"),
   file: tr("Arquivo aberto"),
   task_completed: tr("Tarefa concluída"),
-  client: tr("Cliente aberto"),
   commit: tr("Commit"),
   focus: tr("Sessão de foco"),
   automation: tr("Automação executada"),
@@ -166,9 +160,7 @@ export function Dashboard() {
   const { tasks, loaded: tasksLoaded, load: loadTasks, toggleDone } = useTasksStore();
   const { projects: allProjects, loaded: projectsLoaded, load: loadProjects, open: openProject } = useProjectsStore();
   const projects = useMemo(() => allProjects.filter((p) => !p.archivedAt), [allProjects]);
-  const { clients, load: loadClients } = useClientsStore();
   const settings = useSettingsStore((s) => s.settings);
-  const businessMode = useBusinessMode();
   const setFocusDialog = useFocusStore((s) => s.setDialog);
   const [customizeOpen, setCustomizeOpen] = useState(false);
 
@@ -181,13 +173,11 @@ export function Dashboard() {
   useEffect(() => {
     void loadTasks();
     void loadProjects();
-    if (businessMode) void loadClients();
     void attempt(window.workspace.calendar.list({ from: `${today}T00:00:00`, to: `${toLocalDate(addDays(new Date(), 2))}T23:59:59` })).then(
       (data) => setEvents(data ?? [])
     );
-    // Modo Dev: o histórico de clientes abertos não aparece.
-    void attempt(window.workspace.activity.list(12)).then((data) => setActivity((data ?? []).filter((a) => businessMode || a.itemType !== "client")));
-  }, [loadTasks, loadProjects, loadClients, businessMode, today]);
+    void attempt(window.workspace.activity.list(12)).then((data) => setActivity(data ?? []));
+  }, [loadTasks, loadProjects, today]);
 
   const recentProjects = useMemo(
     () =>
@@ -217,27 +207,19 @@ export function Dashboard() {
   const doneToday = tasks.filter((t) => t.status === "concluido" && t.completedAt && toLocalDate(new Date(t.completedAt)) === today);
   const todayEvents = (events ?? []).filter((e) => e.startsAt.slice(0, 10) === today);
   const nextEvents = (events ?? []).filter((e) => e.startsAt.slice(0, 10) > today).slice(0, 3);
-  const billing = clients
-    .filter((c) => c.status === "ativo" && c.nextBillingDate && c.nextBillingDate <= toLocalDate(addDays(new Date(), 7)))
-    .sort((a, b) => (a.nextBillingDate ?? "").localeCompare(b.nextBillingDate ?? ""))
-    .slice(0, 4);
   const lastProject = recentProjects[0];
   const overdue = tasks.filter((t) => t.status !== "concluido" && t.dueDate && t.dueDate < today).length;
   const nowTime = toLocalDateTime(new Date());
   const nextToday = todayEvents.find((e) => e.startsAt >= nowTime);
   const pendingChanges = projects.filter((p) => (p.git?.modifiedCount ?? 0) > 0).length;
-  const activeClients = clients.filter((c) => c.status === "ativo").length;
-  const monthlyTotal = clients.filter((c) => c.status === "ativo").reduce((sum, c) => sum + (c.monthlyValue ?? 0), 0);
 
   const quickActions = [
     { label: tr("Nova tarefa"), icon: Plus, run: () => setQuickTaskOpen(true) },
-    { label: tr("Novo cliente"), icon: UserPlus, business: true, run: () => navigate("clientes", "new") },
     { label: tr("Novo projeto"), icon: Code2, run: () => navigate("projetos", "new") },
     { label: tr("Abrir VS Code"), icon: Code2, run: () => (lastProject ? void openProject(lastProject, "vscode") : navigate("projetos")) },
     { label: tr("Abrir terminal"), icon: SquareTerminal, run: () => navigate("terminal", lastProject?.id ?? null) },
-    { label: tr("Abrir WhatsApp"), icon: MessageCircle, business: true, run: () => navigate("whatsapp") },
     { label: tr("Perguntar para IA"), icon: Bot, run: () => navigate("ia") },
-  ].filter((a) => businessMode || !a.business);
+  ];
 
   const widgets: Record<DashboardWidgetId, ReactNode> = {
     agenda: (
@@ -474,38 +456,8 @@ export function Dashboard() {
           </CardContent>
         </Card>
     ),
-    cobrancas: (
-        <Card>
-            <CardHeader
-              title={tr("Cobranças (7 dias)")}
-              icon={<Wallet size={12} />}
-              action={
-                <Button variant="ghost" size="xs" onClick={() => navigate("clientes")}>{tr("Clientes")}</Button>
-              }
-            />
-            <CardContent>
-              {billing.length === 0 ? (
-                <p className="py-3 text-sm text-text-faint">{tr("Nenhuma cobrança nos próximos 7 dias.")}</p>
-              ) : (
-                <ul className="space-y-1">
-                  {billing.map((c) => (
-                    <li key={c.id}>
-                      <button onClick={() => navigate("clientes", c.id)} className="flex w-full items-center gap-2 rounded-md px-1 py-1.5 text-left hover:bg-bg-hover">
-                        <span className="min-w-0 flex-1 truncate text-sm text-text">{c.name}</span>
-                        <span className="text-xs tabular-nums text-text-muted">{formatCurrency(c.monthlyValue)}</span>
-                        <Badge tone={c.nextBillingDate! < today ? "danger" : c.nextBillingDate === today ? "warning" : "neutral"}>
-                          {c.nextBillingDate! < today ? tr("Vencida") : c.nextBillingDate === today ? tr("Hoje") : formatDate(c.nextBillingDate)}
-                        </Badge>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-    ),
   };
-  const visibleWidgets = dashboardOrder(settings?.dashboard).filter((id) => !settings?.dashboard.hidden.includes(id) && (businessMode || id !== "cobrancas"));
+  const visibleWidgets = dashboardOrder(settings?.dashboard).filter((id) => !settings?.dashboard.hidden.includes(id));
 
   return (
     <div className="space-y-5">
@@ -542,7 +494,7 @@ export function Dashboard() {
       </div>
       <DashboardCustomizeDialog open={customizeOpen} onClose={() => setCustomizeOpen(false)} />
 
-      <div className={cn("grid grid-cols-2 gap-3", businessMode ? "xl:grid-cols-4" : "xl:grid-cols-3")}>
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-3">
         <StatTile
           icon={CheckSquare}
           label={tr("Tarefas em foco")}
@@ -567,16 +519,6 @@ export function Dashboard() {
           tone="warning"
           onClick={() => navigate("projetos")}
         />
-        {businessMode && (
-          <StatTile
-            icon={Wallet}
-            label={tr("Manutenção mensal")}
-            value={formatCurrency(monthlyTotal) || formatCurrency(0)}
-            sub={trn(activeClients, "{n} cliente ativo", "{n} clientes ativos")}
-            tone="neutral"
-            onClick={() => navigate("clientes")}
-          />
-        )}
       </div>
 
       <div className="flex flex-wrap gap-2">

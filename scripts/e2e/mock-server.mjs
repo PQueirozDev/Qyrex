@@ -272,7 +272,7 @@ async function route(req, res) {
     if (np === `/blocks/${PAGE}/children`) {
       return json(res, 200, {
         results: [
-          { id: "b1", type: "heading_2", has_children: false, heading_2: { rich_text: txt("Objetivo do cliente") } },
+          { id: "b1", type: "heading_2", has_children: false, heading_2: { rich_text: txt("Objetivo da sprint") } },
           { id: "b2", type: "paragraph", has_children: false, paragraph: { rich_text: txt("Vender assinaturas de café pelo site.") } },
           { id: "b3", type: "to_do", has_children: false, to_do: { rich_text: txt("Página de planos"), checked: false } },
         ],

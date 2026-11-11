@@ -3,7 +3,6 @@ import { motion } from "motion/react";
 import {
   Bell,
   Bot,
-  Briefcase,
   Check,
   Cloud,
   Code2,
@@ -52,7 +51,6 @@ import { UpdateCard } from "@/pages/PatchNotes";
 const SECTIONS: { id: string; label: string; icon: LucideIcon }[] = [
   { id: "aparencia", label: tr("Aparência"), icon: Palette },
   { id: "idioma", label: tr("Idioma"), icon: Languages },
-  { id: "modo", label: tr("Modo de uso"), icon: Briefcase },
   { id: "geral", label: tr("Geral"), icon: User },
   { id: "pastas", label: tr("Pastas autorizadas"), icon: FolderPlus },
   { id: "ferramentas", label: tr("VS Code e terminal"), icon: SquareTerminal },
@@ -179,12 +177,7 @@ function ThemePicker({ value, onChange }: { value: AppSettings["theme"]; onChang
 const NOTIFICATION_LABELS: Record<keyof NotificationPrefs, { label: string; hint: string }> = {
   tasks: { label: tr("Tarefas"), hint: tr("Prazos de hoje e tarefas atrasadas") },
   events: { label: tr("Agenda"), hint: tr("Lembrete antes dos compromissos") },
-  billing: { label: tr("Cobranças"), hint: tr("Clientes com cobrança próxima ou atrasada") },
-  marketing: { label: tr("Marketing"), hint: tr("Conteúdos agendados para hoje") },
 };
-
-/** Avisos que só existem no Modo Negócio. */
-const BUSINESS_NOTIFICATIONS: (keyof NotificationPrefs)[] = ["billing", "marketing"];
 
 const DISCORD_STATUS: Record<DiscordStatus, { label: string; tone: "success" | "neutral" | "warning" | "danger" | "accent" }> = {
   disabled: { label: tr("Desligado"), tone: "neutral" },
@@ -253,7 +246,7 @@ function DiscordSection() {
           <li>{tr("Copie o Application ID e cole aqui.")}</li>
         </ol>
       </div>
-      <Row label={tr("Mostrar nome do projeto")} hint={tr("Desligado por padrão: nomes de projetos podem ser de clientes.")}>
+      <Row label={tr("Mostrar nome do projeto")} hint={tr("Desligado por padrão: nomes de projetos podem ser privados.")}>
         <Switch checked={discord.showProject} disabled={!discord.enabled} onChange={(v) => void update({ discord: { ...discord, showProject: v } })} />
       </Row>
     </Section>
@@ -720,39 +713,6 @@ export function Settings() {
           </div>
         </Section>
 
-        <Section
-          id="modo"
-          title={tr("Modo de uso")}
-          description={tr("O modo Dev mostra só o que é de desenvolvimento. O modo Negócio adiciona clientes, cobranças, marketing e WhatsApp.")}
-        >
-          <div className="grid grid-cols-2 gap-3">
-            {(
-              [
-                { business: false, icon: Code2, label: tr("Dev"), sample: tr("Projetos, tarefas, terminal, arquivos e IA") },
-                { business: true, icon: Briefcase, label: tr("Dev + Negócio"), sample: tr("Tudo do Dev, mais clientes, marketing e WhatsApp") },
-              ] as const
-            ).map((mode) => (
-              <button
-                key={String(mode.business)}
-                onClick={() => mode.business !== settings.businessMode && void update({ businessMode: mode.business })}
-                className={cn(
-                  "flex items-start gap-3 rounded-lg border p-3 text-left transition-all",
-                  settings.businessMode === mode.business ? "border-accent ring-2 ring-accent/25" : "border-border-subtle hover:border-border hover:bg-bg-hover/50"
-                )}
-                aria-pressed={settings.businessMode === mode.business}
-              >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-bg-hover text-text-muted">
-                  <mode.icon size={15} />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-[13px] font-medium text-text">{mode.label}</span>
-                  <span className="block truncate text-[11px] text-text-faint">{mode.sample}</span>
-                </span>
-              </button>
-            ))}
-          </div>
-        </Section>
-
         <Section id="geral" title={tr("Geral")}>
           <Row label={tr("Foto de perfil")} hint={tr("Por padrão é o ícone do Qyrex. A imagem escolhida é recortada em quadrado e fica só neste PC.")}>
             <div className="flex items-center gap-3">
@@ -894,7 +854,6 @@ export function Settings() {
 
         <Section id="notificacoes" title={tr("Notificações")} description={tr("Notificações da área de trabalho.")}>
           {(Object.keys(NOTIFICATION_LABELS) as (keyof NotificationPrefs)[])
-            .filter((key) => settings.businessMode || !BUSINESS_NOTIFICATIONS.includes(key))
             .map((key) => (
               <Row key={key} label={NOTIFICATION_LABELS[key].label} hint={NOTIFICATION_LABELS[key].hint}>
                 <Switch checked={settings.notifications[key]} onChange={(v) => void update({ notifications: { ...settings.notifications, [key]: v } })} />
@@ -948,7 +907,7 @@ export function Settings() {
             <img src={logoUrl} alt="" className="h-10 w-10 shrink-0 [image-rendering:pixelated]" draggable={false} />
             <div>
               <p className="text-sm font-medium text-text">Qyrex {system ? `v${system.appVersion}` : ""}</p>
-              <p className="text-xs text-text-muted">{tr("Central de trabalho: projetos, tarefas, arquivos, IA, clientes, marketing e integrações.")}</p>
+              <p className="text-xs text-text-muted">{tr("Central de trabalho do desenvolvedor: projetos, git, terminal, tarefas, arquivos, IA e integrações.")}</p>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">

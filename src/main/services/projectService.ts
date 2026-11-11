@@ -17,7 +17,6 @@ interface ProjectRow {
   local_path: string;
   technologies: string;
   github_url: string | null;
-  client_id: string | null;
   favorite: number;
   icon_mode: string;
   status: string;
@@ -34,7 +33,6 @@ function rowToProject(row: ProjectRow): Project {
     localPath: row.local_path,
     technologies: JSON.parse(row.technologies) as string[],
     githubUrl: row.github_url,
-    clientId: row.client_id,
     favorite: Boolean(row.favorite),
     iconMode: row.icon_mode === "custom" || row.icon_mode === "none" ? row.icon_mode : "auto",
     status: row.status === "pausado" || row.status === "concluido" ? row.status : "ativo",
@@ -153,7 +151,6 @@ export function createProject(input: {
   localPath: string;
   technologies?: string[];
   githubUrl?: string;
-  clientId?: string;
 }): Project {
   // O caminho precisa estar dentro de um diretório autorizado pelo usuário.
   const resolvedPath = assertPathAllowedAndExists(input.localPath);
@@ -167,8 +164,8 @@ export function createProject(input: {
   const id = randomUUID();
   getDb()
     .prepare(
-      `INSERT INTO projects (id, name, description, local_path, technologies, github_url, client_id, favorite)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 0)`
+      `INSERT INTO projects (id, name, description, local_path, technologies, github_url, favorite)
+       VALUES (?, ?, ?, ?, ?, ?, 0)`
     )
     .run(
       id,
@@ -176,22 +173,21 @@ export function createProject(input: {
       input.description ?? null,
       resolvedPath,
       JSON.stringify(input.technologies?.length ? input.technologies : detectTechnologies(resolvedPath)),
-      input.githubUrl ?? null,
-      input.clientId ?? null
+      input.githubUrl ?? null
     );
   return getProject(id)!;
 }
 
 export function updateProject(
   id: string,
-  partial: Partial<Pick<Project, "name" | "description" | "technologies" | "githubUrl" | "clientId" | "status">>
+  partial: Partial<Pick<Project, "name" | "description" | "technologies" | "githubUrl" | "status">>
 ): Project {
   const current = getProject(id);
   if (!current) throw new Error("Projeto não encontrado.");
   const merged = { ...current, ...partial };
   getDb()
-    .prepare("UPDATE projects SET name = ?, description = ?, technologies = ?, github_url = ?, client_id = ?, status = ? WHERE id = ?")
-    .run(merged.name, merged.description, JSON.stringify(merged.technologies), merged.githubUrl, merged.clientId, merged.status, id);
+    .prepare("UPDATE projects SET name = ?, description = ?, technologies = ?, github_url = ?, status = ? WHERE id = ?")
+    .run(merged.name, merged.description, JSON.stringify(merged.technologies), merged.githubUrl, merged.status, id);
   return getProject(id)!;
 }
 

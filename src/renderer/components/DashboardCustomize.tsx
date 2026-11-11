@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { Switch } from "@/components/ui/primitives";
 import { tr } from "@/lib/i18n";
-import { useBusinessMode, useSettingsStore } from "@/stores/useSettingsStore";
+import { useSettingsStore } from "@/stores/useSettingsStore";
 import { tm } from "@shared/i18n";
 
 export const WIDGET_LABEL: Record<DashboardWidgetId, string> = {
@@ -14,7 +14,6 @@ export const WIDGET_LABEL: Record<DashboardWidgetId, string> = {
   foco: tm("Foco"),
   projetos: tm("Projetos recentes"),
   automacoes: tm("Automações"),
-  cobrancas: tm("Cobranças (7 dias)"),
 };
 
 /** Ordem final: a escolhida pelo usuário + widgets novos no fim, na ordem padrão. */
@@ -25,10 +24,9 @@ export function dashboardOrder(prefs: DashboardPrefs | undefined): DashboardWidg
 
 export function DashboardCustomizeDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { settings, update } = useSettingsStore();
-  const businessMode = useBusinessMode();
   if (!settings) return null;
   const prefs = settings.dashboard;
-  const order = dashboardOrder(prefs).filter((id) => businessMode || id !== "cobrancas");
+  const order = dashboardOrder(prefs);
 
   const save = (next: Partial<DashboardPrefs>) => void update({ dashboard: { ...prefs, order: dashboardOrder(prefs), ...next } });
 

@@ -10,7 +10,6 @@ interface TaskRow {
   status: string;
   priority: string;
   project_id: string | null;
-  client_id: string | null;
   due_date: string | null;
   due_time: string | null;
   tags: string;
@@ -26,7 +25,6 @@ function rowToTask(row: TaskRow): Task {
     status: row.status as TaskStatus,
     priority: row.priority as TaskPriority,
     projectId: row.project_id,
-    clientId: row.client_id,
     dueDate: row.due_date,
     dueTime: row.due_time,
     tags: JSON.parse(row.tags) as string[],
@@ -41,7 +39,7 @@ const ORDER = `ORDER BY
   CASE priority WHEN 'urgente' THEN 0 WHEN 'alta' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END,
   created_at DESC`;
 
-export function listTasks(filter?: { status?: TaskStatus; projectId?: string; clientId?: string }): Task[] {
+export function listTasks(filter?: { status?: TaskStatus; projectId?: string }): Task[] {
   const where: string[] = [];
   const params: string[] = [];
   if (filter?.status) {
@@ -51,10 +49,6 @@ export function listTasks(filter?: { status?: TaskStatus; projectId?: string; cl
   if (filter?.projectId) {
     where.push("project_id = ?");
     params.push(filter.projectId);
-  }
-  if (filter?.clientId) {
-    where.push("client_id = ?");
-    params.push(filter.clientId);
   }
   const sql = `SELECT * FROM tasks ${where.length ? `WHERE ${where.join(" AND ")}` : ""} ${ORDER}`;
   return (getDb().prepare(sql).all(...params) as TaskRow[]).map(rowToTask);
@@ -71,7 +65,6 @@ export function createTask(input: {
   status?: TaskStatus;
   priority?: TaskPriority;
   projectId?: string;
-  clientId?: string;
   dueDate?: string;
   dueTime?: string;
   tags?: string[];
@@ -80,8 +73,8 @@ export function createTask(input: {
   const status = input.status ?? "pendente";
   getDb()
     .prepare(
-      `INSERT INTO tasks (id, title, description, status, priority, project_id, client_id, due_date, due_time, tags, completed_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO tasks (id, title, description, status, priority, project_id, due_date, due_time, tags, completed_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .run(
       id,
@@ -90,7 +83,6 @@ export function createTask(input: {
       status,
       input.priority ?? "normal",
       input.projectId ?? null,
-      input.clientId ?? null,
       input.dueDate ?? null,
       input.dueTime ?? null,
       JSON.stringify(input.tags ?? []),
@@ -117,7 +109,7 @@ export function updateTask(
 
   getDb()
     .prepare(
-      `UPDATE tasks SET title = ?, description = ?, status = ?, priority = ?, project_id = ?, client_id = ?,
+      `UPDATE tasks SET title = ?, description = ?, status = ?, priority = ?, project_id = ?,
          due_date = ?, due_time = ?, tags = ?, completed_at = ? WHERE id = ?`
     )
     .run(
@@ -126,7 +118,6 @@ export function updateTask(
       merged.status,
       merged.priority,
       merged.projectId,
-      merged.clientId,
       merged.dueDate,
       merged.dueTime,
       JSON.stringify(merged.tags),

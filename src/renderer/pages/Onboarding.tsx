@@ -95,7 +95,7 @@ export function Onboarding() {
 
           {step === 0 && (
             <div className="space-y-3">
-              <p className="text-sm text-text-muted">{tr("Escolha as pastas onde ficam seus projetos e arquivos de clientes. O Qyrex")}{" "}<strong className="text-text">{tr("só")}</strong>{" "}{tr("acessa o que estiver dentro delas — é a base da segurança do app.")}</p>
+              <p className="text-sm text-text-muted">{tr("Escolha as pastas onde ficam os seus projetos. O Qyrex")}{" "}<strong className="text-text">{tr("só")}</strong>{" "}{tr("acessa o que estiver dentro delas — é a base da segurança do app.")}</p>
               {settings.allowedProjectDirs.map((dir) => (
                 <div key={dir} className="flex items-center justify-between rounded-lg border border-border-subtle bg-bg px-3 py-2">
                   <span className="truncate font-mono text-xs text-text">{dir}</span>
@@ -198,7 +198,7 @@ export function Onboarding() {
                   </li>
                 ))}
               </ul>
-              <p className="text-xs text-text-faint">{tr("Chaves e tokens ficam cifrados pelo cofre do Windows e nunca são exibidos por completo. Tudo o que é local (projetos, tarefas, clientes, agenda) funciona offline.")}</p>
+              <p className="text-xs text-text-faint">{tr("Chaves e tokens ficam cifrados pelo cofre do Windows e nunca são exibidos por completo. Tudo o que é local (projetos, tarefas, agenda) funciona offline.")}</p>
             </div>
           )}
 

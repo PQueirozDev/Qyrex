@@ -4,8 +4,6 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { getSettings, runMigrations, updateSettings } from "../../src/main/database/db";
 import * as tasks from "../../src/main/services/taskService";
 import * as projects from "../../src/main/services/projectService";
-import * as clients from "../../src/main/services/clientService";
-import * as marketing from "../../src/main/services/marketingService";
 import * as calendar from "../../src/main/services/calendarService";
 import { listActivity } from "../../src/main/services/recentService";
 import { globalSearch } from "../../src/main/services/searchService";
@@ -33,8 +31,6 @@ describe("migrations", () => {
       "user_settings",
       "projects",
       "tasks",
-      "clients",
-      "marketing_content",
       "calendar_events",
       "integrations",
       "ai_conversations",
@@ -55,12 +51,12 @@ describe("settings", () => {
     expect(s.theme).toBe("dark");
     expect(s.allowedProjectDirs).toEqual([]);
     expect(s.onboardingCompleted).toBe(false);
-    expect(s.businessMode).toBe(false);
-    expect(s.notifications).toEqual({ tasks: true, events: true, billing: true, marketing: true });
+    expect(s.notifications).toEqual({ tasks: true, events: true });
+    expect(s.dashboard).toEqual({ order: [], hidden: [] });
   });
 
   it("persiste alterações parciais", () => {
-    updateSettings({ userName: "Pedro", defaultTerminal: "cmd", notifications: { tasks: false, events: true, billing: true, marketing: false } });
+    updateSettings({ userName: "Pedro", defaultTerminal: "cmd", notifications: { tasks: false, events: true } });
     const s = getSettings();
     expect(s.userName).toBe("Pedro");
     expect(s.defaultTerminal).toBe("cmd");
@@ -179,32 +175,18 @@ describe("projetos", () => {
   });
 });
 
-describe("clientes", () => {
+describe("tarefas", () => {
   it("busca trata % e _ como texto literal", () => {
-    clients.createClient({ name: "Aquecedores Fortes", company: "AF Ltda" });
-    clients.createClient({ name: "Loja 100%" });
-    expect(clients.listClients("100%").map((c) => c.name)).toEqual(["Loja 100%"]);
-    expect(clients.listClients("%")).toHaveLength(1);
-    expect(clients.listClients("_")).toHaveLength(0);
-    expect(clients.listClients("aquec")).toHaveLength(1);
-  });
-
-  it("pasta de arquivos do cliente precisa estar autorizada", () => {
-    const c = clients.createClient({ name: "C" });
-    expect(() => clients.updateClient(c.id, { filesPath: "C:\\Windows" })).toThrow();
-    expect(clients.updateClient(c.id, { filesPath: dir }).filesPath).toBe(dir);
+    tasks.createTask({ title: "Cobertura de 100% nos testes" });
+    tasks.createTask({ title: "Migrar config_antiga" });
+    tasks.createTask({ title: "Revisar PR" });
+    expect(globalSearch("100%").tasks.map((t) => t.title)).toEqual(["Cobertura de 100% nos testes"]);
+    expect(globalSearch("g_a").tasks.map((t) => t.title)).toEqual(["Migrar config_antiga"]);
+    expect(globalSearch("%%").tasks).toHaveLength(0);
   });
 });
 
-describe("marketing e agenda", () => {
-  it("filtra conteúdo por período", () => {
-    marketing.createMarketingContent({ title: "Post terça", type: "post", scheduledDate: "2030-05-07" });
-    marketing.createMarketingContent({ title: "Reel", type: "reel", scheduledDate: "2030-06-01" });
-    marketing.createMarketingContent({ title: "Ideia solta", type: "story" });
-    expect(marketing.listMarketingContent({ from: "2030-05-01", to: "2030-05-31" }).map((m) => m.title)).toEqual(["Post terça"]);
-    expect(marketing.listMarketingContent()[2].status).toBe("ideia");
-  });
-
+describe("agenda", () => {
   it("lista eventos que cruzam o intervalo e valida término", () => {
     calendar.createEvent({ title: "Faculdade", startsAt: "2030-01-10T09:00:00", endsAt: "2030-01-10T12:00:00" });
     calendar.createEvent({ title: "Antigo", startsAt: "2029-12-01T09:00:00" });
@@ -229,15 +211,11 @@ describe("busca global", () => {
     fs.mkdirSync(path.join(dir, "aquecedores-site"));
     fs.writeFileSync(path.join(dir, "aquecedores-site", "logo-aquecedores.png"), "x");
     projects.createProject({ name: "Aquecedores Fortes", localPath: path.join(dir, "aquecedores-site") });
-    tasks.createTask({ title: "Post aquecedores" });
-    clients.createClient({ name: "Aquecedores Fortes" });
-    marketing.createMarketingContent({ title: "Reel aquecedores", type: "reel" });
+    tasks.createTask({ title: "Logo nova dos aquecedores" });
 
     const r = globalSearch("aquecedores");
     expect(r.projects).toHaveLength(1);
     expect(r.tasks).toHaveLength(1);
-    expect(r.clients).toHaveLength(1);
-    expect(r.marketing).toHaveLength(1);
     expect(r.files.map((f) => f.name)).toEqual(expect.arrayContaining(["aquecedores-site", "logo-aquecedores.png"]));
   });
 

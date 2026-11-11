@@ -39,8 +39,6 @@ import { cn } from "@/lib/cn";
 import { relativeDay, timeAgo } from "@/lib/format";
 import { fuzzyFilter } from "@/lib/fuzzy";
 import { useProjectsStore } from "@/stores/useProjectsStore";
-import { useClientsStore } from "@/stores/useClientsStore";
-import { useBusinessMode } from "@/stores/useSettingsStore";
 import { useTasksStore } from "@/stores/useTasksStore";
 import { confirmAction, toast, useUIStore } from "@/stores/useUIStore";
 
@@ -97,15 +95,12 @@ function ProjectFormDialog({
   onDelete: (project: ProjectWithGit) => void;
 }) {
   const { create, update } = useProjectsStore();
-  const clients = useClientsStore((s) => s.clients);
-  const businessMode = useBusinessMode();
 
   const [localPath, setLocalPath] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [technologies, setTechnologies] = useState("");
   const [githubUrl, setGithubUrl] = useState("");
-  const [clientId, setClientId] = useState("");
   const [status, setStatus] = useState<ProjectStatus>("ativo");
   const [detecting, setDetecting] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -122,7 +117,6 @@ function ProjectFormDialog({
     setDescription(project?.description ?? "");
     setTechnologies(project?.technologies.join(", ") ?? "");
     setGithubUrl(project?.githubUrl ?? "");
-    setClientId(project?.clientId ?? "");
     setStatus(project?.status ?? "ativo");
   }, [open, project]);
 
@@ -188,7 +182,6 @@ function ProjectFormDialog({
           description: description.trim() || null,
           technologies: techList,
           githubUrl: githubUrl.trim() || null,
-          clientId: clientId || null,
           status,
         })
       : await create({
@@ -197,7 +190,6 @@ function ProjectFormDialog({
           localPath,
           technologies: techList,
           githubUrl: githubUrl.trim() || undefined,
-          clientId: clientId || undefined,
         });
     setSaving(false);
     if (ok) onClose();
@@ -264,18 +256,6 @@ function ProjectFormDialog({
           <Field label={tr("Tecnologias")} hint={tr("Separe por vírgula")}>
             <input className="input" value={technologies} onChange={(e) => setTechnologies(e.target.value)} placeholder={tr("React, TypeScript")} />
           </Field>
-          {businessMode && (
-            <Field label={tr("Cliente")}>
-              <select className="input" value={clientId} onChange={(e) => setClientId(e.target.value)}>
-                <option value="">{tr("Nenhum")}</option>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </Field>
-          )}
         </div>
         {project && (
           <Field label={tr("Status")}>
@@ -384,8 +364,6 @@ function ProjectDrawer({
 }) {
   const { open, load, toggleFavorite } = useProjectsStore();
   const { tasks, loaded: tasksLoaded, load: loadTasks, toggleDone } = useTasksStore();
-  const clients = useClientsStore((s) => s.clients);
-  const businessMode = useBusinessMode();
   const navigate = useUIStore((s) => s.navigate);
   const [taskOpen, setTaskOpen] = useState(false);
   const setFocusDialog = useFocusStore((s) => s.setDialog);
@@ -397,7 +375,6 @@ function ProjectDrawer({
   const projectTasks = tasks.filter((t) => t.projectId === project.id && t.status !== "concluido");
   const focusSummary = useFocusSummary(7, project.id);
   const focusSeconds = focusSummary?.byProject.find((p) => p.projectId === project.id)?.seconds ?? 0;
-  const client = businessMode ? clients.find((c) => c.id === project.clientId) : undefined;
 
   return (
     <Drawer
@@ -448,11 +425,6 @@ function ProjectDrawer({
             {project.technologies.map((t) => (
               <Badge key={t}>{t}</Badge>
             ))}
-            {client && (
-              <button onClick={() => navigate("clientes", client.id)}>
-                <Badge tone="accent">{client.name}</Badge>
-              </button>
-            )}
           </div>
           <div className="flex flex-wrap gap-1.5 pt-1">
             <Button size="sm" onClick={() => void open(project, "vscode")}>
@@ -511,7 +483,7 @@ function ProjectDrawer({
           )}
         </section>
       </div>
-      <TaskFormDialog open={taskOpen} onClose={() => setTaskOpen(false)} defaults={{ projectId: project.id, clientId: project.clientId }} />
+      <TaskFormDialog open={taskOpen} onClose={() => setTaskOpen(false)} defaults={{ projectId: project.id }} />
     </Drawer>
   );
 }
@@ -602,8 +574,6 @@ function ProjectCard({ project, onOpen, onDelete }: { project: ProjectWithGit; o
 
 export function Projects() {
   const { projects, loaded, loading, error, load } = useProjectsStore();
-  const { loaded: clientsLoaded, load: loadClients } = useClientsStore();
-  const businessMode = useBusinessMode();
   const pageParam = useUIStore((s) => s.pageParam);
   const navigate = useUIStore((s) => s.navigate);
 
@@ -615,8 +585,7 @@ export function Projects() {
 
   useEffect(() => {
     void load();
-    if (businessMode && !clientsLoaded) void loadClients();
-  }, [load, clientsLoaded, businessMode, loadClients]);
+  }, [load]);
 
   // "new" abre o diálogo; um id abre o drawer do projeto.
   useEffect(() => {

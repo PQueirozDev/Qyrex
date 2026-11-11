@@ -1,5 +1,4 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { buildWhatsAppUrl, normalizeWhatsAppNumber } from "../../src/main/services/systemService";
 import { remoteToGithubUrl } from "../../src/main/services/gitService";
 import { parseRepo } from "../../src/main/integrations/github";
 import { normalizeGoogleEvent } from "../../src/main/integrations/googleCalendar";
@@ -7,27 +6,9 @@ import { createPkcePair } from "../../src/main/integrations/oauth";
 import { dueReminders, localDate } from "../../src/main/services/notificationService";
 import * as tasks from "../../src/main/services/taskService";
 import * as calendar from "../../src/main/services/calendarService";
-import * as clients from "../../src/main/services/clientService";
 import { updateSettings } from "../../src/main/database/db";
 import { assess, runCommand } from "../../src/main/services/commandService";
 import { freshDb } from "../helpers";
-
-describe("WhatsApp (links oficiais wa.me)", () => {
-  it("normaliza números brasileiros", () => {
-    expect(normalizeWhatsAppNumber("(11) 91234-5678")).toBe("5511912345678");
-    expect(normalizeWhatsAppNumber("+55 11 91234-5678")).toBe("5511912345678");
-    expect(normalizeWhatsAppNumber("0055 11 3456-7890")).toBe("551134567890");
-  });
-
-  it("rejeita números inválidos", () => {
-    expect(() => normalizeWhatsAppNumber("123")).toThrow();
-    expect(() => normalizeWhatsAppNumber("abc")).toThrow();
-  });
-
-  it("codifica a mensagem na URL", () => {
-    expect(buildWhatsAppUrl("11912345678", "Olá & bom dia?")).toBe("https://wa.me/5511912345678?text=Ol%C3%A1%20%26%20bom%20dia%3F");
-  });
-});
 
 describe("GitHub", () => {
   it("converte remotes em URL navegável", () => {
@@ -77,18 +58,21 @@ describe("notificações", () => {
     expect(reminders.map((r) => r.body)).toEqual(["14:00 · Finalizar site"]);
   });
 
-  it("avisa reunião próxima, cobrança e respeita preferências", () => {
+  it("avisa reunião próxima e respeita preferências", () => {
     const now = new Date(2030, 0, 10, 15, 50);
     calendar.createEvent({ title: "Reunião", startsAt: "2030-01-10T16:00:00" });
-    clients.createClient({ name: "Aquecedores", monthlyValue: 39.99, nextBillingDate: "2030-01-10" });
-    // No modo Dev (padrão) não há aviso de cobrança.
-    expect(dueReminders(now).map((r) => r.title)).not.toContain("Cobrança hoje");
-    updateSettings({ businessMode: true });
-    const titles = dueReminders(now).map((r) => r.title);
-    expect(titles).toEqual(expect.arrayContaining(["Compromisso em breve", "Cobrança hoje"]));
+    expect(dueReminders(now).map((r) => r.title)).toEqual(["Compromisso em breve"]);
 
-    updateSettings({ notifications: { tasks: true, events: false, billing: false, marketing: true } });
+    updateSettings({ notifications: { tasks: true, events: false } });
     expect(dueReminders(now)).toHaveLength(0);
+  });
+
+  it("perto da meia-noite avisa a tarefa do dia seguinte", () => {
+    const now = new Date(2030, 0, 10, 23, 50);
+    tasks.createTask({ title: "Deploy de madrugada", dueDate: "2030-01-11", dueTime: "00:05" });
+    const [reminder] = dueReminders(now);
+    expect(reminder?.body).toBe("00:05 · Deploy de madrugada");
+    expect(reminder?.key).toBe(`task:${tasks.listTasks()[0].id}:2030-01-11`);
   });
 });
 

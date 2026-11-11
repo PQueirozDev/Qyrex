@@ -143,11 +143,3 @@ export function applyStoredTheme(): void {
     // ignora
   }
 }
-
-/**
- * Modo Negócio (clientes, marketing, WhatsApp). Desligado por padrão: o app
- * abre no modo Dev e esconde tudo que é de cliente até ser ligado nas Configurações.
- */
-export function useBusinessMode(): boolean {
-  return useSettingsStore((s) => s.settings?.businessMode ?? false);
-}

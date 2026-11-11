@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { CheckSquare, Code2, Command, File, Folder, Megaphone, Plus, Search, Users, WifiOff, X } from "lucide-react";
+import { CheckSquare, Code2, Command, File, Folder, Plus, Search, WifiOff, X } from "lucide-react";
 import type { SearchResults } from "@shared/types";
 import { attempt } from "@/lib/api";
 import { useUIStore, type Page } from "@/stores/useUIStore";
@@ -9,7 +9,6 @@ import { FocusHeaderButton } from "@/components/Focus";
 import { Kbd, Spinner } from "@/components/ui/primitives";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/i18n";
-import { useBusinessMode } from "@/stores/useSettingsStore";
 
 function ResultGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -36,7 +35,6 @@ export function Header() {
   const navigate = useUIStore((s) => s.navigate);
   const setPaletteOpen = useUIStore((s) => s.setPaletteOpen);
   const setQuickTaskOpen = useUIStore((s) => s.setQuickTaskOpen);
-  const businessMode = useBusinessMode();
 
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResults | null>(null);
@@ -52,12 +50,11 @@ export function Header() {
     setLoading(true);
     const t = setTimeout(async () => {
       const data = await attempt(window.workspace.search.global(query.trim()));
-      // Modo Dev: clientes e marketing não aparecem na busca.
-      setResults(data && !businessMode ? { ...data, clients: [], marketing: [] } : data ?? null);
+      setResults(data ?? null);
       setLoading(false);
     }, 200);
     return () => clearTimeout(t);
-  }, [query, businessMode]);
+  }, [query]);
 
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
@@ -74,7 +71,7 @@ export function Header() {
   };
 
   const total = results
-    ? results.projects.length + results.tasks.length + results.clients.length + results.files.length + results.marketing.length
+    ? results.projects.length + results.tasks.length + results.files.length
     : 0;
   const showPanel = focused && query.trim().length >= 2;
 
@@ -93,7 +90,7 @@ export function Header() {
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setFocused(true)}
             onKeyDown={(e) => e.key === "Escape" && (setQuery(""), (e.target as HTMLInputElement).blur())}
-            placeholder={businessMode ? tr("Buscar projetos, tarefas, clientes, arquivos...") : tr("Buscar projetos, tarefas, arquivos...")}
+            placeholder={tr("Buscar projetos, tarefas, arquivos...")}
             className="w-full bg-transparent text-[13px] text-text placeholder:text-text-faint focus:outline-none"
           />
           {loading ? <Spinner className="h-3.5 w-3.5" /> : query && (
@@ -117,20 +114,6 @@ export function Header() {
               <ResultGroup title={tr("Tarefas")}>
                 {results.tasks.map((t) => (
                   <ResultRow key={t.id} icon={CheckSquare} label={t.title} hint={t.status === "concluido" ? tr("Concluída") : t.dueDate ?? ""} onClick={() => go("tarefas", t.id)} />
-                ))}
-              </ResultGroup>
-            )}
-            {results && results.clients.length > 0 && (
-              <ResultGroup title={tr("Clientes")}>
-                {results.clients.map((c) => (
-                  <ResultRow key={c.id} icon={Users} label={c.name} hint={c.company ?? ""} onClick={() => go("clientes", c.id)} />
-                ))}
-              </ResultGroup>
-            )}
-            {results && results.marketing.length > 0 && (
-              <ResultGroup title={tr("Marketing")}>
-                {results.marketing.map((m) => (
-                  <ResultRow key={m.id} icon={Megaphone} label={m.title} hint={m.type.toUpperCase()} onClick={() => go("marketing", m.id)} />
                 ))}
               </ResultGroup>
             )}

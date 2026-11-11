@@ -11,7 +11,6 @@ export interface Project {
   localPath: string;
   technologies: string[];
   githubUrl: string | null;
-  clientId: string | null;
   favorite: boolean;
   /** "auto": ícone/logo detectado na pasta; "custom": imagem escolhida; "none": só as iniciais. */
   iconMode: ProjectIconMode;
@@ -32,30 +31,11 @@ export interface Task {
   status: TaskStatus;
   priority: TaskPriority;
   projectId: string | null;
-  clientId: string | null;
   dueDate: string | null;
   dueTime: string | null;
   tags: string[];
   createdAt: string;
   completedAt: string | null;
-}
-
-export type ClientStatus = "ativo" | "inativo" | "prospecto";
-
-export interface Client {
-  id: string;
-  name: string;
-  company: string | null;
-  phone: string | null;
-  whatsapp: string | null;
-  instagram: string | null;
-  email: string | null;
-  notes: string | null;
-  status: ClientStatus;
-  monthlyValue: number | null;
-  nextBillingDate: string | null;
-  filesPath: string | null;
-  createdAt: string;
 }
 
 export interface GitStatusInfo {
@@ -155,24 +135,6 @@ export interface EditableFile {
 export type SaveFileResult =
   | { status: "saved"; mtimeMs: number; size: number }
   | { status: "conflict"; mtimeMs: number };
-
-// --- Marketing ---------------------------------------------------------
-
-export type MarketingContentType = "post" | "story" | "reel";
-export type MarketingStatus = "ideia" | "produzindo" | "pronto" | "publicado";
-
-export interface MarketingContent {
-  id: string;
-  clientId: string | null;
-  type: MarketingContentType;
-  title: string;
-  description: string | null;
-  caption: string | null;
-  status: MarketingStatus;
-  scheduledDate: string | null;
-  files: string[];
-  createdAt: string;
-}
 
 // --- Calendário ---------------------------------------------------------
 
@@ -330,8 +292,7 @@ export type IntegrationId =
   | "github"
   | "google_calendar"
   | "spotify"
-  | "notion"
-  | "whatsapp";
+  | "notion";
 
 export type IntegrationState = "connected" | "disconnected" | "error";
 
@@ -413,12 +374,10 @@ export interface SpotifyPlayback {
 export interface SearchResults {
   projects: Project[];
   tasks: Task[];
-  clients: Client[];
-  marketing: MarketingContent[];
   files: DirEntry[];
 }
 
-export type RecentItemType = "project" | "file" | "task_completed" | "client" | "commit" | "focus" | "automation";
+export type RecentItemType = "project" | "file" | "task_completed" | "commit" | "focus" | "automation";
 
 export interface SavedPrompt {
   id: string;
@@ -512,7 +471,7 @@ export interface FocusSummary {
   dailyGoalMinutes: number;
 }
 
-export const DASHBOARD_WIDGETS = ["agenda", "tarefas", "atividade", "foco", "projetos", "automacoes", "cobrancas"] as const;
+export const DASHBOARD_WIDGETS = ["agenda", "tarefas", "atividade", "foco", "projetos", "automacoes"] as const;
 export type DashboardWidgetId = (typeof DASHBOARD_WIDGETS)[number];
 
 export interface DashboardPrefs {
@@ -543,8 +502,6 @@ export interface RecentItem {
 export interface NotificationPrefs {
   tasks: boolean;
   events: boolean;
-  billing: boolean;
-  marketing: boolean;
 }
 
 /** Backup local automático (Configurações → Backup). */
@@ -600,7 +557,7 @@ export interface DiscordPrefs {
   enabled: boolean;
   /** ID público do aplicativo criado no Discord Developer Portal. */
   clientId: string | null;
-  /** Mostrar o nome do projeto aberto (desligado por padrão: pode ser de cliente). */
+  /** Mostrar o nome do projeto aberto (desligado por padrão: pode ser privado). */
   showProject: boolean;
 }
 
@@ -623,8 +580,6 @@ export interface AppSettings {
   onboardingCompleted: boolean;
   /** Animação de abertura (logo + nome) ao abrir a janela. */
   splashAnimation: boolean;
-  /** Modo Negócio: mostra clientes, marketing e WhatsApp. Desligado = modo Dev (padrão). */
-  businessMode: boolean;
   backup: BackupPrefs;
   focus: FocusPrefs;
   dashboard: DashboardPrefs;

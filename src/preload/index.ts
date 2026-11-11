@@ -16,7 +16,6 @@ import type {
   AutomationSuggestion,
   BackupInfo,
   CalendarEvent,
-  Client,
   CommandAssessment,
   CommandRunResult,
   DiscordStatus,
@@ -40,7 +39,6 @@ import type {
   GitStatusInfo,
   IntegrationStatus,
   IpcResult,
-  MarketingContent,
   Project,
   ProjectDetection,
   ProjectWithGit,
@@ -78,14 +76,10 @@ type TaskInput = {
   status?: TaskStatus;
   priority?: Task["priority"];
   projectId?: string;
-  clientId?: string;
   dueDate?: string;
   dueTime?: string;
   tags?: string[];
 };
-
-type ClientInput = Partial<Omit<Client, "id" | "createdAt">>;
-type MarketingInput = Partial<Omit<MarketingContent, "id" | "createdAt">>;
 
 const api = {
   settings: {
@@ -181,11 +175,6 @@ const api = {
     pickVSCode: () => invoke<string | null>("system:pickVSCode"),
     detectVSCode: () => invoke<string | null>("system:detectVSCode"),
     openLogs: () => invoke<void>("system:openLogs"),
-    openWhatsApp: (target: "desktop" | "web") => invoke<void>("system:openWhatsApp", target),
-    whatsappStatus: () => invoke<{ desktopInstalled: boolean }>("system:whatsappStatus"),
-    openWhatsAppChat: (input: { phone: string; message?: string }, preferDesktop: boolean) =>
-      invoke<void>("system:openWhatsAppChat", input, preferDesktop),
-    whatsappUrl: (input: { phone: string; message?: string }) => invoke<string>("system:whatsappUrl", input),
     openSpotifyApp: () => invoke<void>("system:openSpotifyApp"),
   },
   projects: {
@@ -197,9 +186,8 @@ const api = {
       localPath: string;
       technologies?: string[];
       githubUrl?: string;
-      clientId?: string;
     }) => invoke<Project>("projects:create", input),
-    update: (id: string, patch: Partial<Pick<Project, "name" | "description" | "technologies" | "githubUrl" | "clientId" | "status">>) =>
+    update: (id: string, patch: Partial<Pick<Project, "name" | "description" | "technologies" | "githubUrl" | "status">>) =>
       invoke<Project>("projects:update", id, patch),
     toggleFavorite: (id: string) => invoke<void>("projects:toggleFavorite", id),
     touchOpened: (id: string) => invoke<void>("projects:touchOpened", id),
@@ -236,7 +224,7 @@ const api = {
     test: () => invoke<{ ok: boolean; error?: string }>("github:test"),
   },
   tasks: {
-    list: (filter?: { status?: TaskStatus; projectId?: string; clientId?: string }) => invoke<Task[]>("tasks:list", filter),
+    list: (filter?: { status?: TaskStatus; projectId?: string }) => invoke<Task[]>("tasks:list", filter),
     create: (input: TaskInput) => invoke<Task>("tasks:create", input),
     update: (id: string, patch: Partial<Omit<Task, "id" | "createdAt" | "completedAt">>) => invoke<Task>("tasks:update", id, patch),
     delete: (id: string) => invoke<void>("tasks:delete", id),
@@ -261,28 +249,6 @@ const api = {
   },
   activity: {
     list: (limit?: number) => invoke<RecentItem[]>("activity:list", limit),
-  },
-  clients: {
-    list: (search?: string) => invoke<Client[]>("clients:list", search),
-    get: (id: string) => invoke<Client | null>("clients:get", id),
-    create: (input: ClientInput & { name: string }) => invoke<Client>("clients:create", input),
-    update: (id: string, patch: ClientInput) => invoke<Client>("clients:update", id, patch),
-    delete: (id: string) => invoke<void>("clients:delete", id),
-  },
-  marketing: {
-    list: (filter?: { clientId?: string; from?: string; to?: string }) => invoke<MarketingContent[]>("marketing:list", filter),
-    create: (input: {
-      title: string;
-      type: MarketingContent["type"];
-      clientId?: string;
-      description?: string;
-      caption?: string;
-      status?: MarketingContent["status"];
-      scheduledDate?: string;
-      files?: string[];
-    }) => invoke<MarketingContent>("marketing:create", input),
-    update: (id: string, patch: MarketingInput) => invoke<MarketingContent>("marketing:update", id, patch),
-    delete: (id: string) => invoke<void>("marketing:delete", id),
   },
   calendar: {
     list: (range?: { from: string; to: string }) => invoke<CalendarEvent[]>("calendar:list", range),
