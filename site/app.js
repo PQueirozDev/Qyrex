@@ -7,7 +7,10 @@ const LINKS = {
   releases: "https://github.com/PQueirozDev/QrzSpace-releases/releases",
   // Link direto do instalador: toda release publica uma cópia com nome fixo (scripts/release.mjs).
   download: "https://github.com/PQueirozDev/QrzSpace-releases/releases/latest/download/Qyrex-Setup.exe",
+  latestApi: "https://api.github.com/repos/PQueirozDev/QrzSpace-releases/releases/latest",
 };
+LINKS.issues = `${LINKS.repo}/issues`;
+LINKS.license = `${LINKS.repo}/blob/main/LICENSE`;
 document.querySelectorAll("[data-link]").forEach((a) => {
   const href = LINKS[a.dataset.link];
   if (href) a.href = href;
@@ -51,13 +54,12 @@ new ResizeObserver(drawWires).observe(orch);
 document.fonts?.ready.then(drawWires);
 
 const SCENES = {
-  freelance: [
-    ["whatsapp", "Bravus pediu ajuste no horário de sábado"],
+  feature: [
     ["vscode", "abrindo barbearia-site no VS Code"],
     ["terminal", "npm run dev em C:\\Projetos\\barbearia-site"],
     ["claude", "claude: onde ficam os horários da agenda?"],
-    ["github", "commit \"horário de sábado até 14h\" (confirmado)"],
-    ["whatsapp", "mensagem pronta para a Bravus", true],
+    ["explorer", "abrindo a pasta src/pages"],
+    ["github", "commit \"horário de sábado até 14h\" (confirmado)", true],
   ],
   bug: [
     ["github", "issue #42: agenda não salva no Safari"],
@@ -69,22 +71,22 @@ const SCENES = {
   release: [
     ["terminal", "npm run check (typecheck, lint, testes)"],
     ["claude", "claude: resume as mudanças para o changelog"],
-    ["github", "push da tag v1.7.0 (confirmado)"],
-    ["agenda", "lembrete: avisar clientes amanhã 9h"],
+    ["github", "push da tag v2.3.1 (confirmado)"],
+    ["agenda", "lembrete: conferir o deploy amanhã 9h"],
     ["spotify", "tocando: lo-fi para deploy", true],
   ],
-  conteudo: [
-    ["agenda", "quinta 19:00: reels da Lúmina"],
-    ["claude", "claude: três ganchos para antes e depois"],
-    ["vscode", "abrindo a pasta de arquivos do cliente"],
-    ["whatsapp", "enviar prévia para aprovação"],
-    ["agenda", "post movido para Pronto", true],
+  review: [
+    ["github", "PR #51 pede revisão: cache do catálogo"],
+    ["terminal", "git fetch e checkout da branch do PR"],
+    ["codex", "codex: riscos desse diff no cache?"],
+    ["terminal", "npm test (todos passaram)"],
+    ["github", "comentário enviado no PR #51", true],
   ],
 };
 const logEl = orch.querySelector("[data-log]");
 const sceneLabel = orch.querySelector("[data-log-scene]");
 const hubStatus = orch.querySelector("[data-hub-status]");
-let scene = "freelance";
+let scene = "feature";
 let step = 0;
 let timer = null;
 
@@ -142,7 +144,7 @@ function startScene(name) {
   showStep();
 }
 orch.querySelectorAll("[data-scene]").forEach((b) => b.addEventListener("click", () => startScene(b.dataset.scene)));
-startScene("freelance");
+startScene("feature");
 
 // --- Temas: os mesmos do app, recolorindo a página -------------------------------
 
@@ -221,3 +223,389 @@ copyBtn?.addEventListener("click", async () => {
   }
   setTimeout(() => (copyBtn.textContent = "copiar"), 1800);
 });
+
+// --- Pontilhado colorido (Bayer 8×8) ----------------------------------------------
+// O vídeo do onsen e a paisagem do rodapé passam por um pontilhado ordenado em poucas
+// cores: a pixel art mantém a paleta do Qyrex e ganha a textura de ponto das referências.
+// A paisagem do rodapé é pintada com os tokens, então trocar de tema recolore.
+
+const BAYER = [0, 32, 8, 40, 2, 34, 10, 42, 48, 16, 56, 24, 50, 18, 58, 26, 12, 44, 4, 36, 14, 46, 6, 38, 60, 28, 52, 20, 62, 30, 54, 22, 3, 35, 11, 43, 1, 33, 9, 41, 51, 19, 59, 27, 49, 17, 57, 25, 15, 47, 7, 39, 13, 45, 5, 37, 63, 31, 55, 23, 61, 29, 53, 21];
+const probe = document.createElement("canvas").getContext("2d", { willReadFrequently: true });
+probe.canvas.width = probe.canvas.height = 1;
+function rgbOf(name) {
+  probe.clearRect(0, 0, 1, 1);
+  probe.fillStyle = "#fff";
+  probe.fillStyle = getComputedStyle(root).getPropertyValue(name).trim();
+  probe.fillRect(0, 0, 1, 1);
+  const d = probe.getImageData(0, 0, 1, 1).data;
+  return [d[0], d[1], d[2]];
+}
+const mix = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+
+/** Reduz cada canal a `levels` níveis com o limiar de Bayer: sobra o padrão de pontos. */
+function ditherData(d, w, levels) {
+  const n = levels - 1;
+  for (let p = 0, i = 0; p < d.length; p += 4, i++) {
+    const t = (BAYER[(((i / w) | 0) & 7) * 8 + ((i % w) & 7)] + 0.5) / 64;
+    for (let k = 0; k < 3; k++) {
+      const v = (d[p + k] / 255) * n;
+      const b = Math.floor(v);
+      d[p + k] = Math.round(((b + (v - b > t ? 1 : 0)) * 255) / n);
+    }
+    d[p + 3] = 255;
+  }
+}
+
+function makeDither(canvas) {
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  const box = canvas.parentElement;
+  const st = { ctx, w: 0, h: 0, cell: 3, paint: () => {} };
+  st.size = () => {
+    const dpr = window.devicePixelRatio || 1;
+    // Ponto de tamanho inteiro em pixels do monitor: senão o padrão cria listras.
+    st.cell = Math.max(1, Math.round((box.clientWidth < 520 ? 2 : 3) * dpr)) / dpr;
+    st.w = Math.max(8, Math.ceil(box.clientWidth / st.cell));
+    st.h = Math.max(8, Math.ceil(box.clientHeight / st.cell));
+    canvas.width = st.w;
+    canvas.height = st.h;
+    canvas.style.width = `${st.w * st.cell}px`;
+    canvas.style.height = `${st.h * st.cell}px`;
+    box.style.setProperty("--cell", `${st.cell}px`);
+  };
+  /** Desenha a fonte cobrindo a área (como object-fit: cover) e pontilha. */
+  st.source = (src, sw, sh, focus) => {
+    if (!sw || !sh || !st.w) return;
+    const k = Math.max(st.w / sw, st.h / sh);
+    const dw = sw * k;
+    const dh = sh * k;
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, 0, st.w, st.h);
+    ctx.drawImage(src, (st.w - dw) * focus, (st.h - dh) * 0.5, dw, dh);
+    const img = ctx.getImageData(0, 0, st.w, st.h);
+    ditherData(img.data, st.w, 6);
+    ctx.putImageData(img, 0, 0);
+  };
+  return st;
+}
+
+const dithers = [];
+function repaintAll() {
+  dithers.forEach((d) => d.paint());
+}
+function watchDither(st) {
+  dithers.push(st);
+  new ResizeObserver(() => {
+    st.size();
+    st.paint();
+  }).observe(st.ctx.canvas.parentElement);
+}
+
+// Hero: o vídeo do onsen, quadro a quadro (12 fps, só enquanto aparece na tela).
+{
+  const canvas = document.querySelector('[data-dither="video"]');
+  const video = document.querySelector(".dither-src");
+  if (canvas && video) {
+    const st = makeDither(canvas);
+    const focus = Number(canvas.dataset.focus ?? 0.5);
+    const poster = new Image();
+    poster.src = video.poster;
+    st.paint = () => {
+      try {
+        if (video.readyState >= 2) st.source(video, video.videoWidth, video.videoHeight, focus);
+        else if (poster.complete) st.source(poster, poster.naturalWidth, poster.naturalHeight, focus);
+      } catch {
+        /* quadro indisponível: tenta no próximo */
+      }
+    };
+    poster.addEventListener("load", st.paint);
+    watchDither(st);
+    let seen = false;
+    let last = 0;
+    const tick = (t) => {
+      if (!seen) return;
+      if (t - last > 80) {
+        last = t;
+        st.paint();
+      }
+      requestAnimationFrame(tick);
+    };
+    new IntersectionObserver(([e]) => {
+      const was = seen;
+      seen = e.isIntersecting;
+      if (seen) video.play().catch(() => {});
+      else video.pause();
+      if (seen && !was) requestAnimationFrame(tick);
+    }).observe(canvas.parentElement);
+  }
+}
+
+// Por dentro: o pôster do onsen, parado, atrás do print do app.
+document.querySelectorAll('[data-dither="image"]').forEach((canvas) => {
+  const st = makeDither(canvas);
+  const img = new Image();
+  const focus = Number(canvas.dataset.focus ?? 0.5);
+  st.paint = () => img.complete && st.source(img, img.naturalWidth, img.naturalHeight, focus);
+  img.addEventListener("load", st.paint);
+  img.src = canvas.dataset.src;
+  watchDither(st);
+});
+
+// Rodapé: paisagem desenhada em código (céu, lua, serras, campo e o onsen da capivara).
+document.querySelectorAll('[data-dither="scene"]').forEach((canvas) => {
+  const st = makeDither(canvas);
+  const box = canvas.parentElement;
+  const hash = (x, y) => {
+    let n = (x * 374761393 + y * 668265263) | 0;
+    n = (n ^ (n >>> 13)) * 1274126177;
+    return (n ^ (n >>> 16)) >>> 0;
+  };
+  st.paint = () => {
+    const { w, h, ctx } = st;
+    if (!w) return;
+    const img = ctx.createImageData(w, h);
+    const d = img.data;
+    const hz = Math.round(h * 0.6); // linha do horizonte
+    const moonX = Math.round(w * 0.8);
+    const moonY = Math.round(h * 0.2);
+    const moonR = Math.max(5, Math.round(h * 0.1));
+    const poolY = Math.round(hz + (h - hz) * 0.56);
+    const poolRx = 46;
+    const poolRy = Math.max(5, Math.round((h - hz) * 0.26));
+    const cx = w / 2;
+    const BG = rgbOf("--bg");
+    const OUT = rgbOf("--outer");
+    const WATER = rgbOf("--water");
+    const INK = rgbOf("--ink");
+    const ACC = rgbOf("--accent");
+    const SKY = mix(BG, WATER, 0.22);
+    const FAR = mix(BG, WATER, 0.3);
+    const NEAR = mix(OUT, BG, 0.4);
+    const POOL = mix(WATER, BG, 0.35);
+    const ROCK = mix(INK, BG, 0.55);
+    const MOON = mix(ACC, INK, 0.35);
+    const put = (p, col) => {
+      d[p] = col[0];
+      d[p + 1] = col[1];
+      d[p + 2] = col[2];
+      d[p + 3] = 255;
+    };
+    for (let x = 0; x < w; x++) {
+      const far = hz - 8 - (10 * Math.sin(x / 37 + 1.3) + 6 * Math.sin(x / 13 + 0.4) + 3 * Math.sin(x / 5.3) + 12) * (h / 110);
+      const near = hz - 2 - (6 * Math.sin(x / 29 + 3.1) + 3 * Math.sin(x / 9 + 2) + 6) * (h / 110);
+      for (let y = 0; y < h; y++) {
+        const p = (y * w + x) * 4;
+        const mx = x - moonX;
+        const my = y - moonY;
+        if (y < far) {
+          // Céu: escuro em cima, clareando até a serra.
+          const sky = mix(OUT, SKY, Math.pow(y / hz, 1.6));
+          if (mx * mx + my * my <= moonR * moonR) put(p, mx + my > moonR * 0.6 ? mix(MOON, ACC, 0.5) : MOON);
+          else if (mx * mx + my * my <= moonR * moonR * 2.6) put(p, mix(sky, MOON, 0.16)); // halo da lua
+          else if (y < hz * 0.75 && hash(x, y) % 173 === 0) put(p, INK);
+          else put(p, sky);
+        } else if (y < near) {
+          put(p, mix(FAR, SKY, 0.35 + 0.35 * Math.sin((y - far) * 1.1 + x * 0.12))); // serra distante, em hachura
+        } else if (y < hz) {
+          put(p, mix(NEAR, FAR, 0.25 + 0.2 * Math.sin((y - near) * 1.7 - x * 0.2)));
+        } else {
+          const t = (y - hz) / (h - hz);
+          let col = mix(mix(BG, WATER, 0.42), mix(OUT, WATER, 0.18), t); // água do onsen até a borda
+          if ((y + ((x / 9) | 0)) % 4 === 0 && hash(x >> 2, y) % 3 === 0) col = mix(col, INK, 0.28); // ondinhas
+          const px = (x - cx) / poolRx;
+          const py = (y - poolY) / poolRy;
+          const e = px * px + py * py;
+          if (e <= 1) col = (y + ((x / 7) | 0)) % 3 === 0 && e < 0.8 ? mix(POOL, INK, 0.3) : mix(POOL, OUT, 0.35); // poça mais funda
+          else if (e <= 1.25) col = hash(x >> 1, y) % 5 === 0 ? mix(ROCK, OUT, 0.4) : ROCK; // pedras em volta
+          put(p, col);
+        }
+      }
+    }
+    ditherData(d, w, 5);
+    ctx.putImageData(img, 0, 0);
+    // A capivara senta com as patas na água.
+    box.style.setProperty("--capy-b", `${(h - poolY - 5) * st.cell}px`);
+  };
+  watchDither(st);
+});
+
+// Recolore quando o tema muda (os tokens ficam no style do <html>).
+new MutationObserver(repaintAll).observe(root, { attributes: true, attributeFilter: ["style", "data-site-theme"] });
+dithers.forEach((d) => d.size());
+repaintAll();
+
+// --- Telas do app: os botões trocam o print -------------------------------------------
+
+{
+  const img = document.querySelector("[data-shot-img]");
+  const title = document.querySelector("[data-shot-title]");
+  const tabs = [...document.querySelectorAll("[data-shot]")];
+  tabs.forEach((b) =>
+    b.addEventListener("click", () => {
+      tabs.forEach((t) => {
+        t.classList.toggle("on", t === b);
+        t.setAttribute("aria-pressed", String(t === b));
+      });
+      title.textContent = b.dataset.title;
+      const next = new Image();
+      next.src = `assets/app-${b.dataset.shot}.webp`;
+      img.classList.add("swap");
+      const show = () => {
+        img.src = next.src;
+        img.classList.remove("swap");
+      };
+      // Troca só depois de carregar (ou de falhar), para não piscar uma imagem quebrada.
+      next.decode().then(show, show);
+    }),
+  );
+}
+
+// --- Frase central: as palavras acendem em ordem conforme a página rola -------------
+
+{
+  const el = document.querySelector("[data-reveal-words]");
+  if (el) {
+    const words = el.textContent.trim().split(/\s+/);
+    el.textContent = "";
+    const spans = words.map((w, i) => {
+      const s = document.createElement("span");
+      s.className = "w";
+      s.textContent = w;
+      el.append(s, i < words.length - 1 ? " " : "");
+      return s;
+    });
+    let lit = 0;
+    let queued = false;
+    const update = () => {
+      queued = false;
+      const r = el.getBoundingClientRect();
+      const vh = window.innerHeight;
+      // Começa quando o topo do texto passa de 85% da tela e termina com o fim dele em 55%.
+      const p = (vh * 0.85 - r.top) / (r.height + vh * 0.3);
+      const n = Math.max(lit, Math.min(spans.length, Math.ceil(p * spans.length)));
+      for (; lit < n; lit++) spans[lit].classList.add("on");
+    };
+    const onScroll = () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(update);
+    };
+    new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) window.addEventListener("scroll", onScroll, { passive: true });
+      else window.removeEventListener("scroll", onScroll);
+      update();
+    }).observe(el);
+  }
+}
+
+// --- Entrada das seções, item atual do menu e menu do celular ------------------------
+
+root.classList.add("js");
+{
+  const io = new IntersectionObserver(
+    (entries) =>
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        e.target.classList.add("in");
+        io.unobserve(e.target);
+      }),
+    { rootMargin: "0px 0px -8% 0px" },
+  );
+  document.querySelectorAll("main > section:not(.hero) > *:not(.brk)").forEach((el) => {
+    el.classList.add("rv");
+    io.observe(el);
+  });
+
+  const navLinks = [...document.querySelectorAll(".nav a")];
+  const spy = new IntersectionObserver(
+    (entries) =>
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        navLinks.forEach((a) => {
+          if (a.getAttribute("href") === `#${e.target.id}`) a.setAttribute("aria-current", "true");
+          else a.removeAttribute("aria-current");
+        });
+      }),
+    { rootMargin: "-45% 0px -50% 0px" },
+  );
+  document.querySelectorAll("main > section[id]").forEach((s) => spy.observe(s));
+
+  const menu = document.getElementById("menu");
+  const menuBtn = document.querySelector(".menu-btn");
+  const setMenu = (open) => {
+    menuBtn.setAttribute("aria-expanded", String(open));
+    menuBtn.setAttribute("aria-label", open ? "Fechar menu" : "Abrir menu");
+    document.body.classList.toggle("locked", open);
+    document.querySelector("main").inert = open;
+    document.querySelector(".foot").inert = open;
+    if (open) {
+      menu.hidden = false;
+      requestAnimationFrame(() => requestAnimationFrame(() => menu.classList.add("open")));
+      menu.querySelector("a")?.focus({ preventScroll: true });
+    } else {
+      if (menu.contains(document.activeElement)) menuBtn.focus({ preventScroll: true });
+      menu.classList.remove("open");
+      setTimeout(() => {
+        if (menuBtn.getAttribute("aria-expanded") === "false") menu.hidden = true;
+      }, 300);
+    }
+  };
+  menuBtn.addEventListener("click", () => setMenu(menuBtn.getAttribute("aria-expanded") !== "true"));
+  menu.addEventListener("click", (e) => e.target.closest("a") && setMenu(false));
+  document.addEventListener("keydown", (e) => {
+    if (menuBtn.getAttribute("aria-expanded") !== "true") return;
+    if (e.key === "Escape") return setMenu(false);
+    if (e.key !== "Tab") return;
+    // Tab circula entre o botão de fechar e os links do menu.
+    const items = [menuBtn, ...menu.querySelectorAll("a")];
+    const i = items.indexOf(document.activeElement);
+    const next = e.shiftKey ? (i <= 0 ? items.length - 1 : i - 1) : i === items.length - 1 ? 0 : i + 1;
+    e.preventDefault();
+    items[next].focus();
+  });
+  window.matchMedia("(min-width: 761px)").addEventListener("change", (e) => e.matches && setMenu(false));
+}
+
+// --- Versão publicada: lida da última release (o HTML traz um valor de reserva) -------
+
+{
+  const show = (v) => document.querySelectorAll("[data-version]").forEach((el) => (el.textContent = v));
+  const valid = (v) => typeof v === "string" && /^\d+\.\d+\.\d+$/.test(v);
+  let cached = null;
+  try {
+    cached = sessionStorage.getItem("qyrex-version");
+  } catch {
+    /* sem armazenamento */
+  }
+  if (valid(cached)) show(cached);
+  else
+    fetch(LINKS.latestApi)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        const v = String(j?.tag_name ?? "").replace(/^v/, "");
+        if (!valid(v)) return;
+        show(v);
+        try {
+          sessionStorage.setItem("qyrex-version", v);
+        } catch {
+          /* ignora */
+        }
+      })
+      .catch(() => {});
+}
+
+// --- Perguntas em dados estruturados (para buscadores e assistentes) -----------------
+
+{
+  const items = [...document.querySelectorAll("[data-faq] > div")].map((d) => ({
+    "@type": "Question",
+    name: d.querySelector("dt").textContent.trim(),
+    acceptedAnswer: { "@type": "Answer", text: d.querySelector("dd").textContent.trim() },
+  }));
+  if (items.length) {
+    const s = document.createElement("script");
+    s.type = "application/ld+json";
+    s.textContent = JSON.stringify({ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: items });
+    document.head.appendChild(s);
+  }
+}

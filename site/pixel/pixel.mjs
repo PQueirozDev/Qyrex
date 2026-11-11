@@ -604,8 +604,8 @@ function toRects(c) {
 function renderIcon() {
   const { rects } = toRects(iconCanvas());
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="512" height="512" shape-rendering="crispEdges">\n<!-- Qyrex: capivara no onsen (pixel art 32×32, gerada por site/pixel/pixel.mjs) -->\n${rects.join("\n")}\n</svg>\n`;
-  for (const out of [path.join(ROOT, "build", "icon.svg"), path.join(ROOT, "src", "renderer", "assets", "logo.svg"), path.join(ASSETS, "icon.svg")]) fs.writeFileSync(out, svg);
-  console.log("ícone: build/icon.svg (+ logo da sidebar e do site)");
+  for (const out of [path.join(ROOT, "build", "icon.svg"), path.join(ROOT, "src", "renderer", "assets", "logo.svg"), path.join(ASSETS, "icon-pixel.svg")]) fs.writeFileSync(out, svg);
+  console.log("ícone: build/icon.svg (+ logo da sidebar e site/assets/icon-pixel.svg; rode halftone-icon.mjs para o ícone do site)");
 
   // Só o símbolo (sem o quadrado de fundo), recortado na área ocupada: abertura do app.
   const mark = toRects(iconCanvas({ background: false }));
