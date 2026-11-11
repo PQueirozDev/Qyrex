@@ -14,7 +14,7 @@
   !define MUI_FINISHPAGE_TEXT "$(qyFinishText)"
   !define MUI_FINISHPAGE_RUN_TEXT "$(qyFinishRun)"
   !define MUI_FINISHPAGE_LINK "$(qyFinishLink)"
-  !define MUI_FINISHPAGE_LINK_LOCATION "https://qyrexapp.vercel.app"
+  !define MUI_FINISHPAGE_LINK_LOCATION "https://qyrex.pqueirozdev.com.br"
   !define MUI_FINISHPAGE_LINK_COLOR "C65F15"
 !else
   !define MUI_FINISHPAGE_TITLE "$(qyUnFinishTitle)"
@@ -38,7 +38,7 @@
 
 ; Inserido depois dos idiomas (MUI_LANGUAGE), por isso as LangStrings ficam aqui.
 !macro customHeader
-  BrandingText "${PRODUCT_NAME} ${VERSION}  ·  qyrexapp.vercel.app"
+  BrandingText "${PRODUCT_NAME} ${VERSION}  ·  qyrex.pqueirozdev.com.br"
 
   LangString qyWelcomeTitle ${LANG_PORTUGUESEBR} "Boas-vindas ao ${PRODUCT_NAME}"
   LangString qyWelcomeTitle ${LANG_ENGLISH} "Welcome to ${PRODUCT_NAME}"
