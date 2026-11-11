@@ -1,10 +1,10 @@
 {
   "name": "qyrex",
   "productName": "Qyrex",
-  "version": "2.0.0",
-  "description": "Central de trabalho desktop open source para devs e freelancers: projetos, tarefas, arquivos, IA, clientes, marketing e integrações num lugar só.",
+  "version": "2.1.0",
+  "description": "Central de trabalho desktop open source para desenvolvedores: projetos com git, terminal, IA, automações, tarefas e arquivos num lugar só.",
   "author": "Pedro Queiroz",
-  "homepage": "https://qyrexapp.vercel.app",
+  "homepage": "https://qyrex.pqueirozdev.com.br",
   "repository": "github:PQueirozDev/Qyrex",
   "license": "MIT",
   "private": true,
