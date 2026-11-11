@@ -4,8 +4,8 @@
 
 # Qyrex
 
-**A central de trabalho para devs e freelancers.**<br>
-Projetos, tarefas, arquivos, IA, clientes, marketing e agenda num app desktop só.
+**A central de trabalho do desenvolvedor.**<br>
+Projetos com git, terminal, IA, automações, tarefas e arquivos num app desktop só.
 
 [![Versão](https://img.shields.io/github/v/release/PQueirozDev/QrzSpace-releases?label=vers%C3%A3o&color=ff9a3c&style=flat-square)](https://github.com/PQueirozDev/QrzSpace-releases/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/PQueirozDev/QrzSpace-releases/total?label=downloads&color=3fa3a8&style=flat-square)](https://github.com/PQueirozDev/QrzSpace-releases/releases)
@@ -13,21 +13,27 @@ Projetos, tarefas, arquivos, IA, clientes, marketing e agenda num app desktop s�
 [![Licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-6b7280?style=flat-square)](LICENSE)
 
 [**⬇ Baixar para Windows**](https://github.com/PQueirozDev/QrzSpace-releases/releases/latest/download/Qyrex-Setup.exe) ·
-[Site](https://qyrexapp.vercel.app) ·
+[Site](https://qyrex.pqueirozdev.com.br) ·
 [Novidades](https://github.com/PQueirozDev/QrzSpace-releases/releases)
 
 <br>
 
-<img src="docs/screenshots/inicio.png" alt="Tela Início do Qyrex: tarefas em foco, compromissos, projetos, manutenção mensal, agenda do dia, atividade recente, foco do dia e projetos recentes" width="100%">
+<img src="docs/screenshots/inicio.png" alt="Tela Início do Qyrex: tarefas em foco, compromissos, projetos, agenda do dia, atividade recente, foco do dia e projetos recentes" width="100%">
 
 </div>
 
 <br>
 
 O Qyrex **orquestra** as ferramentas que você já usa (VS Code, terminal,
-Explorer, GitHub, WhatsApp, Spotify) em vez de tentar substituí-las. Tudo fica
+Explorer, GitHub, Spotify) em vez de tentar substituí-las. Tudo fica
 no seu PC: banco SQLite local, chaves no cofre do Windows e nenhuma conta
 para criar.
+
+## Em 28 segundos
+
+<a href="docs/video/qyrex-divulgacao.mp4"><img src="docs/video/qyrex-divulgacao.gif" alt="Prévia animada do Qyrex: abertura com a capivara no onsen e as telas Início, Projetos, Git visual, IA, Automações e Tarefas" width="100%"></a>
+
+Clique na prévia para ver o [vídeo completo](docs/video/qyrex-divulgacao.mp4), ou assista no [site](https://qyrex.pqueirozdev.com.br/#video).
 
 ## Telas
 
@@ -43,10 +49,6 @@ para criar.
   <tr>
     <td><img src="docs/screenshots/tarefas.png" alt="Tarefas"><p align="center"><b>Tarefas</b> · lista ou kanban, com prazo e prioridade</p></td>
     <td><img src="docs/screenshots/agenda.png" alt="Agenda"><p align="center"><b>Agenda</b> · eventos locais e do Google Agenda</p></td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/clientes.png" alt="Clientes"><p align="center"><b>Clientes</b> · manutenção mensal e cobranças</p></td>
-    <td><img src="docs/screenshots/marketing.png" alt="Marketing"><p align="center"><b>Marketing</b> · da ideia ao post publicado</p></td>
   </tr>
 </table>
 
@@ -67,7 +69,7 @@ Também tem Escuro, Meia-noite, Areia e Sistema, escolhidos por prévia em
 
 | | |
 | --- | --- |
-| 🏠 **Início** | Cards que você escolhe e ordena: tarefas em foco, agenda, atividade, foco do dia, projetos recentes, automações e cobranças, mais tempo de uso do app e ações rápidas. |
+| 🏠 **Início** | Cards que você escolhe e ordena: tarefas em foco, agenda, atividade, foco do dia, projetos recentes e automações, mais tempo de uso do app e ações rápidas. |
 | 🧩 **Projetos** | Tecnologias detectadas pelo `package.json`, status (ativo, pausado, concluído) e arquivamento, issues e PRs do GitHub. |
 | 🌿 **Git visual** | Diff de cada arquivo, commit só do que você marcar, criar e trocar de branch (recusado com alterações não commitadas), fetch, sincronização e aviso de conflito. Pull só fast-forward, push nunca com `--force`. |
 | 💻 **Terminal** | xterm.js + node-pty com abas ou grade, PowerShell, CMD, Claude Code ou Codex, aberto na pasta do projeto, e modo só terminais. |
@@ -75,12 +77,9 @@ Também tem Escuro, Meia-noite, Areia e Sistema, escolhidos por prévia em
 | ⏱️ **Foco** | Temporizador com pausa ligado a um projeto, histórico do dia e da semana e meta diária opcional. |
 | 💾 **Backup e sincronização** | Backup local verificado (diário e antes de cada atualização), restauração com cópia de segurança e sincronização entre PCs por uma pasta da nuvem, cifrada com a sua senha. |
 | 📁 **Arquivos** | Navegação só nas pastas autorizadas, busca, renomear/copiar/mover/excluir e preview de imagem, código e Markdown. |
-| ✅ **Tarefas** | Lista (Hoje, Próximas, Todas, Concluídas) ou kanban, com prioridade, prazo, tags, projeto e cliente. `Ctrl+Shift+T` de qualquer lugar. |
+| ✅ **Tarefas** | Lista (Hoje, Próximas, Todas, Concluídas) ou kanban, com prioridade, prazo, tags e projeto. `Ctrl+Shift+T` de qualquer lugar. |
 | 📅 **Agenda** | Dia, semana e mês, com eventos locais e do Google Agenda. |
 | 📝 **Notion** | Busca, leitura e criação de páginas, com "Perguntar à IA" sobre o conteúdo. |
-| 🤝 **Clientes** | Status, manutenção mensal, próxima cobrança, pasta de arquivos e atalhos para WhatsApp, Instagram, email e telefone. |
-| 📣 **Marketing** | Quadro Ideia → Produzindo → Pronto → Publicado, calendário semanal e captura rápida de ideias. |
-| 💬 **WhatsApp** | Abre conversas pelo app desktop ou pelo WhatsApp Web, só com links oficiais. |
 | 🤖 **IA** | Chat com Claude, OpenAI e Gemini (por API key ou pela sua assinatura do Claude Code/Codex), anexos explícitos, prompts reutilizáveis, comandos com botão **Executar** e permissão, **AI Council** (vários modelos e uma síntese) e aba de uso de tokens. |
 | 🎵 **Mini player** | Mostra e controla o que está tocando no Windows (Spotify, navegador etc.), com capa. |
 
@@ -126,7 +125,6 @@ do sistema e aparece na tela só mascarado.
 | Notion | Token de uma integração interna, com as páginas compartilhadas com ela |
 | Google Agenda | No Google Cloud Console: ative a Google Calendar API e crie um OAuth Client do tipo **App para computador**. Informe o Client ID e o Client Secret. |
 | Spotify (opcional) | No [Spotify Developer Dashboard](https://developer.spotify.com/dashboard), crie um app com o Redirect URI `http://127.0.0.1:43821/callback`. Só o Client ID é necessário (PKCE). |
-| WhatsApp | Nada: usa os links oficiais (`wa.me` e o app desktop). |
 | Discord (em Configurações) | Em [discord.com/developers](https://discord.com/developers/applications), crie um aplicativo chamado **Qyrex**, envie `build/icon.png` em Rich Presence → Art Assets com o nome `qyrex` e cole o Application ID. Precisa do app do Discord aberto. |
 
 </details>
@@ -187,7 +185,7 @@ src/
 tests/           # vitest: segurança, banco, IPC, arquivos e integrações
 scripts/         # testes no Electron, E2E, release, ícones e screenshots
 build/           # ícone e artes do instalador
-site/            # site estático (qyrexapp.vercel.app)
+site/            # site estático (qyrex.pqueirozdev.com.br)
 docs/            # imagens do README
 ```
 
@@ -208,12 +206,12 @@ script e rode `node site/pixel/pixel.mjs` e depois `npm run icons`.
 
 - [x] Projetos, tarefas, arquivos, palette, terminal e bandeja
 - [x] IA com Claude, OpenAI e Gemini, AI Council e execução com permissão
-- [x] Clientes, Marketing, Agenda, GitHub, Notion, WhatsApp e mini player
+- [x] Agenda, GitHub, Notion e mini player
 - [x] Temas, português/inglês, Discord e atualização automática
 - [x] 2.0: backup, sincronização entre PCs, Git visual, foco, automações, prompts e Início personalizável
-- [ ] WhatsApp Cloud API oficial (lembretes de cobrança e confirmações)
+- [x] 2.1: 100% para devs (saem clientes, cobranças, marketing e WhatsApp)
 - [ ] Criar e editar eventos do Google Agenda pelo app
-- [ ] Automações entre módulos (ex.: tarefa ao publicar conteúdo)
+- [ ] Workspace por projeto (tarefas, terminais, git e IA no mesmo painel)
 
 ## Contribuir
 

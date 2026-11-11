@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<title>Qyrex: cenas do vídeo</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Silkscreen:wght@400;700&display=swap" />
+<style>
+  /* Cada cena é um quadro de 1920×1080 (capturado em 2× pelo render.cjs). Cores do tema Onsen. */
+  :root { --bg: #0d1020; --outer: #070914; --card: #11152a; --ink: #eef0f8; --dim: #a0a7c2; --accent: #ff9a3c; --line: rgba(180, 190, 255, 0.16); }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: transparent; }
+  body { font-family: "Geist", "Segoe UI", sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+  .scene { position: absolute; inset: 0; display: none; }
+  .scene.on { display: block; }
+
+  /* Tela do app com título */
+  .shot { background: var(--bg); }
+  .shot::before {
+    content: ""; position: absolute; inset: 0; opacity: 0.5;
+    background-image: linear-gradient(rgba(180, 190, 255, 0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(180, 190, 255, 0.07) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .head { position: absolute; left: 120px; right: 120px; top: 84px; display: flex; align-items: flex-end; justify-content: space-between; gap: 64px; }
+  .eyebrow { display: flex; align-items: center; gap: 16px; font: 500 24px/32px "Geist Mono", monospace; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
+  .eyebrow::before { content: ""; width: 12px; height: 12px; background: var(--accent); }
+  h1 { margin-top: 16px; font: 600 76px/1 "Geist", sans-serif; letter-spacing: -0.045em; white-space: nowrap; }
+  .sub { max-width: 560px; padding-bottom: 8px; font: 400 26px/38px "Geist Mono", monospace; color: var(--dim); text-align: right; }
+  .win { position: absolute; left: 180px; top: 300px; width: 1560px; border: 2px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--outer); box-shadow: 0 48px 96px -24px rgba(0, 0, 0, 0.7); }
+  .bar { display: flex; align-items: center; gap: 16px; height: 48px; padding: 0 20px; background: #0a0d1a; border-bottom: 1px solid var(--line); font: 20px "Geist Mono", monospace; color: var(--dim); }
+  .bar i { width: 12px; height: 12px; background: var(--line); }
+  .bar i:first-child { background: var(--accent); }
+  .win img { display: block; width: 100%; }
+
+  /* Texto por cima do vídeo do onsen (fundo transparente) */
+  .over { text-align: center; }
+  .over .word { position: absolute; left: 0; right: 0; top: 150px; font: 400 230px/1 "Silkscreen", monospace; letter-spacing: -0.02em; text-shadow: 0 12px 0 rgba(7, 9, 20, 0.7); }
+  .over .tag { position: absolute; left: 0; right: 0; top: 420px; font: 500 48px/1.2 "Geist", sans-serif; letter-spacing: -0.03em; text-shadow: 0 4px 24px rgba(7, 9, 20, 0.9); }
+  .over .big { position: absolute; left: 0; right: 0; top: 150px; font: 600 104px/1 "Geist", sans-serif; letter-spacing: -0.045em; text-shadow: 0 6px 32px rgba(7, 9, 20, 0.9); }
+  .over .url { position: absolute; left: 50%; top: 300px; transform: translateX(-50%); padding: 16px 32px; border-radius: 8px; background: var(--accent); color: #1f0f02; font: 500 44px/1 "Geist Mono", monospace; white-space: nowrap; }
+  .over .fine { position: absolute; left: 0; right: 0; top: 420px; font: 400 30px/1 "Geist Mono", monospace; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink); text-shadow: 0 4px 16px rgba(7, 9, 20, 0.95); }
+</style>
+</head>
+<body>
+<script>
+  // Cena escolhida por ?s=: 0..5 são telas do app; intro e outro são textos transparentes.
+  const SHOTS = [
+    ["central de trabalho", "Seu dia numa janela só.", "Tarefas em foco, agenda, commits e projetos: o app abre no que importa hoje.", "inicio", "Início"],
+    ["projetos", "Todos os projetos, um clique.", "VS Code, terminal e Explorer abrem já na pasta certa.", "projetos", "Projetos"],
+    ["git visual", "Commit só do que você marcar.", "Diff de cada arquivo, branches e push sempre com confirmação.", "projeto-git", "Git visual"],
+    ["ia", "IA pela sua assinatura.", "Claude Code e Codex já logados no PC, sem pagar API.", "ia", "IA"],
+    ["automações", "Testes, lint e build em sequência.", "Nada roda sem você confirmar.", "automacoes", "Automações"],
+    ["tarefas", "Tarefas ligadas ao projeto.", "Lista ou kanban, com prazo e prioridade.", "tarefas", "Tarefas"],
+  ];
+  const params = new URLSearchParams(location.search);
+  const shots = params.get("shots");
+  const id = params.get("s");
+  const el = document.createElement("div");
+  if (id === "intro") {
+    el.className = "scene over on";
+    el.innerHTML = `<div class="word">QYREX</div><div class="tag">A central de trabalho do desenvolvedor</div>`;
+  } else if (id === "outro") {
+    el.className = "scene over on";
+    el.innerHTML = `<div class="big">Baixe grátis para Windows</div><div class="url">qyrex.pqueirozdev.com.br</div><div class="fine">open source · sem conta · sem nuvem</div>`;
+  } else {
+    const [eyebrow, title, sub, file, name] = SHOTS[Number(id)];
+    el.className = "scene shot on";
+    el.innerHTML = `<div class="head"><div><p class="eyebrow">${eyebrow}</p><h1>${title}</h1></div><p class="sub">${sub}</p></div>
+      <div class="win"><div class="bar"><i></i><i></i><i></i><span>Qyrex · ${name}</span></div><img src="${shots}/${file}.png" alt="" /></div>`;
+  }
+  document.body.appendChild(el);
+  window.sceneCount = SHOTS.length;
+  window.ready = Promise.all([document.fonts.ready, ...[...document.images].map((i) => i.decode().catch(() => {}))]).then(() => true);
+</script>
+</body>
+</html>
