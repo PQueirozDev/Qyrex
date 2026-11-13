@@ -646,6 +646,22 @@ export const workspaceMock: WorkspaceApi = {
     },
     used: () => ok(undefined),
   },
+  assist: {
+    commitMessage: async (requestId) => {
+      void runStream(requestId, "anthropic", "demo", "feat(webhooks): retentativa com backoff exponencial\n\n- Fila com até 5 tentativas e dead letter\n- Registra o motivo da falha em cada tentativa", "assist");
+      return ok(undefined);
+    },
+    daily: async (requestId) => {
+      void runStream(
+        requestId,
+        "anthropic",
+        "demo",
+        "**Ontem**\n- Implementei a fila de retentativas dos webhooks e a validação da assinatura HMAC.\n- Configurei o CI com testes e lint.\n\n**Hoje**\n- Retentativa com backoff nos webhooks.\n- Revisar o PR #51 (cache do catálogo).\n\n**Bloqueios**\n- Nenhum.",
+        "assist"
+      );
+      return ok(undefined);
+    },
+  },
   runner: {
     scripts: () => ok({ packageManager: "npm" as const, scripts: Object.entries(DEMO_SCRIPTS).map(([name, command]) => ({ name, command })) }),
     list: () => ok([...demoProcesses], 20),
@@ -817,6 +833,17 @@ export const workspaceMock: WorkspaceApi = {
   },
   projects: {
     list: () => ok(db.projects.map(withGit)),
+    insights: async (id) => {
+      // Linguagens e atividade fixas por projeto (só para a vitrine).
+      const demo: Record<string, { languages: { name: string; color: string; percent: number }[]; weekly: number[] }> = {
+        p1: { languages: [{ name: "TypeScript", color: "#3178c6", percent: 86.4 }, { name: "SQL", color: "#e38c00", percent: 9.1 }, { name: "Shell", color: "#89e051", percent: 4.5 }], weekly: [3, 5, 2, 8, 6, 9, 4, 7, 11, 6, 9, 5] },
+        p2: { languages: [{ name: "TypeScript", color: "#3178c6", percent: 71.2 }, { name: "CSS", color: "#663399", percent: 18.3 }, { name: "HTML", color: "#e34c26", percent: 10.5 }], weekly: [6, 4, 7, 3, 2, 5, 8, 4, 3, 2, 1, 2] },
+        p3: { languages: [{ name: "JavaScript", color: "#f1e05a", percent: 100 }], weekly: [0, 1, 0, 2, 4, 1, 0, 0, 3, 1, 0, 1] },
+      };
+      const d = demo[id] ?? { languages: [], weekly: new Array(12).fill(0) };
+      const commit = db.commits[id]?.[0] ?? null;
+      return ok({ languages: d.languages, weeklyCommits: d.weekly, lastCommit: commit });
+    },
     detect: (p) => ok({ name: p.split("\\").pop() ?? null, technologies: ["TypeScript"], githubUrl: null, hasPackageJson: true, isGitRepo: true, icon: null }),
     create: () => fail("Na demo não dá para adicionar pastas do seu PC. Explore os projetos de exemplo!"),
     update: async (id, patch) => {

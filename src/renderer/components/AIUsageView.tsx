@@ -14,7 +14,7 @@ import { AnimatedValue } from "@/components/ui/AnimatedValue";
 type Period = "1" | "7" | "30" | "all";
 
 const PROVIDER_LABEL: Record<AIProviderId, string> = { anthropic: "Claude", openai: "OpenAI", google: "Gemini" };
-const SOURCE_LABEL = { chat: tr("Chat"), council: tr("AI Council"), synthesis: tr("Síntese") } as const;
+const SOURCE_LABEL = { chat: tr("Chat"), council: tr("AI Council"), synthesis: tr("Síntese"), assist: tr("Assistentes") } as const;
 
 const compact = (n: number) => n.toLocaleString(getLocale(), { notation: "compact", maximumFractionDigits: 1 });
 const full = (n: number) => n.toLocaleString(getLocale());

@@ -23,6 +23,8 @@ import {
   Timer,
   ImagePlus,
   ScanSearch,
+  LayoutGrid,
+  List,
 } from "lucide-react";
 import type { GitHubOverview, ProjectIconMode, ProjectStatus, ProjectWithGit } from "@shared/types";
 import { Button } from "@/components/ui/Button";
@@ -31,6 +33,8 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Badge, Drawer, EmptyState, ErrorState, Field, LoadingRows, Menu, PageHeader, ProjectIcon, Segmented, Spinner } from "@/components/ui/primitives";
 import { TaskFormDialog } from "@/components/TaskFormDialog";
 import { GitPanel } from "@/components/GitPanel";
+import { CommitSparkline, LanguageBar, useProjectInsights } from "@/components/ProjectInsights";
+import { ProjectScriptsSection } from "@/components/runner/ProjectScripts";
 import { useFocusSummary } from "@/components/Focus";
 import { formatUsage } from "@/components/AppUsage";
 import { useFocusStore } from "@/stores/useFocusStore";
@@ -444,6 +448,8 @@ function ProjectDrawer({
           </div>
         </div>
 
+        {!project.archivedAt && <ProjectScriptsSection projectId={project.id} />}
+
         <section>
           <p className="section-title mb-2">{tr("Git")}</p>
           {project.archivedAt ? (
@@ -490,86 +496,157 @@ function ProjectDrawer({
 
 // --- Página ---------------------------------------------------------------------------
 
-function ProjectCard({ project, onOpen, onDelete }: { project: ProjectWithGit; onOpen: () => void; onDelete: () => void }) {
-  const { open, toggleFavorite } = useProjectsStore();
+/** Ações secundárias do card/linha (aparecem no hover para o card respirar). */
+function QuickActions({ project, className }: { project: ProjectWithGit; className?: string }) {
+  const { open } = useProjectsStore();
   const navigate = useUIStore((s) => s.navigate);
+  return (
+    <span className={cn("flex items-center gap-0.5", className)}>
+      <Button size="icon-sm" variant="ghost" onClick={() => navigate("editor", project.localPath)} title={tr("Editar no Qyrex")} aria-label={tr("Editar no Qyrex")}>
+        <FileCode2 size={13} />
+      </Button>
+      <Button size="icon-sm" variant="ghost" onClick={() => navigate("terminal", project.id)} title={tr("Terminal")} aria-label={tr("Terminal")}>
+        <SquareTerminal size={13} />
+      </Button>
+      <Button size="icon-sm" variant="ghost" onClick={() => void open(project, "explorer")} title={tr("Explorer")} aria-label={tr("Explorer")}>
+        <FolderOpen size={13} />
+      </Button>
+      {project.githubUrl && (
+        <Button size="icon-sm" variant="ghost" onClick={() => void open(project, "github")} title={tr("GitHub")} aria-label={tr("GitHub")}>
+          <Github size={13} />
+        </Button>
+      )}
+    </span>
+  );
+}
+
+function ProjectMenu({ project, onOpen, onDelete }: { project: ProjectWithGit; onOpen: () => void; onDelete: () => void }) {
+  const { toggleFavorite } = useProjectsStore();
+  return (
+    <Menu
+      trigger={<MoreHorizontal size={15} />}
+      items={[
+        { label: tr("Detalhes"), icon: Code2, onSelect: onOpen },
+        { label: project.favorite ? tr("Remover dos favoritos") : tr("Favoritar"), icon: Star, onSelect: () => void toggleFavorite(project.id) },
+        project.archivedAt
+          ? { label: tr("Desarquivar"), icon: ArchiveRestore, onSelect: () => void toggleArchive(project) }
+          : { label: tr("Arquivar"), icon: Archive, onSelect: () => void toggleArchive(project) },
+        "separator",
+        { label: tr("Excluir projeto"), icon: Trash2, danger: true, onSelect: onDelete },
+      ]}
+    />
+  );
+}
+
+function GitLine({ project }: { project: ProjectWithGit }) {
   const git = project.git;
+  if (project.archivedAt) return <span>{tr("Arquivado {time}", { time: timeAgo(project.archivedAt) })}</span>;
+  if (!git?.isRepo) return <span>{tr("Sem git")}</span>;
+  return (
+    <span className="flex min-w-0 items-center gap-1.5">
+      <GitBranch size={11} className="shrink-0" />
+      <span className="truncate font-mono">{git.branch ?? "?"}</span>
+      {git.ahead > 0 && (
+        <span className="text-accent" title={trn(git.ahead, "{n} commit para enviar", "{n} commits para enviar")}>
+          ↑{git.ahead}
+        </span>
+      )}
+      {git.behind > 0 && (
+        <span className="text-warning" title={trn(git.behind, "{n} commit para receber", "{n} commits para receber")}>
+          ↓{git.behind}
+        </span>
+      )}
+      {git.modifiedCount > 0 && <span className="text-warning">· {trn(git.modifiedCount, "{n} alterado", "{n} alterados")}</span>}
+    </span>
+  );
+}
+
+function ProjectCard({ project, onOpen, onDelete }: { project: ProjectWithGit; onOpen: () => void; onDelete: () => void }) {
+  const { open } = useProjectsStore();
+  const insights = useProjectInsights(project.id, !project.archivedAt);
 
   return (
     <Card className="card-interactive group flex flex-col p-4">
-      <div className="flex items-start gap-2.5">
-        <ProjectIcon name={project.name} icon={project.icon} size={34} />
+      <div className="flex items-start gap-3">
+        <ProjectIcon name={project.name} icon={project.icon} size={36} />
         <button className="min-w-0 flex-1 text-left" onClick={onOpen}>
           <p className="flex items-center gap-1.5 text-sm font-semibold text-text">
             <span className="truncate">{project.name}</span>
+            {project.favorite && <Star size={12} className="shrink-0 fill-warning text-warning" />}
             <StatusBadge project={project} />
           </p>
           <p className="mt-0.5 line-clamp-2 min-h-[2.2em] text-xs text-text-muted">{project.description || project.localPath}</p>
         </button>
-        <button
-          onClick={() => void toggleFavorite(project.id)}
-          className={cn("rounded-md p-1 transition-colors hover:bg-bg-hover", project.favorite ? "text-warning" : "text-text-faint opacity-0 group-hover:opacity-100")}
-          aria-label={project.favorite ? tr("Remover dos favoritos") : tr("Favoritar")}
-        >
-          <Star size={14} className={project.favorite ? "fill-warning" : ""} />
-        </button>
-        <button
-          onClick={onDelete}
-          className="rounded-md p-1 text-text-faint opacity-0 transition-colors hover:bg-bg-hover hover:text-danger focus-visible:opacity-100 group-hover:opacity-100"
-          title={tr("Excluir projeto")}
-          aria-label={tr("Excluir projeto")}
-        >
-          <Trash2 size={14} />
-        </button>
+        <ProjectMenu project={project} onOpen={onOpen} onDelete={onDelete} />
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-1">
-        {project.technologies.slice(0, 4).map((t) => (
-          <Badge key={t}>{t}</Badge>
-        ))}
-        {project.technologies.length > 4 && <Badge>+{project.technologies.length - 4}</Badge>}
+      {!project.archivedAt && <LanguageBar insights={insights} className="mt-3" />}
+
+      <div className="mt-3 flex items-end justify-between gap-3 text-[11px] text-text-faint">
+        <div className="min-w-0 space-y-0.5">
+          <GitLine project={project} />
+          {insights?.lastCommit ? (
+            <p className="truncate" title={insights.lastCommit.subject}>
+              {insights.lastCommit.subject} · {timeAgo(insights.lastCommit.date)}
+            </p>
+          ) : (
+            <p>{project.lastOpenedAt ? tr("Aberto {time}", { time: timeAgo(project.lastOpenedAt) }) : tr("Nunca aberto")}</p>
+          )}
+        </div>
+        {!project.archivedAt && project.git?.isRepo && <CommitSparkline weekly={insights?.weeklyCommits} className="shrink-0" />}
       </div>
 
-      <div className="mt-3 flex items-center gap-2 text-[11px] text-text-faint">
-        {project.archivedAt ? (
-          <span>{tr("Arquivado {time}", { time: timeAgo(project.archivedAt) })}</span>
-        ) : git?.isRepo ? (
-          <>
-            <GitBranch size={11} /> {git.branch ?? "?"}
-            {git.modifiedCount > 0 && <span className="text-warning">· {trn(git.modifiedCount, "{n} alterado", "{n} alterados")}</span>}
-          </>
-        ) : (
-          <span>{tr("Sem git")}</span>
-        )}
-        <span className="ml-auto">{project.lastOpenedAt ? tr("Aberto {time}", { time: timeAgo(project.lastOpenedAt) }) : tr("Nunca aberto")}</span>
-      </div>
-
-      <div className="mt-3 flex gap-1.5 border-t border-border-subtle pt-3">
+      <div className="mt-3 flex items-center gap-1 border-t border-border-subtle pt-3">
         <Button size="xs" onClick={() => void open(project, "vscode")}>
-          <Code2 size={12} />{" "}{tr("VS Code")}</Button>
-        <Button size="xs" variant="secondary" onClick={() => navigate("editor", project.localPath)} title={tr("Editar no Qyrex")}>
-          <FileCode2 size={12} />
+          <Code2 size={12} /> {tr("VS Code")}
         </Button>
-        <Button size="xs" variant="secondary" onClick={() => navigate("terminal", project.id)} title={tr("Terminal")}>
-          <SquareTerminal size={12} />
+        <QuickActions project={project} className="opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100" />
+        <Button size="xs" variant="ghost" className="ml-auto" onClick={onOpen}>
+          {tr("Detalhes")}
         </Button>
-        <Button size="xs" variant="secondary" onClick={() => void open(project, "explorer")} title={tr("Explorer")}>
-          <FolderOpen size={12} />
-        </Button>
-        {project.githubUrl && (
-          <Button size="xs" variant="secondary" onClick={() => void open(project, "github")} title={tr("GitHub")}>
-            <Github size={12} />
-          </Button>
-        )}
-        {project.archivedAt && (
-          <Button size="xs" variant="secondary" onClick={() => void toggleArchive(project)} title={tr("Desarquivar")}>
-            <ArchiveRestore size={12} />
-          </Button>
-        )}
-        <Button size="xs" variant="ghost" className="ml-auto" onClick={onOpen}>{tr("Detalhes")}</Button>
       </div>
     </Card>
   );
+}
+
+/** Linha da visão em lista: tudo numa faixa, para quem tem muitos projetos. */
+function ProjectRow({ project, onOpen, onDelete }: { project: ProjectWithGit; onOpen: () => void; onDelete: () => void }) {
+  const { open } = useProjectsStore();
+  const insights = useProjectInsights(project.id, !project.archivedAt);
+  return (
+    <div className="group flex items-center gap-3 border-b border-border-subtle px-3 py-2.5 last:border-b-0 hover:bg-bg-hover/50">
+      <ProjectIcon name={project.name} icon={project.icon} size={28} className="rounded-md" />
+      <button className="min-w-0 flex-1 text-left" onClick={onOpen}>
+        <p className="flex items-center gap-1.5 text-sm font-medium text-text">
+          <span className="truncate">{project.name}</span>
+          {project.favorite && <Star size={11} className="shrink-0 fill-warning text-warning" />}
+          <StatusBadge project={project} />
+        </p>
+        <p className="truncate text-[11px] text-text-faint">{insights?.lastCommit?.subject ?? project.description ?? project.localPath}</p>
+      </button>
+      <div className="hidden w-28 shrink-0 lg:block">{!project.archivedAt && <LanguageBar insights={insights} legend={0} />}</div>
+      <div className="hidden w-44 shrink-0 text-[11px] text-text-faint md:block">
+        <GitLine project={project} />
+      </div>
+      <div className="hidden w-[70px] shrink-0 xl:block">{!project.archivedAt && project.git?.isRepo && <CommitSparkline weekly={insights?.weeklyCommits} />}</div>
+      <span className="w-24 shrink-0 text-right text-[11px] text-text-faint">{project.lastOpenedAt ? timeAgo(project.lastOpenedAt) : "—"}</span>
+      {/* Largura fixa: com ou sem GitHub, as colunas da lista continuam alinhadas. */}
+      <QuickActions project={project} className="w-[104px] shrink-0 justify-end opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100" />
+      <Button size="xs" variant="secondary" onClick={() => void open(project, "vscode")}>
+        <Code2 size={12} /> {tr("VS Code")}
+      </Button>
+      <ProjectMenu project={project} onOpen={onOpen} onDelete={onDelete} />
+    </div>
+  );
+}
+
+const VIEW_KEY = "qrz.projectsView";
+function readView(): "grade" | "lista" {
+  try {
+    return localStorage.getItem(VIEW_KEY) === "lista" ? "lista" : "grade";
+  } catch {
+    return "grade";
+  }
 }
 
 export function Projects() {
@@ -582,6 +659,15 @@ export function Projects() {
   const [editing, setEditing] = useState<ProjectWithGit | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [view, setView] = useState<"ativos" | "arquivados">("ativos");
+  const [layout, setLayoutState] = useState<"grade" | "lista">(readView);
+  const setLayout = (next: "grade" | "lista") => {
+    setLayoutState(next);
+    try {
+      localStorage.setItem(VIEW_KEY, next);
+    } catch {
+      // sem storage: vale só nesta sessão
+    }
+  };
 
   useEffect(() => {
     void load();
@@ -629,13 +715,20 @@ export function Projects() {
     if (pageParam === "new") navigate("projetos");
   };
 
-  const grid = (items: ProjectWithGit[]) => (
-    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-      {items.map((p) => (
-        <ProjectCard key={p.id} project={p} onOpen={() => setDetailId(p.id)} onDelete={() => void deleteProject(p)} />
-      ))}
-    </div>
-  );
+  const grid = (items: ProjectWithGit[]) =>
+    layout === "lista" ? (
+      <Card className="overflow-hidden">
+        {items.map((p) => (
+          <ProjectRow key={p.id} project={p} onOpen={() => setDetailId(p.id)} onDelete={() => void deleteProject(p)} />
+        ))}
+      </Card>
+    ) : (
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {items.map((p) => (
+          <ProjectCard key={p.id} project={p} onOpen={() => setDetailId(p.id)} onDelete={() => void deleteProject(p)} />
+        ))}
+      </div>
+    );
 
   return (
     <div>
@@ -655,6 +748,14 @@ export function Projects() {
                 ]}
               />
             )}
+            <Segmented
+              value={layout}
+              onChange={setLayout}
+              options={[
+                { value: "grade", label: <LayoutGrid size={13} aria-label={tr("Grade")} /> },
+                { value: "lista", label: <List size={13} aria-label={tr("Lista")} /> },
+              ]}
+            />
             <input className="input w-56 py-1 text-xs" placeholder={tr("Filtrar projetos...")} value={search} onChange={(e) => setSearch(e.target.value)} />
             <Button size="sm" variant="ghost" onClick={() => void load()} title={tr("Atualizar status git")}>
               {loading ? <Spinner /> : <RefreshCw size={13} />}

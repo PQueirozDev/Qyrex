@@ -504,6 +504,31 @@ export function runCouncil(
   log.info(`AI Council disparado para ${input.targets.length} provider(s)`);
 }
 
+/** Ordem de preferência quando o recurso não escolhe provider (assistentes de Git, daily). */
+const ASSIST_ORDER: AIProviderId[] = ["anthropic", "openai", "google"];
+
+/** Primeiro provider conectado (pela assinatura ou com API key) e o modelo padrão dele. */
+export function pickAssistProvider(): { provider: AIProviderId; model: string } {
+  const status = listProviderStatus();
+  for (const id of ASSIST_ORDER) {
+    const s = status.find((x) => x.id === id && x.connected);
+    if (s) return { provider: s.id, model: s.defaultModel };
+  }
+  throw new Error("Conecte uma IA em Integrações para usar este recurso.");
+}
+
+/**
+ * Geração avulsa (sem conversa salva): o texto chega pelo mesmo canal `ai:stream`.
+ * Quem chama monta o pedido a partir de dados do main; a IA só escreve texto,
+ * nunca executa nada, e a UI só preenche um campo com o resultado.
+ */
+export function streamOneShot(sender: WebContents, requestId: string, system: string, prompt: string): void {
+  const { provider, model } = pickAssistProvider();
+  void runStream(sender, requestId, provider, model, system, [{ role: "user", content: prompt }], { source: "assist" })
+    .then(() => emit(sender, { requestId, type: "done" }))
+    .catch((err: unknown) => emit(sender, { requestId, type: "error", error: err instanceof Error ? err.message : String(err) }));
+}
+
 export function synthesizeCouncil(
   sender: WebContents,
   input: {

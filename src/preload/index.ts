@@ -23,6 +23,7 @@ import type {
   FocusSummary,
   ListeningPort,
   LocalMediaState,
+  ProjectInsights,
   ProjectScripts,
   RunnerProcess,
   MediaAction,
@@ -114,6 +115,12 @@ const api = {
     /** Conta o uso (os mais usados aparecem primeiro). */
     used: (id: string) => invoke<void>("prompts:used", id),
   },
+  assist: {
+    /** Sugere a mensagem de commit pelo diff dos arquivos marcados; o texto chega por `ai.onStream`. */
+    commitMessage: (requestId: string, input: { projectId: string; files: string[] }) => invoke<void>("assist:commitMessage", requestId, input),
+    /** Resumo para a daily (commits seus e tarefas desde o último dia útil), por `ai.onStream`. */
+    daily: (requestId: string) => invoke<void>("assist:daily", requestId),
+  },
   runner: {
     /** Scripts do package.json do projeto e o gerenciador detectado. */
     scripts: (projectId: string) => invoke<ProjectScripts>("runner:scripts", projectId),
@@ -200,6 +207,8 @@ const api = {
   },
   projects: {
     list: () => invoke<ProjectWithGit[]>("projects:list"),
+    /** Linguagens, commits por semana e último commit (cache de 5 min no main). */
+    insights: (id: string) => invoke<ProjectInsights>("projects:insights", id),
     detect: (p: string) => invoke<ProjectDetection>("projects:detect", p),
     create: (input: {
       name: string;

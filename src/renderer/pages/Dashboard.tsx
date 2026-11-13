@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { CheckCircle2, Code2, FileCode2, FileText, FolderOpen, GitBranch, GitCommitHorizontal, Plus, Settings2, SquareTerminal, Timer } from "lucide-react";
+import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
+import { MessageSquareText, CheckCircle2, Code2, FileCode2, FileText, FolderOpen, GitBranch, GitCommitHorizontal, Plus, Settings2, SquareTerminal, Timer } from "lucide-react";
 import type { CalendarEvent, DashboardWidgetId, GitCommit, ProjectWithGit, RecentItem } from "@shared/types";
 import { Button } from "@/components/ui/Button";
 import { Badge, EmptyState, LoadingRows, ProjectIcon } from "@/components/ui/primitives";
@@ -121,6 +121,9 @@ function ContinueStrip({ project, lastCommit }: { project: ProjectWithGit; lastC
   );
 }
 
+// Só carrega o Markdown quando o diálogo da daily abre.
+const DailyDialog = lazy(() => import("@/components/DailyDialog"));
+
 /** Widgets que ocupam duas colunas na tela larga. */
 const WIDE_WIDGETS = new Set<DashboardWidgetId>(["projetos"]);
 const ACTIVITY_ICON: Record<string, typeof Code2> = {
@@ -150,6 +153,7 @@ export function Dashboard() {
   const settings = useSettingsStore((s) => s.settings);
   const setFocusDialog = useFocusStore((s) => s.setDialog);
   const [customizeOpen, setCustomizeOpen] = useState(false);
+  const [dailyOpen, setDailyOpen] = useState(false);
 
   const [events, setEvents] = useState<CalendarEvent[] | null>(null);
   const [activity, setActivity] = useState<RecentItem[]>([]);
@@ -435,6 +439,9 @@ export function Dashboard() {
           </p>
         </div>
         <div className="relative flex items-center gap-1">
+          <Button variant="ghost" size="sm" onClick={() => setDailyOpen(true)} title={tr("Resumo para a daily")}>
+            <MessageSquareText size={14} /> {tr("Daily")}
+          </Button>
           <Button variant="ghost" size="icon" onClick={() => setCustomizeOpen(true)} title={tr("Personalizar o Início")} aria-label={tr("Personalizar o Início")}>
             <Settings2 size={15} />
           </Button>
@@ -442,6 +449,11 @@ export function Dashboard() {
         </div>
       </div>
       <DashboardCustomizeDialog open={customizeOpen} onClose={() => setCustomizeOpen(false)} />
+      {dailyOpen && (
+        <Suspense fallback={null}>
+          <DailyDialog open={dailyOpen} onClose={() => setDailyOpen(false)} />
+        </Suspense>
+      )}
 
       {lastProject && <ContinueStrip project={lastProject} lastCommit={lastCommit} />}
 

@@ -132,6 +132,12 @@ export const runnerStart = z
   })
   .refine((v) => Boolean(v.script) !== Boolean(v.command), "Escolha um script ou digite um comando.");
 
+/** Assistente de commit: o projeto e os arquivos marcados (conferidos de novo no main contra o git). */
+export const assistCommit = z.object({
+  projectId: id,
+  files: z.array(z.string().min(1).max(1000)).min(1).max(500),
+});
+
 export const port = z.number().int().min(1).max(65535);
 export const pid = z.number().int().min(5).max(4_294_967_295);
 

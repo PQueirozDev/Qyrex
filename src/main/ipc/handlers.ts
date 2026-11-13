@@ -33,6 +33,8 @@ import * as backupService from "../services/backupService.js";
 import * as focusService from "../services/focusService.js";
 import * as automationService from "../services/automationService.js";
 import * as runnerService from "../services/runnerService.js";
+import * as assistService from "../services/assistService.js";
+import { getProjectInsights, invalidateInsights } from "../services/projectInsightsService.js";
 import * as promptService from "../services/promptService.js";
 import * as syncService from "../services/syncService.js";
 import { getDiscordStatus, setDiscordActivity } from "../integrations/discord.js";
@@ -286,6 +288,7 @@ export function registerIpcHandlers(): void {
 
   // --- Projetos ----------------------------------------------------------------------
   handle("projects:list", () => projectService.listProjectsWithGit());
+  handle("projects:insights", (_e, id) => getProjectInsights(v.parse(v.id, id)));
   handle("projects:detect", (_e, p) => projectService.detectProject(v.parse(v.filePath, p)));
   handle("projects:create", (_e, input) => projectService.createProject(v.parse(v.projectCreate, input)));
   handle("projects:update", (_e, id, patch) => projectService.updateProject(v.parse(v.id, id), v.parse(v.projectUpdate, patch)));
@@ -307,6 +310,7 @@ export function registerIpcHandlers(): void {
   handle("git:commit", (_e, input) => {
     const parsed = v.parse(v.gitCommit, input);
     requireConfirmation(parsed.confirmed);
+    invalidateInsights();
     return gitService.commit(parsed.projectPath, parsed.message, parsed.stageAll, parsed.files);
   });
   handle("git:diff", (_e, input) => {
@@ -327,6 +331,7 @@ export function registerIpcHandlers(): void {
   handle("git:pull", (_e, input) => {
     const parsed = v.parse(v.gitRemoteOp, input);
     requireConfirmation(parsed.confirmed);
+    invalidateInsights();
     return gitService.pull(parsed.projectPath);
   });
   handle("git:push", (_e, input) => {
@@ -422,6 +427,11 @@ export function registerIpcHandlers(): void {
     aiService.regenerate(e.sender, v.parse(v.id, requestId), v.parse(v.id, conversationId))
   );
   handle("ai:interrupt", (_e, requestId) => aiService.interruptRequest(v.parse(v.id, requestId)));
+  // Assistentes: a IA só escreve o texto (mensagem de commit, resumo da daily); nada é executado.
+  handle("assist:commitMessage", (e, requestId, input) =>
+    assistService.suggestCommitMessage(e.sender, v.parse(v.id, requestId), v.parse(v.assistCommit, input))
+  );
+  handle("assist:daily", (e, requestId) => assistService.dailyStandup(e.sender, v.parse(v.id, requestId)));
   handle("ai:council:run", (e, input) => {
     const parsed = v.parse(v.councilRun, input);
     // Proteção contra custo acidental: o número de providers confirmado pelo

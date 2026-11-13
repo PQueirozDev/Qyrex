@@ -183,6 +183,64 @@ export async function getRecentCommits(projectPath: string, limit = 10): Promise
     });
 }
 
+/**
+ * Commits por semana nas últimas `weeks` semanas (a última posição é a semana atual).
+ * Conta todas as branches locais; só lê datas (%ct), nunca o conteúdo.
+ */
+export async function getWeeklyCommits(projectPath: string, weeks = 12, now = Date.now()): Promise<number[]> {
+  const resolved = assertPathAllowedAndExists(projectPath);
+  const counts = new Array<number>(weeks).fill(0);
+  if (!isGitRepo(resolved)) return counts;
+  const res = await git(resolved, ["log", "--all", `--since=${weeks * 7}.days.ago`, "--format=%ct"], 20_000, 2_000_000);
+  if (res.code !== 0) return counts; // sem commits ainda
+  return bucketByWeek(res.stdout, weeks, now);
+}
+
+/** Agrupa timestamps (segundos, um por linha) em semanas contadas para trás a partir de `now`. Exportado para testes. */
+export function bucketByWeek(raw: string, weeks: number, now: number): number[] {
+  const counts = new Array<number>(weeks).fill(0);
+  const WEEK = 7 * 24 * 3600 * 1000;
+  for (const line of raw.split(/\r?\n/)) {
+    const ts = Number(line.trim()) * 1000;
+    if (!ts) continue;
+    const ago = Math.floor((now - ts) / WEEK);
+    if (ago >= 0 && ago < weeks) counts[weeks - 1 - ago]++;
+  }
+  return counts;
+}
+
+/**
+ * Commits do próprio usuário (user.email do repositório) desde `sinceIso`, em todas
+ * as branches locais. Usado no resumo da daily. Sem user.email, devolve vazio.
+ */
+export async function getMyCommitsSince(projectPath: string, sinceIso: string, limit = 30): Promise<GitCommit[]> {
+  const resolved = assertPathAllowedAndExists(projectPath);
+  if (!isGitRepo(resolved)) return [];
+  const email = await git(resolved, ["config", "user.email"]).catch(() => null);
+  const author = email && email.code === 0 ? email.stdout.trim() : "";
+  if (!author) return [];
+  const SEP = "\x1f";
+  const res = await git(resolved, [
+    "log",
+    "--all",
+    "--no-merges",
+    `-n${Math.min(Math.max(limit, 1), 100)}`,
+    `--since=${sinceIso}`,
+    // --fixed-strings: o e-mail é comparado literalmente (pontos e "+" não viram regex).
+    "--fixed-strings",
+    `--author=${author}`,
+    `--pretty=format:%H${SEP}%h${SEP}%an${SEP}%aI${SEP}%s`,
+  ]);
+  if (res.code !== 0) return [];
+  return res.stdout
+    .split(/\r?\n/)
+    .filter(Boolean)
+    .map((line) => {
+      const [hash, shortHash, authorName, date, subject] = line.split(SEP);
+      return { hash, shortHash, author: authorName, date, subject };
+    });
+}
+
 export async function getChangedFiles(projectPath: string): Promise<GitChangedFile[]> {
   const resolved = assertPathAllowedAndExists(projectPath);
   if (!isGitRepo(resolved)) return [];

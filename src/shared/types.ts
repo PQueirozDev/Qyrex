@@ -627,7 +627,7 @@ export type DiscordStatus = "disabled" | "connecting" | "connected" | "discord-n
 
 // --- Uso da IA ------------------------------------------------------------------
 
-export type AIUsageSource = "chat" | "council" | "synthesis";
+export type AIUsageSource = "chat" | "council" | "synthesis" | "assist";
 
 export interface AIUsageRecord {
   id: string;
@@ -722,4 +722,21 @@ export interface ListeningPort {
   processName: string | null;
   /** Processo do runner dono da porta (a própria árvore dele), se houver. */
   runnerId: string | null;
+}
+
+// --- Insights do projeto (2.2) ------------------------------------------------------
+
+export interface ProjectLanguage {
+  name: string;
+  /** Cor da linguagem (paleta do GitHub Linguist). */
+  color: string;
+  percent: number;
+}
+
+export interface ProjectInsights {
+  /** Linguagens por bytes de código (até 5 + "Outras"). */
+  languages: ProjectLanguage[];
+  /** Commits por semana, das mais antigas para a atual (12 posições). */
+  weeklyCommits: number[];
+  lastCommit: GitCommit | null;
 }

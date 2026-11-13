@@ -11,6 +11,8 @@ import {
   GitBranchPlus,
   GitCommitHorizontal,
   RefreshCw,
+  Sparkles,
+  Square,
 } from "lucide-react";
 import type { GitBranch as Branch, GitChangedFile, GitCommit, GitDiff, ProjectWithGit } from "@shared/types";
 import { Button } from "@/components/ui/Button";
@@ -19,6 +21,7 @@ import { attempt, errorMessage, unwrap } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { timeAgo } from "@/lib/format";
 import { tr, trn } from "@/lib/i18n";
+import { useAssist } from "@/lib/useAssist";
 import { confirmAction, promptText } from "@/stores/useUIStore";
 import { tm } from "@shared/i18n";
 
@@ -68,6 +71,8 @@ export function GitPanel({ project, onChanged }: { project: ProjectWithGit; onCh
   const [branches, setBranches] = useState<Branch[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  // Sugestão da IA: vai preenchendo o campo enquanto chega (o usuário revisa antes de commitar).
+  const assist = useAssist((text) => setMessage(text));
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [openDiff, setOpenDiff] = useState<string | null>(null);
   const [diff, setDiff] = useState<GitDiff | null>(null);
@@ -310,8 +315,30 @@ export function GitPanel({ project, onChanged }: { project: ProjectWithGit; onCh
 
       {changes && changes.length > 0 && (
         <div className="space-y-2">
-          <textarea className="input min-h-[56px] resize-y" placeholder={tr("Mensagem do commit")} value={message} onChange={(e) => setMessage(e.target.value)} />
-          <div className="flex justify-end">
+          <textarea
+            className="input min-h-[56px] resize-y"
+            placeholder={assist.running ? tr("A IA está escrevendo...") : tr("Mensagem do commit")}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            readOnly={assist.running}
+          />
+          {assist.error && <p className="text-xs text-danger">{assist.error}</p>}
+          <div className="flex items-center justify-between gap-2">
+            {assist.running ? (
+              <Button size="sm" variant="ghost" onClick={assist.stop}>
+                <Square size={11} /> {tr("Parar")}
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={selectedFiles.length === 0 || busy !== null}
+                onClick={() => void assist.start((id) => window.workspace.assist.commitMessage(id, { projectId: project.id, files: commitPaths(selectedFiles) }))}
+                title={tr("Envia o diff dos arquivos marcados para a IA conectada e preenche a mensagem. Nada é commitado sem você.")}
+              >
+                <Sparkles size={13} className="text-accent" /> {tr("Sugerir com IA")}
+              </Button>
+            )}
             <Button size="sm" onClick={() => void doCommit()} disabled={!message.trim() || selectedFiles.length === 0 || busy !== null} loading={busy === "commit"}>
               <GitCommitHorizontal size={13} /> {trn(selectedFiles.length, "Commitar {n} arquivo", "Commitar {n} arquivos")}
             </Button>
