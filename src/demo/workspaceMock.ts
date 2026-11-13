@@ -29,6 +29,11 @@ import type {
   IntegrationStatus,
   IpcResult,
   ListeningPort,
+  PluginInfo,
+  PluginPermission,
+  QuickLink,
+  PreviewConsoleEntry,
+  PreviewState,
   LocalMediaState,
   NotionItem,
   Project,
@@ -430,6 +435,46 @@ const withGit = (p: Project): ProjectWithGit => ({
   icon: null,
   git: { branch: db.branch[p.id] ?? "main", modifiedCount: db.changes[p.id]?.length ?? 0, isRepo: true, ahead: p.id === "p1" ? 1 : 0, behind: 0, remoteUrl: p.githubUrl, upstream: `origin/${db.branch[p.id] ?? "main"}`, conflicts: 0, operation: null },
 });
+// Preview simulado: um iframe com uma página de exemplo (marcada como demonstração)
+// ocupa o lugar da view nativa do app, nas mesmas coordenadas.
+const previewState = channel<PreviewState>();
+const previewConsole = channel<PreviewConsoleEntry>();
+let demoPreview: PreviewState = { open: false, url: null, title: null, loading: false, canGoBack: false, canGoForward: false, error: null, zoom: 1 };
+let demoFrame: HTMLIFrameElement | null = null;
+const DEMO_PAGE = `<!doctype html><html><head><meta charset="utf-8"><style>
+body{margin:0;font:14px/1.5 system-ui,sans-serif;background:#f6f7fb;color:#1c2333}
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;background:#fff;border-bottom:1px solid #e5e8f0}
+.tag{font-size:11px;padding:3px 8px;border-radius:99px;background:#fff1e3;color:#b55309}
+main{padding:22px;display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.card{background:#fff;border:1px solid #e5e8f0;border-radius:12px;padding:16px}
+.card b{display:block;font-size:24px}
+</style></head><body><header><strong>dashboard-admin</strong><span class="tag">Página de exemplo da demo</span></header>
+<main><div class="card">Usuários ativos<b>1.284</b></div><div class="card">Latência p95<b>182 ms</b></div><div class="card">Erros (24 h)<b>3</b></div><div class="card">Deploy<b>v2.3</b></div></main>
+<script>console.log("[vite] connected.")</script></body></html>`;
+function setDemoPreview(patch: Partial<PreviewState>) {
+  demoPreview = { ...demoPreview, ...patch };
+  previewState.emit(demoPreview);
+}
+
+const demoNotes = new Map<string, string>();
+
+// Plugins simulados: os três embutidos e um exemplo local, só para mostrar o gerenciador.
+const demoPlugins: PluginInfo[] = [
+  { manifest: { id: "qyrex.project-notes", name: "Notas do projeto", version: "1.0.0", author: "Qyrex", description: "Um painel de notas em Markdown por projeto, no Workspace. As notas ficam no banco local.", qyrex: "2.2.0", permissions: ["notes"], contributes: {} }, source: "builtin", enabled: true, compatible: true, error: null, installedAt: null },
+  { manifest: { id: "qyrex.quick-links", name: "Links rápidos", version: "1.0.0", author: "Qyrex", description: "Seus atalhos (documentação, painel de deploy, board) na paleta de comandos, gerais ou por projeto.", qyrex: "2.2.0", permissions: ["quickLinks"], contributes: {} }, source: "builtin", enabled: true, compatible: true, error: null, installedAt: null },
+  { manifest: { id: "qyrex.project-templates", name: "Modelos de projeto", version: "1.0.0", author: "Qyrex", description: "Cria a estrutura de um projeto novo (pastas, README, tarefas iniciais) a partir de um modelo.", qyrex: "2.2.0", permissions: ["projectTemplates"], contributes: {} }, source: "builtin", enabled: true, compatible: true, error: null, installedAt: null },
+  { manifest: { id: "exemplo.docs-do-time", name: "Docs do time (exemplo)", version: "0.3.0", author: "Exemplo", description: "Plugin de exemplo da demo: links para a documentação interna.", qyrex: "2.2.0", permissions: ["quickLinks"], contributes: { quickLinks: [{ title: "Guia de estilo", url: "https://example.com/guia" }] } }, source: "local", enabled: true, compatible: true, error: null, installedAt: ago(60 * 24 * 3) },
+];
+const demoLinks: QuickLink[] = [
+  { id: "l1", projectId: null, title: "Painel da Vercel", url: "https://vercel.com/dashboard", pluginId: null },
+  { id: "l2", projectId: "p1", title: "Documentação do provedor de pagamentos", url: "https://example.com/docs", pluginId: null },
+];
+const DEMO_PERMISSIONS: Record<PluginPermission, string> = {
+  quickLinks: "Adicionar links rápidos (abrem no navegador)",
+  projectTemplates: "Oferecer modelos de projeto (pastas, arquivos de texto e tarefas, criados só com sua confirmação)",
+  notes: "Mostrar o painel de notas do projeto",
+};
+
 // Runner simulado: nada roda de verdade; a saída imita um servidor de dev.
 const runnerChanged = channel<RunnerProcess[]>();
 const runnerData = channel<{ id: string; chunk: string }>();
@@ -647,6 +692,10 @@ export const workspaceMock: WorkspaceApi = {
     used: () => ok(undefined),
   },
   assist: {
+    buddy: async (requestId) => {
+      void runStream(requestId, "anthropic", "demo", "Na demo eu respondo com dados de exemplo: você tem 3 tarefas abertas e o api-pagamentos foi o último projeto aberto. No app de verdade eu uso só os dados do seu PC, depois do seu consentimento.", "assist");
+      return ok(undefined);
+    },
     commitMessage: async (requestId) => {
       void runStream(requestId, "anthropic", "demo", "feat(webhooks): retentativa com backoff exponencial\n\n- Fila com até 5 tentativas e dead letter\n- Registra o motivo da falha em cada tentativa", "assist");
       return ok(undefined);
@@ -661,6 +710,87 @@ export const workspaceMock: WorkspaceApi = {
       );
       return ok(undefined);
     },
+  },
+  plugins: {
+    list: () => ok(demoPlugins),
+    permissions: () => ok(DEMO_PERMISSIONS),
+    setEnabled: async (id, enabled) => {
+      const pl = demoPlugins.find((x) => x.manifest.id === id);
+      if (pl) pl.enabled = enabled;
+      return ok(demoPlugins);
+    },
+    install: () => fail(DEMO_ONLY),
+    uninstall: () => fail(DEMO_ONLY),
+  },
+  quickLinks: {
+    list: (projectId) => ok([...demoLinks.filter((l) => !l.projectId || l.projectId === projectId), { id: "exemplo#0", projectId: null, title: "Guia de estilo", url: "https://example.com/guia", pluginId: "exemplo.docs-do-time" }]),
+    add: async (input) => {
+      const link: QuickLink = { id: uid(), projectId: input.projectId ?? null, title: input.title, url: input.url, pluginId: null };
+      demoLinks.push(link);
+      return ok(link);
+    },
+    remove: async (id) => {
+      const i = demoLinks.findIndex((l) => l.id === id);
+      if (i >= 0) demoLinks.splice(i, 1);
+      return ok(undefined);
+    },
+  },
+  templates: {
+    list: () =>
+      ok([
+        { pluginId: "qyrex.project-templates", id: "api-node", name: "API Node.js", description: "API com pastas de rotas, serviços e testes.", technologies: ["Node.js", "TypeScript"], folders: ["src/routes", "src/services", "tests"], files: [{ path: "README.md", content: "" }], tasks: ["Definir as rotas principais"] },
+        { pluginId: "qyrex.project-templates", id: "web-app", name: "Aplicação web", description: "Front-end com componentes, páginas e assets.", technologies: ["TypeScript"], folders: ["src/components", "src/pages", "public"], files: [{ path: "README.md", content: "" }], tasks: ["Montar o layout base"] },
+      ]),
+    create: () => fail(DEMO_ONLY),
+  },
+  notes: {
+    get: async (projectId) => ok({ projectId, content: demoNotes.get(projectId) ?? (projectId === "p1" ? "## Webhooks\n\n- Backoff: 1s, 5s, 30s, 2min, 10min\n- Dead letter depois da 5ª tentativa\n" : ""), updatedAt: null }),
+    save: async (projectId, content) => {
+      demoNotes.set(projectId, content);
+      return ok({ projectId, content, updatedAt: new Date().toISOString() });
+    },
+  },
+  preview: {
+    open: async (url) => {
+      setDemoPreview({ open: true, url, title: "dashboard-admin", loading: false, error: null });
+      setTimeout(() => previewConsole.emit({ level: "info", message: "[vite] connected.", source: "client.ts:1", at: new Date().toISOString() }), 400);
+      return ok(demoPreview, 200);
+    },
+    setBounds: async (b) => {
+      if (!b || !demoPreview.open) {
+        if (demoFrame) demoFrame.style.display = "none";
+        return ok(undefined, 0);
+      }
+      if (!demoFrame) {
+        demoFrame = document.createElement("iframe");
+        demoFrame.srcdoc = DEMO_PAGE;
+        demoFrame.title = "Preview (demo)";
+        demoFrame.setAttribute("sandbox", "");
+        Object.assign(demoFrame.style, { position: "fixed", border: "0", zIndex: "30", background: "#fff" });
+        document.body.appendChild(demoFrame);
+      }
+      Object.assign(demoFrame.style, { display: "block", left: `${b.x}px`, top: `${b.y}px`, width: `${b.width}px`, height: `${b.height}px` });
+      return ok(undefined, 0);
+    },
+    state: () => ok(demoPreview, 0),
+    reload: () => ok(undefined),
+    back: () => ok(undefined),
+    forward: () => ok(undefined),
+    setZoom: async (factor) => {
+      demoPreview = { ...demoPreview, zoom: factor };
+      return ok(undefined, 0);
+    },
+    devtools: () => fail(DEMO_ONLY),
+    console: () => ok([]),
+    clearConsole: () => ok(undefined),
+    close: async () => {
+      demoFrame?.remove();
+      demoFrame = null;
+      setDemoPreview({ open: false, url: null, title: null });
+      return ok(undefined);
+    },
+    onState: (cb) => previewState.on(cb),
+    onConsole: (cb) => previewConsole.on(cb),
   },
   runner: {
     scripts: () => ok({ packageManager: "npm" as const, scripts: Object.entries(DEMO_SCRIPTS).map(([name, command]) => ({ name, command })) }),
@@ -698,6 +828,21 @@ export const workspaceMock: WorkspaceApi = {
       return ok(ports);
     },
     killPort: () => fail(DEMO_ONLY),
+    monitor: async () => {
+      // Valores simulados (a demo não lê o computador do visitante).
+      const wave = (base: number, amp: number) => Math.max(1, base + Math.sin(Date.now() / 4000) * amp + Math.random() * amp);
+      return ok({
+        at: new Date().toISOString(),
+        cpu: wave(22, 9),
+        cores: 8,
+        memUsed: 9.4e9 + Math.random() * 2e8,
+        memTotal: 16e9,
+        app: { cpu: wave(2, 1.5), memory: 4.1e8 },
+        processes: demoProcesses
+          .filter((p) => p.status === "running")
+          .map((p) => ({ runnerId: p.id, pid: p.pid ?? 0, processCount: 3, cpu: wave(4, 3), memory: 2.3e8 + Math.random() * 2e7 })),
+      }, 30);
+    },
     onChanged: (cb) => runnerChanged.on(cb),
     onData: (cb) => runnerData.on(cb),
   },
@@ -833,6 +978,12 @@ export const workspaceMock: WorkspaceApi = {
   },
   projects: {
     list: () => ok(db.projects.map(withGit)),
+    envCheck: async (id) =>
+      ok(
+        id === "p1"
+          ? { exampleFile: ".env.example", envFiles: [".env"], expected: 6, defined: 6, missing: ["WEBHOOK_SECRET"], extra: ["DEBUG_SQL"], empty: ["SENTRY_DSN"] }
+          : { exampleFile: null, envFiles: [], expected: 0, defined: 0, missing: [], extra: [], empty: [] }
+      ),
     insights: async (id) => {
       // Linguagens e atividade fixas por projeto (só para a vitrine).
       const demo: Record<string, { languages: { name: string; color: string; percent: number }[]; weekly: number[] }> = {
@@ -945,6 +1096,11 @@ export const workspaceMock: WorkspaceApi = {
           { number: 11, title: "GET /catalogo lento sem cache", state: "open", author: "visitante", htmlUrl: url, updatedAt: ago(2000) },
         ],
         pulls: [{ number: 15, title: "Fila de retentativas para webhooks", state: "open", author: "visitante", htmlUrl: url, updatedAt: ago(60) }],
+        runs: [
+          { id: 3, name: "CI", title: "Fila de retentativas para webhooks", branch: "feat/retry", event: "pull_request", status: "in_progress", conclusion: null, htmlUrl: url, createdAt: ago(4) },
+          { id: 2, name: "CI", title: "Valida assinatura HMAC do provedor", branch: "main", event: "push", status: "completed", conclusion: "success", htmlUrl: url, createdAt: ago(60 * 26) },
+          { id: 1, name: "Deploy", title: "Valida assinatura HMAC do provedor", branch: "main", event: "push", status: "completed", conclusion: "failure", htmlUrl: url, createdAt: ago(60 * 27) },
+        ],
       }, 400),
     connect: () => fail("Na demo o GitHub já vem conectado."),
     ghCliAvailable: () => ok(true),

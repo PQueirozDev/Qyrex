@@ -17,218 +17,9 @@ document.querySelectorAll("[data-link]").forEach((a) => {
 });
 document.querySelectorAll("[data-repo-url]").forEach((el) => (el.textContent = LINKS.repo));
 
-const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-// --- Orquestra: fios do centro até cada programa + cenários ------------------------
-
-const orch = document.querySelector(".orch");
-const svg = orch.querySelector(".wires");
-const hub = orch.querySelector(".hub");
-const nodes = Object.fromEntries([...orch.querySelectorAll(".node")].map((n) => [n.dataset.node, n]));
-const wires = {};
-
-function drawWires() {
-  const box = orch.getBoundingClientRect();
-  svg.setAttribute("viewBox", `0 0 ${box.width} ${box.height}`);
-  const h = hub.getBoundingClientRect();
-  const hx = h.left + h.width / 2 - box.left;
-  const hy = h.top + h.height / 2 - box.top;
-  for (const [id, n] of Object.entries(nodes)) {
-    const r = n.getBoundingClientRect();
-    const nx = r.left + r.width / 2 - box.left;
-    const ny = r.top + r.height / 2 - box.top;
-    // Cotovelo em ângulo reto: sai do centro na horizontal, desce/sobe e chega no cartão.
-    const mx = (hx + nx) / 2;
-    const d = Math.abs(nx - hx) < 40 ? `M${hx},${hy} L${nx},${ny}` : `M${hx},${hy} L${mx},${hy} L${mx},${ny} L${nx},${ny}`;
-    let p = wires[id];
-    if (!p) {
-      p = document.createElementNS("http://www.w3.org/2000/svg", "path");
-      svg.appendChild(p);
-      wires[id] = p;
-    }
-    p.setAttribute("d", d);
-  }
-}
-drawWires();
-new ResizeObserver(drawWires).observe(orch);
-document.fonts?.ready.then(drawWires);
-
-const SCENES = {
-  feature: [
-    ["vscode", "abrindo barbearia-site no VS Code"],
-    ["terminal", "npm run dev em C:\\Projetos\\barbearia-site"],
-    ["claude", "claude: onde ficam os horários da agenda?"],
-    ["explorer", "abrindo a pasta src/pages"],
-    ["github", "commit \"horário de sábado até 14h\" (confirmado)", true],
-  ],
-  bug: [
-    ["github", "issue #42: agenda não salva no Safari"],
-    ["vscode", "abrindo loja-online na pasta certa"],
-    ["codex", "codex: explica esse erro de Date no Safari"],
-    ["terminal", "npm test -- agenda (3 passaram)"],
-    ["github", "PR #43 aberto: corrige parse de data", true],
-  ],
-  release: [
-    ["terminal", "npm run check (typecheck, lint, testes)"],
-    ["claude", "claude: resume as mudanças para o changelog"],
-    ["github", "push da tag v2.3.1 (confirmado)"],
-    ["agenda", "lembrete: conferir o deploy amanhã 9h"],
-    ["spotify", "tocando: lo-fi para deploy", true],
-  ],
-  review: [
-    ["github", "PR #51 pede revisão: cache do catálogo"],
-    ["terminal", "git fetch e checkout da branch do PR"],
-    ["codex", "codex: riscos desse diff no cache?"],
-    ["terminal", "npm test (todos passaram)"],
-    ["github", "comentário enviado no PR #51", true],
-  ],
-};
-const logEl = orch.querySelector("[data-log]");
-const sceneLabel = orch.querySelector("[data-log-scene]");
-const hubStatus = orch.querySelector("[data-hub-status]");
-let scene = "feature";
-let step = 0;
-let timer = null;
-
-function showStep() {
-  const steps = SCENES[scene];
-  Object.values(nodes).forEach((n) => n.classList.remove("on"));
-  Object.values(wires).forEach((w) => w.classList.remove("live"));
-  if (step >= steps.length) {
-    hub.classList.remove("busy");
-    hubStatus.textContent = "tudo pronto";
-    step = 0;
-    timer = setTimeout(() => {
-      logEl.innerHTML = "";
-      showStep();
-    }, 2600);
-    return;
-  }
-  const [id, text, done] = steps[step];
-  nodes[id].classList.add("on");
-  wires[id]?.classList.add("live");
-  hub.classList.add("busy");
-  hubStatus.textContent = nodes[id].querySelector(".n-name").textContent.toLowerCase();
-  const li = document.createElement("li");
-  li.textContent = text;
-  if (done) li.className = "ok";
-  logEl.appendChild(li);
-  while (logEl.children.length > 5) logEl.firstElementChild.remove();
-  step++;
-  timer = setTimeout(showStep, 1500);
-}
-
-function startScene(name) {
-  clearTimeout(timer);
-  scene = name;
-  step = 0;
-  logEl.innerHTML = "";
-  sceneLabel.textContent = orch.querySelector(`[data-scene="${name}"]`).textContent;
-  orch.querySelectorAll("[data-scene]").forEach((b) => {
-    const on = b.dataset.scene === name;
-    b.classList.toggle("on", on);
-    b.setAttribute("aria-pressed", String(on));
-  });
-  if (reduced) {
-    // Sem animação: mostra o cenário inteiro de uma vez.
-    for (const [id, text, done] of SCENES[name]) {
-      const li = document.createElement("li");
-      li.textContent = text;
-      if (done) li.className = "ok";
-      logEl.appendChild(li);
-      nodes[id].classList.add("on");
-    }
-    while (logEl.children.length > 5) logEl.firstElementChild.remove();
-    return;
-  }
-  showStep();
-}
-orch.querySelectorAll("[data-scene]").forEach((b) => b.addEventListener("click", () => startScene(b.dataset.scene)));
-startScene("feature");
-
-// --- Temas: os mesmos do app, recolorindo a página -------------------------------
-
-const THEMES = {
-  onsen: { desc: "Noite azul e laranja de yuzu. O tema deste site.", vars: {} },
-  dark: {
-    desc: "Grafite neutro com azul. O padrão do app.",
-    vars: { bg: "#0b0d10", outer: "#060709", card: "#15181d", sunken: "#111418", ink: "#e6e8eb", "ink-dim": "#9aa1ac", "ink-mute": "#686f7a", accent: "#688cff", "accent-on": "#ffffff", line: "rgba(255,255,255,0.07)", "line-2": "rgba(255,255,255,0.13)", water: "#8fb4ff" },
-  },
-  light: {
-    desc: "Limpo e neutro para ambientes iluminados.",
-    vars: { bg: "#f6f7f9", outer: "#e9ebef", card: "#ffffff", sunken: "#eef0f3", ink: "#16181d", "ink-dim": "#585e6a", "ink-mute": "#8a909c", accent: "#4c6ef5", "accent-on": "#ffffff", line: "rgba(20,24,40,0.08)", "line-2": "rgba(20,24,40,0.14)", water: "#2b8a91", tick: "rgba(20,24,40,0.4)", ok: "#2f9e55", warn: "#b7791f" },
-  },
-  midnight: {
-    desc: "Azul profundo com destaque ciano.",
-    vars: { bg: "#070b16", outer: "#04070e", card: "#0f172a", sunken: "#0b1120", ink: "#e2e8f0", "ink-dim": "#94a3b8", "ink-mute": "#64748b", accent: "#22d3ee", "accent-on": "#031721", line: "rgba(148,163,184,0.09)", "line-2": "rgba(148,163,184,0.16)", water: "#67e8f9" },
-  },
-  violet: {
-    desc: "Roxo escuro e lavanda, para as madrugadas.",
-    vars: { bg: "#0d0b14", outer: "#07060b", card: "#181423", sunken: "#13101c", ink: "#ebe7f5", "ink-dim": "#a79fbd", "ink-mute": "#7a7190", accent: "#a78bfa", "accent-on": "#140c28", line: "rgba(200,180,255,0.08)", "line-2": "rgba(200,180,255,0.15)", water: "#c4b5fd" },
-  },
-  sand: {
-    desc: "Papel quente e terracota, claro e calmo.",
-    vars: { bg: "#f7f3ec", outer: "#ece5d8", card: "#fffdf9", sunken: "#f1ebe1", ink: "#2b241c", "ink-dim": "#6e6254", "ink-mute": "#978a78", accent: "#c95a26", "accent-on": "#ffffff", line: "rgba(60,40,20,0.09)", "line-2": "rgba(60,40,20,0.16)", water: "#2f7f86", tick: "rgba(60,40,20,0.4)", ok: "#3f8f4f", warn: "#a86a12" },
-  },
-};
-const ALL_VARS = [...new Set(Object.values(THEMES).flatMap((t) => Object.keys(t.vars)))];
 const root = document.documentElement;
-const descEl = document.querySelector("[data-theme-desc]");
-
-function applyTheme(id) {
-  const t = THEMES[id] ?? THEMES.onsen;
-  ALL_VARS.forEach((v) => root.style.removeProperty(`--${v}`));
-  Object.entries(t.vars).forEach(([k, v]) => root.style.setProperty(`--${k}`, v));
-  root.dataset.siteTheme = id;
-  descEl.textContent = t.desc;
-  document.querySelectorAll("[data-theme-id]").forEach((b) => {
-    const on = b.dataset.themeId === id;
-    b.classList.toggle("on", on);
-    b.setAttribute("aria-checked", String(on));
-  });
-  try {
-    localStorage.setItem("qyrex-site-theme", id);
-  } catch {
-    /* sem armazenamento: tudo bem */
-  }
-}
-document.querySelectorAll("[data-theme-id]").forEach((b) => b.addEventListener("click", () => applyTheme(b.dataset.themeId)));
-try {
-  const saved = localStorage.getItem("qyrex-site-theme");
-  if (saved && THEMES[saved]) applyTheme(saved);
-} catch {
-  /* ignora */
-}
-
-// --- Copiar comandos --------------------------------------------------------------
-
-const copyBtn = document.querySelector("[data-copy]");
-copyBtn?.addEventListener("click", async () => {
-  const pre = document.querySelector("[data-copy-src]");
-  const text = pre.innerText
-    .split("\n")
-    .filter((l) => !l.trim().startsWith("#"))
-    .map((l) => l.replace(/\s+#.*$/, ""))
-    .join("\n");
-  try {
-    await navigator.clipboard.writeText(text);
-    copyBtn.textContent = "copiado";
-  } catch {
-    const range = document.createRange();
-    range.selectNodeContents(pre);
-    const sel = getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
-    copyBtn.textContent = "selecionado";
-  }
-  setTimeout(() => (copyBtn.textContent = "copiar"), 1800);
-});
-
-// --- Pontilhado colorido (Bayer 8×8) ----------------------------------------------
-// O vídeo do onsen e a paisagem do rodapé passam por um pontilhado ordenado em poucas
-// cores: a pixel art mantém a paleta do Qyrex e ganha a textura de ponto das referências.
-// A paisagem do rodapé é pintada com os tokens, então trocar de tema recolore.
-
+const motion = matchMedia("(prefers-reduced-motion: reduce)");
 const BAYER = [0, 32, 8, 40, 2, 34, 10, 42, 48, 16, 56, 24, 50, 18, 58, 26, 12, 44, 4, 36, 14, 46, 6, 38, 60, 28, 52, 20, 62, 30, 54, 22, 3, 35, 11, 43, 1, 33, 9, 41, 51, 19, 59, 27, 49, 17, 57, 25, 15, 47, 7, 39, 13, 45, 5, 37, 63, 31, 55, 23, 61, 29, 53, 21];
 const probe = document.createElement("canvas").getContext("2d", { willReadFrequently: true });
 probe.canvas.width = probe.canvas.height = 1;
@@ -242,7 +33,7 @@ function rgbOf(name) {
 }
 const mix = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 
-/** Reduz cada canal a `levels` níveis com o limiar de Bayer: sobra o padrão de pontos. */
+/** Pontilhado suave por canal: preserva as cores, com passos pequenos entre tons. */
 function ditherData(d, w, levels) {
   const n = levels - 1;
   for (let p = 0, i = 0; p < d.length; p += 4, i++) {
@@ -279,11 +70,11 @@ function makeDither(canvas) {
     const dw = sw * k;
     const dh = sh * k;
     ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = "#000";
+    ctx.fillStyle = getComputedStyle(root).getPropertyValue("--bg").trim();
     ctx.fillRect(0, 0, st.w, st.h);
     ctx.drawImage(src, (st.w - dw) * focus, (st.h - dh) * 0.5, dw, dh);
     const img = ctx.getImageData(0, 0, st.w, st.h);
-    ditherData(img.data, st.w, 6);
+    ditherData(img.data, st.w, 32);
     ctx.putImageData(img, 0, 0);
   };
   return st;
@@ -300,6 +91,43 @@ function watchDither(st) {
     st.paint();
   }).observe(st.ctx.canvas.parentElement);
 }
+
+// A mesma luz de pixels dos cabeçalhos do app, desenhada só ao redimensionar/trocar tema.
+document.querySelectorAll('.hero-visual, .page-heading, .download-summary').forEach((host) => {
+  host.classList.add('glow-host');
+  const canvas = document.createElement('canvas');
+  canvas.className = 'section-glow';
+  canvas.setAttribute('aria-hidden', 'true');
+  host.prepend(canvas);
+  const ctx = canvas.getContext('2d');
+  const cell = 3;
+  const st = {
+    ctx, w:0, h:0,
+    size() {
+      this.w = Math.max(1, Math.ceil(host.clientWidth / cell));
+      this.h = Math.max(1, Math.ceil(Math.min(220, host.clientHeight) / cell));
+      canvas.width = this.w; canvas.height = this.h;
+      canvas.style.width = `${this.w * cell}px`; canvas.style.height = `${this.h * cell}px`;
+    },
+    paint() {
+      if (!this.w || !this.h) return;
+      const color = rgbOf('--accent');
+      const img = ctx.createImageData(this.w, this.h);
+      for (let y = 0; y < this.h; y++) {
+        for (let x = 0; x < this.w; x++) {
+          const distance = Math.hypot((x - this.w * .75) / (this.w * .7), (y + this.h * .1) / (this.h * 1.2));
+          const intensity = Math.max(0, 1 - distance) ** 1.6 * .5;
+          if (intensity * 64 > BAYER[(y % 8) * 8 + x % 8]) {
+            const p = (y * this.w + x) * 4;
+            img.data[p] = color[0]; img.data[p + 1] = color[1]; img.data[p + 2] = color[2]; img.data[p + 3] = 255;
+          }
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+    },
+  };
+  watchDither(st);
+});
 
 // Hero: o vídeo do onsen, quadro a quadro (12 fps, só enquanto aparece na tela).
 {
@@ -320,23 +148,23 @@ function watchDither(st) {
     };
     poster.addEventListener("load", st.paint);
     watchDither(st);
-    let seen = false;
+    let visible = false;
+    let frame = 0;
     let last = 0;
     const tick = (t) => {
-      if (!seen) return;
-      if (t - last > 80) {
-        last = t;
-        st.paint();
-      }
-      requestAnimationFrame(tick);
+      if (t - last > 80) { last = t; st.paint(); }
+      frame = requestAnimationFrame(tick);
     };
-    new IntersectionObserver(([e]) => {
-      const was = seen;
-      seen = e.isIntersecting;
-      if (seen) video.play().catch(() => {});
-      else video.pause();
-      if (seen && !was) requestAnimationFrame(tick);
-    }).observe(canvas.parentElement);
+    const sync = () => {
+      cancelAnimationFrame(frame);
+      if (visible && !document.hidden && !motion.matches) {
+        video.play().catch(() => {});
+        frame = requestAnimationFrame(tick);
+      } else { video.pause(); st.paint(); }
+    };
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; sync(); }).observe(canvas.parentElement);
+    document.addEventListener("visibilitychange", sync);
+    motion.addEventListener("change", sync);
   }
 }
 
@@ -402,7 +230,7 @@ document.querySelectorAll('[data-dither="scene"]').forEach((canvas) => {
           const sky = mix(OUT, SKY, Math.pow(y / hz, 1.6));
           if (mx * mx + my * my <= moonR * moonR) put(p, mx + my > moonR * 0.6 ? mix(MOON, ACC, 0.5) : MOON);
           else if (mx * mx + my * my <= moonR * moonR * 2.6) put(p, mix(sky, MOON, 0.16)); // halo da lua
-          else if (y < hz * 0.75 && hash(x, y) % 173 === 0) put(p, INK);
+          else if (y < hz * 0.75 && hash(x, y) % 431 === 0) put(p, mix(INK, sky, 0.4));
           else put(p, sky);
         } else if (y < near) {
           put(p, mix(FAR, SKY, 0.35 + 0.35 * Math.sin((y - far) * 1.1 + x * 0.12))); // serra distante, em hachura
@@ -421,7 +249,7 @@ document.querySelectorAll('[data-dither="scene"]').forEach((canvas) => {
         }
       }
     }
-    ditherData(d, w, 5);
+    ditherData(d, w, 32);
     ctx.putImageData(img, 0, 0);
     // A capivara senta com as patas na água.
     box.style.setProperty("--capy-b", `${(h - poolY - 5) * st.cell}px`);
@@ -433,179 +261,3 @@ document.querySelectorAll('[data-dither="scene"]').forEach((canvas) => {
 new MutationObserver(repaintAll).observe(root, { attributes: true, attributeFilter: ["style", "data-site-theme"] });
 dithers.forEach((d) => d.size());
 repaintAll();
-
-// --- Telas do app: os botões trocam o print -------------------------------------------
-
-{
-  const img = document.querySelector("[data-shot-img]");
-  const title = document.querySelector("[data-shot-title]");
-  const tabs = [...document.querySelectorAll("[data-shot]")];
-  tabs.forEach((b) =>
-    b.addEventListener("click", () => {
-      tabs.forEach((t) => {
-        t.classList.toggle("on", t === b);
-        t.setAttribute("aria-pressed", String(t === b));
-      });
-      title.textContent = b.dataset.title;
-      const next = new Image();
-      next.src = `assets/app-${b.dataset.shot}.webp`;
-      img.classList.add("swap");
-      const show = () => {
-        img.src = next.src;
-        img.classList.remove("swap");
-      };
-      // Troca só depois de carregar (ou de falhar), para não piscar uma imagem quebrada.
-      next.decode().then(show, show);
-    }),
-  );
-}
-
-// --- Frase central: as palavras acendem em ordem conforme a página rola -------------
-
-{
-  const el = document.querySelector("[data-reveal-words]");
-  if (el) {
-    const words = el.textContent.trim().split(/\s+/);
-    el.textContent = "";
-    const spans = words.map((w, i) => {
-      const s = document.createElement("span");
-      s.className = "w";
-      s.textContent = w;
-      el.append(s, i < words.length - 1 ? " " : "");
-      return s;
-    });
-    let lit = 0;
-    let queued = false;
-    const update = () => {
-      queued = false;
-      const r = el.getBoundingClientRect();
-      const vh = window.innerHeight;
-      // Começa quando o topo do texto passa de 85% da tela e termina com o fim dele em 55%.
-      const p = (vh * 0.85 - r.top) / (r.height + vh * 0.3);
-      const n = Math.max(lit, Math.min(spans.length, Math.ceil(p * spans.length)));
-      for (; lit < n; lit++) spans[lit].classList.add("on");
-    };
-    const onScroll = () => {
-      if (queued) return;
-      queued = true;
-      requestAnimationFrame(update);
-    };
-    new IntersectionObserver(([e]) => {
-      if (e.isIntersecting) window.addEventListener("scroll", onScroll, { passive: true });
-      else window.removeEventListener("scroll", onScroll);
-      update();
-    }).observe(el);
-  }
-}
-
-// --- Entrada das seções, item atual do menu e menu do celular ------------------------
-
-root.classList.add("js");
-{
-  const io = new IntersectionObserver(
-    (entries) =>
-      entries.forEach((e) => {
-        if (!e.isIntersecting) return;
-        e.target.classList.add("in");
-        io.unobserve(e.target);
-      }),
-    { rootMargin: "0px 0px -8% 0px" },
-  );
-  document.querySelectorAll("main > section:not(.hero) > *:not(.brk)").forEach((el) => {
-    el.classList.add("rv");
-    io.observe(el);
-  });
-
-  const navLinks = [...document.querySelectorAll(".nav a")];
-  const spy = new IntersectionObserver(
-    (entries) =>
-      entries.forEach((e) => {
-        if (!e.isIntersecting) return;
-        navLinks.forEach((a) => {
-          if (a.getAttribute("href") === `#${e.target.id}`) a.setAttribute("aria-current", "true");
-          else a.removeAttribute("aria-current");
-        });
-      }),
-    { rootMargin: "-45% 0px -50% 0px" },
-  );
-  document.querySelectorAll("main > section[id]").forEach((s) => spy.observe(s));
-
-  const menu = document.getElementById("menu");
-  const menuBtn = document.querySelector(".menu-btn");
-  const setMenu = (open) => {
-    menuBtn.setAttribute("aria-expanded", String(open));
-    menuBtn.setAttribute("aria-label", open ? "Fechar menu" : "Abrir menu");
-    document.body.classList.toggle("locked", open);
-    document.querySelector("main").inert = open;
-    document.querySelector(".foot").inert = open;
-    if (open) {
-      menu.hidden = false;
-      requestAnimationFrame(() => requestAnimationFrame(() => menu.classList.add("open")));
-      menu.querySelector("a")?.focus({ preventScroll: true });
-    } else {
-      if (menu.contains(document.activeElement)) menuBtn.focus({ preventScroll: true });
-      menu.classList.remove("open");
-      setTimeout(() => {
-        if (menuBtn.getAttribute("aria-expanded") === "false") menu.hidden = true;
-      }, 300);
-    }
-  };
-  menuBtn.addEventListener("click", () => setMenu(menuBtn.getAttribute("aria-expanded") !== "true"));
-  menu.addEventListener("click", (e) => e.target.closest("a") && setMenu(false));
-  document.addEventListener("keydown", (e) => {
-    if (menuBtn.getAttribute("aria-expanded") !== "true") return;
-    if (e.key === "Escape") return setMenu(false);
-    if (e.key !== "Tab") return;
-    // Tab circula entre o botão de fechar e os links do menu.
-    const items = [menuBtn, ...menu.querySelectorAll("a")];
-    const i = items.indexOf(document.activeElement);
-    const next = e.shiftKey ? (i <= 0 ? items.length - 1 : i - 1) : i === items.length - 1 ? 0 : i + 1;
-    e.preventDefault();
-    items[next].focus();
-  });
-  window.matchMedia("(min-width: 761px)").addEventListener("change", (e) => e.matches && setMenu(false));
-}
-
-// --- Versão publicada: lida da última release (o HTML traz um valor de reserva) -------
-
-{
-  const show = (v) => document.querySelectorAll("[data-version]").forEach((el) => (el.textContent = v));
-  const valid = (v) => typeof v === "string" && /^\d+\.\d+\.\d+$/.test(v);
-  let cached = null;
-  try {
-    cached = sessionStorage.getItem("qyrex-version");
-  } catch {
-    /* sem armazenamento */
-  }
-  if (valid(cached)) show(cached);
-  else
-    fetch(LINKS.latestApi)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((j) => {
-        const v = String(j?.tag_name ?? "").replace(/^v/, "");
-        if (!valid(v)) return;
-        show(v);
-        try {
-          sessionStorage.setItem("qyrex-version", v);
-        } catch {
-          /* ignora */
-        }
-      })
-      .catch(() => {});
-}
-
-// --- Perguntas em dados estruturados (para buscadores e assistentes) -----------------
-
-{
-  const items = [...document.querySelectorAll("[data-faq] > div")].map((d) => ({
-    "@type": "Question",
-    name: d.querySelector("dt").textContent.trim(),
-    acceptedAnswer: { "@type": "Answer", text: d.querySelector("dd").textContent.trim() },
-  }));
-  if (items.length) {
-    const s = document.createElement("script");
-    s.type = "application/ld+json";
-    s.textContent = JSON.stringify({ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: items });
-    document.head.appendChild(s);
-  }
-}

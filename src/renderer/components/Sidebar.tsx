@@ -19,23 +19,30 @@ interface NavItem {
 
 const item = (id: Page, label: string, shortcut?: string): NavItem => ({ id, label, icon: PAGE_ICONS[id], shortcut });
 
+// Grupos por momento de uso: organizar o dia, desenvolver, ferramentas de apoio.
 const SECTIONS: { title: string | null; items: NavItem[] }[] = [
   {
     title: null,
-    items: [item("inicio", tr("Início")), item("ia", tr("IA"), "Ctrl Shift A")],
+    items: [item("inicio", tr("Início")), item("projetos", tr("Projetos"), "Ctrl Shift P"), item("tarefas", tr("Tarefas")), item("agenda", tr("Agenda"))],
   },
   {
-    title: tr("Trabalho"),
+    title: tr("Desenvolvimento"),
     items: [
-      item("projetos", tr("Projetos"), "Ctrl Shift P"),
+      item("workspace", tr("Workspace")),
       item("terminal", tr("Terminal")),
-      item("processos", tr("Processos")),
-      item("automacoes", tr("Automações")),
-      item("arquivos", tr("Arquivos")),
       item("editor", tr("Editor")),
-      item("ferramentas", tr("Ferramentas")),
-      item("tarefas", tr("Tarefas")),
-      item("agenda", tr("Agenda")),
+      item("preview", tr("Preview")),
+      item("processos", tr("Processos")),
+      item("arquivos", tr("Arquivos")),
+    ],
+  },
+  {
+    title: tr("Ferramentas"),
+    items: [
+      item("ia", tr("IA"), "Ctrl Shift A"),
+      item("automacoes", tr("Automações")),
+      item("ferramentas", tr("Utilitários")),
+      item("plugins", tr("Plugins")),
       item("notion", tr("Notion")),
     ],
   },
@@ -69,7 +76,7 @@ function NavButton({
       title={item.shortcut ? `${item.label} (${item.shortcut})` : item.label}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "press group relative flex w-full items-center gap-2.5 rounded-lg py-[7px] text-[13px] transition-colors",
+        "press group relative flex w-full items-center gap-2.5 rounded-lg py-[5px] text-[13px] transition-colors",
         collapsed ? "justify-center px-0" : "px-2.5",
         active ? "font-medium text-text" : "text-text-muted hover:bg-bg-hover/60 hover:text-text"
       )}

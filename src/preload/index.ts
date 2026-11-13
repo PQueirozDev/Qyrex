@@ -23,7 +23,17 @@ import type {
   FocusSummary,
   ListeningPort,
   LocalMediaState,
+  EnvCheck,
   ProjectInsights,
+  MonitorSample,
+  ProjectNote,
+  PluginInfo,
+  PluginPermission,
+  ProjectTemplate,
+  QuickLink,
+  PreviewBounds,
+  PreviewConsoleEntry,
+  PreviewState,
   ProjectScripts,
   RunnerProcess,
   MediaAction,
@@ -120,6 +130,49 @@ const api = {
     commitMessage: (requestId: string, input: { projectId: string; files: string[] }) => invoke<void>("assist:commitMessage", requestId, input),
     /** Resumo para a daily (commits seus e tarefas desde o último dia útil), por `ai.onStream`. */
     daily: (requestId: string) => invoke<void>("assist:daily", requestId),
+    /** Pergunta livre à capivara; `consent` = o usuário marcou que aceita enviar o resumo à IA. */
+    buddy: (requestId: string, question: string, consent: true) => invoke<void>("assist:buddy", requestId, question, consent),
+  },
+  plugins: {
+    list: () => invoke<PluginInfo[]>("plugins:list"),
+    /** Texto de cada permissão (para a UI explicar o que o plugin pode fazer). */
+    permissions: () => invoke<Record<PluginPermission, string>>("plugins:permissions"),
+    setEnabled: (id: string, enabled: boolean) => invoke<PluginInfo[]>("plugins:setEnabled", id, enabled),
+    /** Abre o seletor nativo (pasta do plugin ou qyrex-plugin.json). null = cancelado. */
+    install: () => invoke<{ plugin: PluginInfo; updated: boolean } | null>("plugins:install"),
+    uninstall: (id: string, confirmed: true) => invoke<void>("plugins:uninstall", id, confirmed),
+  },
+  quickLinks: {
+    list: (projectId?: string | null) => invoke<QuickLink[]>("quickLinks:list", projectId ?? null),
+    add: (input: { title: string; url: string; projectId?: string | null }) => invoke<QuickLink>("quickLinks:add", input),
+    remove: (id: string) => invoke<void>("quickLinks:remove", id),
+  },
+  templates: {
+    list: () => invoke<(ProjectTemplate & { pluginId: string })[]>("templates:list"),
+    /** Cria a pasta, os arquivos, o projeto e as tarefas do modelo. Só depois da confirmação. */
+    create: (input: { pluginId: string; templateId: string; parentDir: string; name: string }, confirmed: true) =>
+      invoke<Project>("templates:create", input, confirmed),
+  },
+  notes: {
+    get: (projectId: string) => invoke<ProjectNote>("notes:get", projectId),
+    save: (projectId: string, content: string) => invoke<ProjectNote>("notes:save", projectId, content),
+  },
+  preview: {
+    /** Abre um endereço local (localhost) na área de preview. */
+    open: (url: string) => invoke<PreviewState>("preview:open", url),
+    /** Onde desenhar a página (px da janela); null esconde (ex.: um diálogo abriu por cima). */
+    setBounds: (bounds: PreviewBounds | null) => invoke<void>("preview:setBounds", bounds),
+    state: () => invoke<PreviewState>("preview:state"),
+    reload: () => invoke<void>("preview:reload"),
+    back: () => invoke<void>("preview:back"),
+    forward: () => invoke<void>("preview:forward"),
+    setZoom: (factor: number) => invoke<void>("preview:setZoom", factor),
+    devtools: () => invoke<void>("preview:devtools"),
+    console: () => invoke<PreviewConsoleEntry[]>("preview:console"),
+    clearConsole: () => invoke<void>("preview:clearConsole"),
+    close: () => invoke<void>("preview:close"),
+    onState: (callback: (state: PreviewState) => void) => subscribe<PreviewState>("preview:state", callback),
+    onConsole: (callback: (entry: PreviewConsoleEntry) => void) => subscribe<PreviewConsoleEntry>("preview:console", callback),
   },
   runner: {
     /** Scripts do package.json do projeto e o gerenciador detectado. */
@@ -134,6 +187,8 @@ const api = {
     restart: (id: string) => invoke<RunnerProcess>("runner:restart", id),
     remove: (id: string) => invoke<void>("runner:remove", id),
     ports: () => invoke<ListeningPort[]>("runner:ports"),
+    /** Uma leitura de CPU/RAM (sistema, Qyrex e processos do runner). */
+    monitor: () => invoke<MonitorSample>("monitor:sample"),
     /** Só depois da confirmação; o main confere de novo que o PID ainda usa a porta. */
     killPort: (port: number, pid: number, confirmed: true) => invoke<void>("runner:killPort", port, pid, confirmed),
     onChanged: (callback: (processes: RunnerProcess[]) => void) => subscribe<RunnerProcess[]>("runner:changed", callback),
@@ -209,6 +264,8 @@ const api = {
     list: () => invoke<ProjectWithGit[]>("projects:list"),
     /** Linguagens, commits por semana e último commit (cache de 5 min no main). */
     insights: (id: string) => invoke<ProjectInsights>("projects:insights", id),
+    /** .env x .env.example: nomes que faltam, sobram ou estão vazios (nunca valores). */
+    envCheck: (id: string) => invoke<EnvCheck>("projects:envCheck", id),
     detect: (p: string) => invoke<ProjectDetection>("projects:detect", p),
     create: (input: {
       name: string;

@@ -1,4 +1,14 @@
 import { create } from "zustand";
+import { readShortcuts, writeShortcuts, type ShortcutMap } from "@/lib/shortcuts";
+
+/** Registro da central de notificações (tudo o que apareceu como aviso na sessão). */
+export interface NotificationEntry {
+  id: number;
+  kind: Toast["kind"];
+  message: string;
+  at: number;
+  read: boolean;
+}
 
 export type Page =
   | "inicio"
@@ -7,6 +17,9 @@ export type Page =
   | "terminal"
   | "automacoes"
   | "processos"
+  | "plugins"
+  | "workspace"
+  | "preview"
   | "ferramentas"
   | "arquivos"
   | "editor"
@@ -24,6 +37,9 @@ export const PAGES: Page[] = [
   "terminal",
   "automacoes",
   "processos",
+  "plugins",
+  "workspace",
+  "preview",
   "ferramentas",
   "arquivos",
   "editor",
@@ -77,6 +93,10 @@ interface UIState {
   terminalOnly: boolean;
   /** Barra lateral recolhida (só ícones). */
   sidebarCollapsed: boolean;
+  /** Modo compacto: menos espaço entre tudo (classe `compact` no <html>). */
+  compact: boolean;
+  shortcuts: ShortcutMap;
+  notifications: NotificationEntry[];
 
   navigate: (page: Page, param?: string | null) => void;
   setPaletteOpen: (open: boolean) => void;
@@ -84,6 +104,10 @@ interface UIState {
   setOnline: (online: boolean) => void;
   setTerminalOnly: (on: boolean) => void;
   setSidebarCollapsed: (on: boolean) => void;
+  setCompact: (on: boolean) => void;
+  setShortcuts: (map: ShortcutMap) => void;
+  markNotificationsRead: () => void;
+  clearNotifications: () => void;
   pushToast: (kind: Toast["kind"], message: string) => void;
   dismissToast: (id: number) => void;
 }
@@ -92,6 +116,7 @@ let toastId = 0;
 
 const TERMINAL_ONLY_KEY = "qrz.terminalOnly";
 const SIDEBAR_KEY = "qrz.sidebarCollapsed";
+const COMPACT_KEY = "qrz.compact";
 
 /** Preferências pequenas de layout ficam no localStorage (sem storage: valem só nesta sessão). */
 function readFlag(key: string): boolean {
@@ -120,6 +145,9 @@ export const useUIStore = create<UIState>((set, get) => ({
   promptState: null,
   terminalOnly: readFlag(TERMINAL_ONLY_KEY),
   sidebarCollapsed: readFlag(SIDEBAR_KEY),
+  compact: readFlag(COMPACT_KEY),
+  shortcuts: readShortcuts(),
+  notifications: [],
 
   navigate: (page, param = null) => set({ page, pageParam: param }),
   setPaletteOpen: (open) => set({ paletteOpen: open }),
@@ -133,9 +161,23 @@ export const useUIStore = create<UIState>((set, get) => ({
     writeFlag(SIDEBAR_KEY, on);
     set({ sidebarCollapsed: on });
   },
+  setCompact: (on) => {
+    writeFlag(COMPACT_KEY, on);
+    set({ compact: on });
+  },
+  setShortcuts: (map) => {
+    writeShortcuts(map);
+    set({ shortcuts: map });
+  },
+  markNotificationsRead: () => set({ notifications: get().notifications.map((n) => ({ ...n, read: true })) }),
+  clearNotifications: () => set({ notifications: [] }),
   pushToast: (kind, message) => {
     const id = ++toastId;
-    set({ toasts: [...get().toasts.slice(-3), { id, kind, message }] });
+    set({
+      toasts: [...get().toasts.slice(-3), { id, kind, message }],
+      // Tudo o que vira aviso fica na central (as 60 mais recentes), para rever depois.
+      notifications: [{ id, kind, message, at: Date.now(), read: false }, ...get().notifications].slice(0, 60),
+    });
     setTimeout(() => get().dismissToast(id), kind === "error" ? 6000 : 3000);
   },
   dismissToast: (id) => set({ toasts: get().toasts.filter((t) => t.id !== id) }),

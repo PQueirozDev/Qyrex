@@ -628,7 +628,7 @@ export function ToolsPage() {
 
   return (
     <div>
-      <PageHeader title={tr("Ferramentas")} icon={PAGE_ICONS.ferramentas} description={tr("Utilitários do dia a dia, offline. Nada do que você cola sai do PC.")} />
+      <PageHeader title={tr("Utilitários")} icon={PAGE_ICONS.ferramentas} description={tr("Utilitários do dia a dia, offline. Nada do que você cola sai do PC.")} />
       <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
         <nav className="space-y-0.5">
           <div className="mb-2 flex items-center gap-2 rounded-md border border-border-subtle bg-bg-elevated px-2 py-1">

@@ -40,7 +40,8 @@ function legacyDb(): Database.Database {
 describe("migration 018 (100% para devs)", () => {
   it("apaga clientes e marketing e preserva projetos, tarefas e dependentes", () => {
     const db = legacyDb();
-    expect(runMigrations(db, MIGRATIONS_DIR)).toEqual(["018_dev_only.sql"]);
+    // A 018 é a primeira a rodar; as seguintes (019+) só acrescentam tabelas.
+    expect(runMigrations(db, MIGRATIONS_DIR)[0]).toBe("018_dev_only.sql");
 
     const tables = (db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all() as { name: string }[]).map((t) => t.name);
     expect(tables).not.toContain("clients");

@@ -1,7 +1,7 @@
 import { deleteSecret, getSecret, maskKey, saveSecret } from "../security/secrets.js";
 import { setIntegrationState } from "../services/integrationsService.js";
 import { createLogger } from "../logger.js";
-import type { GitHubItem, GitHubOverview } from "../../shared/types.js";
+import type { GitHubItem, GitHubOverview, GitHubWorkflowRun } from "../../shared/types.js";
 import { endpoints } from "./endpoints.js";
 import fs from "node:fs";
 import path from "node:path";
@@ -124,6 +124,30 @@ interface RawItem {
   pull_request?: unknown;
 }
 
+interface RawRun {
+  id: number;
+  name: string | null;
+  display_title?: string | null;
+  head_branch: string | null;
+  event: string;
+  status: GitHubWorkflowRun["status"];
+  conclusion: string | null;
+  html_url: string;
+  created_at: string;
+}
+
+const toRun = (r: RawRun): GitHubWorkflowRun => ({
+  id: r.id,
+  name: r.name ?? "workflow",
+  title: r.display_title ?? r.name ?? "",
+  branch: r.head_branch,
+  event: r.event,
+  status: r.status,
+  conclusion: r.conclusion,
+  htmlUrl: r.html_url,
+  createdAt: r.created_at,
+});
+
 const toItem = (i: RawItem): GitHubItem => ({
   number: i.number,
   title: i.title,
@@ -149,6 +173,8 @@ export async function overview(repoUrl: string): Promise<GitHubOverview> {
     gh<RawItem[]>(`${base}/issues?state=open&per_page=15&sort=updated`),
     gh<RawItem[]>(`${base}/pulls?state=open&per_page=10&sort=updated`),
   ]);
+  // Actions é opcional: repositório sem workflows (ou sem permissão) só não mostra o CI.
+  const runs = await gh<{ workflow_runs?: RawRun[] }>(`${base}/actions/runs?per_page=6`).catch(() => ({ workflow_runs: [] }));
   return {
     repo: {
       fullName: info.full_name,
@@ -162,5 +188,6 @@ export async function overview(repoUrl: string): Promise<GitHubOverview> {
     // A API de issues também devolve PRs; separa as duas coisas.
     issues: issues.filter((i) => !i.pull_request).slice(0, 10).map(toItem),
     pulls: pulls.map(toItem),
+    runs: (runs.workflow_runs ?? []).map(toRun),
   };
 }

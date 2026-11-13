@@ -5,6 +5,8 @@ import { streamOneShot } from "./aiService.js";
 import { getChangedFiles, getFileDiff, getMyCommitsSince, getRecentCommits } from "./gitService.js";
 import { getProject, listProjects } from "./projectService.js";
 import { listTasks } from "./taskService.js";
+import { listProcesses, getOutput } from "./runnerService.js";
+import { listActivity } from "./recentService.js";
 
 /**
  * Assistentes de IA para o dia a dia de dev. O contexto (diff, commits, tarefas)
@@ -125,5 +127,56 @@ export async function dailyStandup(sender: WebContents, requestId: string): Prom
   ]
     .filter(Boolean)
     .join("\n\n");
+  streamOneShot(sender, requestId, system, prompt);
+}
+
+// eslint-disable-next-line no-control-regex
+const ANSI = /\u001b\[[0-9;?]*[ -/]*[@-~]/g;
+const ERROR_LINE = /\b(error|erro|failed|falhou|exception|fatal|cannot|unhandled)\b|ERR!/i;
+
+/**
+ * Pergunta livre à capivara. Só roda depois do consentimento marcado na UI (o
+ * texto avisa o que vai). O contexto é um resumo montado aqui: tarefas abertas,
+ * projetos, processos do runner (com as últimas linhas de erro) e atividade
+ * recente. Nada de arquivos, caminhos completos, segredos ou conteúdo de .env.
+ */
+export function buddyAnswer(sender: WebContents, requestId: string, question: string): void {
+  const projects = listProjects().filter((p) => !p.archivedAt);
+  const name = (id: string | null) => (id ? projects.find((p) => p.id === id)?.name ?? "" : "");
+  const tasks = listTasks()
+    .filter((t) => t.status !== "concluido")
+    .slice(0, 30)
+    .map((t) => `- ${t.title}${t.projectId ? ` [${name(t.projectId)}]` : ""}${t.dueDate ? ` (prazo ${t.dueDate})` : ""} — ${t.status}`);
+  const recentProjects = [...projects]
+    .sort((a, b) => (b.lastOpenedAt ?? "").localeCompare(a.lastOpenedAt ?? ""))
+    .slice(0, 10)
+    .map((p) => `- ${p.name}${p.technologies.length ? ` (${p.technologies.join(", ")})` : ""}${p.lastOpenedAt ? `, aberto em ${p.lastOpenedAt}` : ""}`);
+  const processes = listProcesses()
+    .slice(0, 8)
+    .map((p) => {
+      let errors: string[] = [];
+      try {
+        errors = [...new Set(getOutput(p.id).replace(ANSI, "").split(/\r?\n/).map((l) => l.trim()).filter((l) => l && ERROR_LINE.test(l)))].slice(-3);
+      } catch {
+        // processo removido no meio
+      }
+      return `- ${p.projectName}: ${p.script ?? p.command} — ${p.status}${p.urls.length ? ` em ${p.urls.join(", ")}` : ""}${errors.length ? `\n  erros: ${errors.map((e) => e.slice(0, 200)).join(" | ")}` : ""}`;
+    });
+  const activity = listActivity(10).map((a) => `- ${a.itemType}: ${a.label} (${a.openedAt})`);
+
+  const system = [
+    "Você é a capivara assistente do Qyrex, um app de desenvolvimento. Responda curto e prático.",
+    `Responda em ${languageName()}.`,
+    "Use SOMENTE os dados abaixo. Se a resposta não estiver neles, diga que não sabe; nunca invente tarefas, projetos, erros ou números.",
+    "Você não executa nada: pode sugerir um comando, mas quem roda é o usuário.",
+  ].join("\n");
+  const prompt = [
+    `Agora: ${new Date().toISOString()}`,
+    `Tarefas abertas:\n${tasks.join("\n") || "nenhuma"}`,
+    `Projetos (mais recentes primeiro):\n${recentProjects.join("\n") || "nenhum"}`,
+    `Processos do Qyrex:\n${processes.join("\n") || "nenhum"}`,
+    `Atividade recente:\n${activity.join("\n") || "nenhuma"}`,
+    `Pergunta: ${question}`,
+  ].join("\n\n");
   streamOneShot(sender, requestId, system, prompt);
 }

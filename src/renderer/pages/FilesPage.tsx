@@ -4,6 +4,7 @@ import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import {
   ChevronRight,
+  ArrowUp,
   ClipboardPaste,
   Code2,
   Copy,
@@ -32,6 +33,7 @@ import { attempt, errorMessage, unwrap } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { basename, dirname, formatBytes, timeAgo } from "@/lib/format";
 import { useSettingsStore } from "@/stores/useSettingsStore";
+import { useProjectsStore } from "@/stores/useProjectsStore";
 import { confirmAction, promptText, toast, useUIStore } from "@/stores/useUIStore";
 
 import { getLocale, tr } from "@/lib/i18n";
@@ -146,6 +148,8 @@ interface Clipboard {
 }
 
 export function FilesPage() {
+  const projects = useProjectsStore((s) => s.projects);
+  useEffect(() => { void useProjectsStore.getState().load(); }, []);
   const settings = useSettingsStore((s) => s.settings);
   const pageParam = useUIStore((s) => s.pageParam);
   const navigate = useUIStore((s) => s.navigate);
@@ -209,6 +213,8 @@ export function FilesPage() {
       setRoot(r);
       setCurrentPath(p);
       setSelected(null);
+      setQuery("");
+      setResults(null);
     },
     [roots]
   );
@@ -425,6 +431,9 @@ export function FilesPage() {
       />
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
+        <Button size="sm" variant="secondary" disabled={!currentPath || !root || norm(currentPath) === norm(root)} onClick={() => currentPath && openDir(dirname(currentPath))} title={tr("Pasta acima")}>
+          <ArrowUp size={14} /> {tr("Pasta acima")}
+        </Button>
         {root && currentPath && <Breadcrumb root={root} path={currentPath} onNavigate={openDir} />}
         <div className="ml-auto flex items-center gap-1.5">
           <Button size="sm" variant="secondary" onClick={() => void newFolder()}>
@@ -456,6 +465,15 @@ export function FilesPage() {
       )}
 
       {error && <ErrorState message={error} onRetry={() => void refresh()} />}
+
+      <nav aria-label={tr("Acesso rápido")} className="mb-4 rounded-lg border border-border-subtle bg-bg-card p-3">
+        <p className="mb-2 text-xs font-medium text-text-muted">{tr("Acesso rápido")}</p>
+        <div className="flex flex-wrap gap-2">
+          {roots.map((p) => <Button key={p} size="sm" variant={currentPath === p ? "default" : "secondary"} title={p} onClick={() => openDir(p)}><HardDrive size={13} />{basename(p) || p}</Button>)}
+          {projects.filter((p) => !p.archivedAt && rootOf(p.localPath, roots)).map((p) => <Button key={p.id} size="sm" variant="secondary" title={p.localPath} onClick={() => openDir(p.localPath)}><Folder size={13} />{p.name}</Button>)}
+        </div>
+        <p className="mt-2 break-all text-xs text-text-faint">{currentPath}</p>
+      </nav>
 
       <div className={cn("grid gap-4", selected && "lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]")}>
         <Card className="overflow-hidden">

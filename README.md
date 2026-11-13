@@ -5,7 +5,7 @@
 # Qyrex
 
 **A central de trabalho do desenvolvedor.**<br>
-Projetos com git, terminal, IA, automações, tarefas e arquivos num app desktop só.
+Workspace por projeto, Git, terminal, preview, IA e monitor de recursos num app desktop só.
 
 [![Versão](https://img.shields.io/github/v/release/PQueirozDev/QrzSpace-releases?label=vers%C3%A3o&color=ff9a3c&style=flat-square)](https://github.com/PQueirozDev/QrzSpace-releases/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/PQueirozDev/QrzSpace-releases/total?label=downloads&color=3fa3a8&style=flat-square)](https://github.com/PQueirozDev/QrzSpace-releases/releases)
@@ -14,11 +14,13 @@ Projetos com git, terminal, IA, automações, tarefas e arquivos num app desktop
 
 [**⬇ Baixar para Windows**](https://github.com/PQueirozDev/QrzSpace-releases/releases/latest/download/Qyrex-Setup.exe) ·
 [Site](https://qyrex.pqueirozdev.com.br) ·
+[Demonstração](https://pqueirozdev.com.br/qyrex-demo/) ·
+[Documentação](https://qyrex.pqueirozdev.com.br/docs) ·
 [Novidades](https://github.com/PQueirozDev/QrzSpace-releases/releases)
 
 <br>
 
-<img src="docs/screenshots/inicio.png" alt="Tela Início do Qyrex: tarefas em foco, compromissos, projetos, agenda do dia, atividade recente, foco do dia e projetos recentes" width="100%">
+<img src="docs/screenshots/inicio.png" alt="Tela Início do Qyrex: resumo do dia, continuar de onde parou, agenda, tarefas, atividade, foco e projetos recentes" width="100%">
 
 </div>
 
@@ -29,11 +31,15 @@ Explorer, GitHub, Spotify) em vez de tentar substituí-las. Tudo fica
 no seu PC: banco SQLite local, chaves no cofre do Windows e nenhuma conta
 para criar.
 
-## Em 28 segundos
+## Experimente no navegador
 
-<a href="docs/video/qyrex-divulgacao.mp4"><img src="docs/video/qyrex-divulgacao.gif" alt="Prévia animada do Qyrex: abertura com a capivara no onsen e as telas Início, Projetos, Git visual, IA, Automações e Tarefas" width="100%"></a>
+[Abra a demonstração interativa](https://pqueirozdev.com.br/qyrex-demo/) para
+explorar a interface atual com projetos e dados fictícios. Terminal, monitor,
+integrações e IA são simulados: a demo não lê seu computador nem suas chaves.
 
-Clique na prévia para ver o [vídeo completo](docs/video/qyrex-divulgacao.mp4), ou assista no [site](https://qyrex.pqueirozdev.com.br/#video).
+O app desktop oferece suporte a **Windows 10 e 11 de 64 bits**. macOS e Linux
+ainda não são suportados. As telas abaixo mostram o código atual da **2.2**;
+o download aponta sempre para a última versão publicada nas releases.
 
 ## Telas
 
@@ -49,6 +55,22 @@ Clique na prévia para ver o [vídeo completo](docs/video/qyrex-divulgacao.mp4),
   <tr>
     <td><img src="docs/screenshots/tarefas.png" alt="Tarefas"><p align="center"><b>Tarefas</b> · lista ou kanban, com prazo e prioridade</p></td>
     <td><img src="docs/screenshots/agenda.png" alt="Agenda"><p align="center"><b>Agenda</b> · eventos locais e do Google Agenda</p></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/workspace.png" alt="Workspace por projeto"><p align="center"><b>Workspace</b> · arquivos, preview e terminal lado a lado</p></td>
+    <td><img src="docs/screenshots/monitor.png" alt="Monitor de recursos do Qyrex"><p align="center"><b>Monitor</b> · CPU e memória do próprio Qyrex em destaque</p></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/arquivos.png" alt="Arquivos com acesso rápido aos projetos e caminho completo"><p align="center"><b>Arquivos</b> · atalhos de projetos, caminho completo e navegação por pastas</p></td>
+    <td><img src="docs/screenshots/terminais.png" alt="Três terminais preenchendo a área lado a lado"><p align="center"><b>Terminal</b> · três sessões lado a lado, sem espaço vazio</p></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/preview.png" alt="Preview da aplicação local"><p align="center"><b>Preview</b> · a aplicação local dentro do Qyrex</p></td>
+    <td><img src="docs/screenshots/plugins.png" alt="Plugins"><p align="center"><b>Plugins</b> · declarativos, com permissões claras</p></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/utilitarios.png" alt="Utilitários de desenvolvimento"><p align="center"><b>Utilitários</b> · ferramentas locais para o dia a dia</p></td>
+    <td><img src="docs/screenshots/capivara.png" alt="Capivara assistente"><p align="center"><b>Capivara</b> · respostas rápidas com os dados do seu PC</p></td>
   </tr>
 </table>
 
@@ -69,21 +91,30 @@ Também tem Escuro, Meia-noite, Areia e Sistema, escolhidos por prévia em
 
 | | |
 | --- | --- |
-| 🏠 **Início** | Cards que você escolhe e ordena: tarefas em foco, agenda, atividade, foco do dia, projetos recentes e automações, mais tempo de uso do app e ações rápidas. |
+| 🏠 **Início** | Resumo do dia numa linha, "continuar de onde parou" e widgets que você escolhe e ordena: agenda, tarefas, atividade, foco, projetos recentes, automações, servidores ativos e avisos importantes. Botão **Daily** resume seus commits e tarefas. |
+| 🧱 **Workspace** | Por projeto: arquivos, terminal, Git, preview, IA, tarefas, notas, processos e monitor em painéis. Divida, arraste abas, maximize, use os layouts Desenvolvimento/Debug/Git/Foco; cada projeto guarda o seu e vários abrem em abas. |
+| 🌐 **Preview** | A aplicação local dentro do app, isolada (só `localhost`, sem acesso às APIs do Qyrex), com desktop/tablet/celular/personalizado, zoom, console e DevTools. |
+| ▶️ **Processos e Monitor** | Abre no Monitor, com CPU e memória do próprio Qyrex em destaque e os totais do PC como referência. Também acompanha scripts do `package.json` ou comandos confirmados, saída ao vivo, portas e consumo de cada processo iniciado pelo app. |
+| 🦫 **Capivara assistente** | Reage a tarefas, builds e foco; responde perguntas rápidas só com dados locais; pergunta livre à IA só com consentimento. Configurável (posição, mensagens, sons, movimento). |
+| 🧩 **Plugins** | Manifesto JSON declarativo com permissões: links rápidos, modelos de projeto e notas. Nenhum código de terceiro roda. Veja [docs/PLUGINS.md](docs/PLUGINS.md). |
+| 🧰 **Utilitários** | JSON, JWT, Base64, URL, timestamp, regex, diff, UUID, hash, cores e nomes, tudo offline. |
 | 🧩 **Projetos** | Tecnologias detectadas pelo `package.json`, status (ativo, pausado, concluído) e arquivamento, issues e PRs do GitHub. |
 | 🌿 **Git visual** | Diff de cada arquivo, commit só do que você marcar, criar e trocar de branch (recusado com alterações não commitadas), fetch, sincronização e aviso de conflito. Pull só fast-forward, push nunca com `--force`. |
 | 💻 **Terminal** | xterm.js + node-pty com abas ou grade, PowerShell, CMD, Claude Code ou Codex, aberto na pasta do projeto, e modo só terminais. |
 | ⚙️ **Automações** | Sequências de comandos e ações de um projeto (testes, lint, build, git, abrir o ambiente), com modelos a partir dos scripts e histórico. Cada execução pede confirmação e mostra o risco de cada comando. |
 | ⏱️ **Foco** | Temporizador com pausa ligado a um projeto, histórico do dia e da semana e meta diária opcional. |
 | 💾 **Backup e sincronização** | Backup local verificado (diário e antes de cada atualização), restauração com cópia de segurança e sincronização entre PCs por uma pasta da nuvem, cifrada com a sua senha. |
-| 📁 **Arquivos** | Navegação só nas pastas autorizadas, busca, renomear/copiar/mover/excluir e preview de imagem, código e Markdown. |
+| 📁 **Arquivos** | Acesso rápido aos projetos e às pastas autorizadas, caminho completo, botão para subir uma pasta, busca, renomear/copiar/mover/excluir e preview de imagem, código e Markdown. |
 | ✅ **Tarefas** | Lista (Hoje, Próximas, Todas, Concluídas) ou kanban, com prioridade, prazo, tags e projeto. `Ctrl+Shift+T` de qualquer lugar. |
 | 📅 **Agenda** | Dia, semana e mês, com eventos locais e do Google Agenda. |
 | 📝 **Notion** | Busca, leitura e criação de páginas, com "Perguntar à IA" sobre o conteúdo. |
 | 🤖 **IA** | Chat com Claude, OpenAI e Gemini (por API key ou pela sua assinatura do Claude Code/Codex), anexos explícitos, prompts reutilizáveis, comandos com botão **Executar** e permissão, **AI Council** (vários modelos e uma síntese) e aba de uso de tokens. |
 | 🎵 **Mini player** | Mostra e controla o que está tocando no Windows (Spotify, navegador etc.), com capa. |
 
-E mais: Command Palette (`Ctrl+K`), bandeja do sistema, notificações,
+E mais: Command Palette (`Ctrl+K`) com workspace, preview, layouts e links,
+atalhos configuráveis, modo compacto, central de notificações, barra de status,
+mensagem de commit sugerida pela IA, CI do GitHub Actions e conferência do `.env`,
+bandeja do sistema, notificações,
 interface em **português ou inglês**, foto de perfil, Discord Rich Presence
 opcional, animação de abertura e **atualização automática** com conferência
 de SHA-512.
@@ -93,8 +124,6 @@ de SHA-512.
 Baixe o [**Qyrex-Setup.exe**](https://github.com/PQueirozDev/QrzSpace-releases/releases/latest/download/Qyrex-Setup.exe)
 e siga o assistente. Não precisa de administrador, e depois de instalado o app
 se atualiza sozinho.
-
-<img src="docs/screenshots/instalador.png" width="420" alt="Assistente de instalação do Qyrex">
 
 > O instalador ainda não é assinado digitalmente, então o SmartScreen pode
 > avisar na primeira execução: clique em **Mais informações → Executar assim mesmo**.
@@ -162,7 +191,7 @@ npm run dev:app      # Vite (5173) + Electron com hot reload
 | `npm run dist` | gera `release/Qyrex-Setup-<versão>.exe` (NSIS x64) |
 | `npm run release` | `check` + build + publica a versão em [QrzSpace-releases](https://github.com/PQueirozDev/QrzSpace-releases) |
 | `npm run build:demo` | demo web com a interface real e dados fictícios (`dist-demo/`) |
-| `npm run screenshots` | refaz as imagens de `docs/screenshots/` a partir da demo |
+| `npm run screenshots` | após `build:demo`, refaz os PNG de `docs/screenshots/` e os WebP do site com dados fictícios |
 | `npm run icons` | regenera ícones e artes do instalador a partir de `build/icon.svg` |
 
 Se o binário do Electron não baixar no `npm install`, rode
@@ -210,8 +239,10 @@ script e rode `node site/pixel/pixel.mjs` e depois `npm run icons`.
 - [x] Temas, português/inglês, Discord e atualização automática
 - [x] 2.0: backup, sincronização entre PCs, Git visual, foco, automações, prompts e Início personalizável
 - [x] 2.1: 100% para devs (saem clientes, cobranças, marketing e WhatsApp)
+- [x] 2.2: workspace por projeto, preview web, processos e monitor, capivara assistente, plugins declarativos, utilitários e cara nova
 - [ ] Criar e editar eventos do Google Agenda pelo app
-- [ ] Workspace por projeto (tarefas, terminais, git e IA no mesmo painel)
+- [ ] Restaurar sessões de terminal ao reabrir o app
+- [ ] Saúde das dependências (`npm outdated`/`audit`), cliente HTTP leve e painel do Docker
 
 ## Contribuir
 

@@ -2,6 +2,9 @@ import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
 import { StatusBar } from "@/components/StatusBar";
+import { CapyBuddy, useBuddyEvents } from "@/components/buddy/CapyBuddy";
+import { usePluginsStore } from "@/stores/usePluginsStore";
+import { actionFor, comboOf } from "@/lib/shortcuts";
 import { CommandPalette } from "@/components/CommandPalette";
 import { FocusDialogs } from "@/components/Focus";
 import { ConfirmHost, PromptHost, Toaster } from "@/components/Overlays";
@@ -29,6 +32,9 @@ const Notion = lazy(() => import("@/pages/Notion").then((m) => ({ default: m.Not
 const TerminalPage = lazy(() => import("@/pages/TerminalPage").then((m) => ({ default: m.TerminalPage })));
 const Automations = lazy(() => import("@/pages/Automations").then((m) => ({ default: m.Automations })));
 const ProcessesPage = lazy(() => import("@/pages/ProcessesPage").then((m) => ({ default: m.ProcessesPage })));
+const WorkspacePage = lazy(() => import("@/pages/WorkspacePage").then((m) => ({ default: m.WorkspacePage })));
+const PluginsPage = lazy(() => import("@/pages/PluginsPage").then((m) => ({ default: m.PluginsPage })));
+const PreviewPage = lazy(() => import("@/pages/PreviewPage").then((m) => ({ default: m.PreviewPage })));
 const ToolsPage = lazy(() => import("@/pages/ToolsPage").then((m) => ({ default: m.ToolsPage })));
 const EditorPage = lazy(() => import("@/pages/EditorPage").then((m) => ({ default: m.EditorPage })));
 
@@ -40,6 +46,7 @@ function PageView({ page }: { page: Page }) {
       return <Projects />;
     case "terminal":
     case "editor":
+    case "workspace":
       return null; // ficam sempre montados (ver PersistentPage): shells e edições não salvas sobrevivem à troca de página
     case "tarefas":
       return <Tasks />;
@@ -49,6 +56,10 @@ function PageView({ page }: { page: Page }) {
       return <ProcessesPage />;
     case "ferramentas":
       return <ToolsPage />;
+    case "preview":
+      return <PreviewPage />;
+    case "plugins":
+      return <PluginsPage />;
     case "arquivos":
       return <FilesPage />;
     case "configuracoes":
@@ -92,7 +103,7 @@ function PersistentPage({ visible, children }: { visible: boolean; children: (vi
 }
 
 /** Páginas que ocupam a altura toda (sem padding/scroll do layout). */
-const FULL_BLEED: Page[] = ["ia", "terminal", "editor", "notion", "processos"];
+const FULL_BLEED: Page[] = ["ia", "terminal", "editor", "notion", "processos", "preview", "workspace"];
 
 export function App() {
   const page = useUIStore((s) => s.page);
@@ -103,6 +114,11 @@ export function App() {
   const setQuickTaskOpen = useUIStore((s) => s.setQuickTaskOpen);
   const setOnline = useUIStore((s) => s.setOnline);
   const { settings, load, loadSystem, loadAvatar } = useSettingsStore();
+  useBuddyEvents();
+  const loadPlugins = usePluginsStore((s) => s.load);
+  useEffect(() => {
+    void loadPlugins();
+  }, [loadPlugins]);
 
   useEffect(() => {
     void load();
@@ -127,25 +143,27 @@ export function App() {
     void window.workspace.discord.setActivity(page, project);
   }, [page, pageParam, projects, discordOn]);
 
-  // Atalhos globais (dentro da janela). Customização futura: mapa em um só lugar.
+  // Modo compacto: a classe no <html> reduz a escala de espaçamento do app inteiro.
+  const compact = useUIStore((s) => s.compact);
+  useEffect(() => {
+    document.documentElement.classList.toggle("compact", compact);
+  }, [compact]);
+
+  // Atalhos globais (dentro da janela), configuráveis em Configurações → Atalhos.
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       // Teclas já tratadas por outro componente (ex.: atalhos do editor de código) não disparam os globais.
-      if (e.defaultPrevented || !(e.ctrlKey || e.metaKey)) return;
-      const key = e.key.toLowerCase();
-      if (!e.shiftKey && key === "k") {
-        e.preventDefault();
-        setPaletteOpen(!useUIStore.getState().paletteOpen);
-      } else if (e.shiftKey && key === "t") {
-        e.preventDefault();
-        setQuickTaskOpen(true);
-      } else if (e.shiftKey && key === "p") {
-        e.preventDefault();
-        navigate("projetos");
-      } else if (e.shiftKey && key === "a") {
-        e.preventDefault();
-        navigate("ia");
-      }
+      if (e.defaultPrevented) return;
+      const action = actionFor(useUIStore.getState().shortcuts, comboOf(e));
+      if (!action) return;
+      e.preventDefault();
+      if (action === "palette") setPaletteOpen(!useUIStore.getState().paletteOpen);
+      else if (action === "quickTask") setQuickTaskOpen(true);
+      else if (action === "projects") navigate("projetos");
+      else if (action === "ai") navigate("ia");
+      else if (action === "workspace") navigate("workspace");
+      else if (action === "preview") navigate("preview");
+      else if (action === "sidebar") useUIStore.getState().setSidebarCollapsed(!useUIStore.getState().sidebarCollapsed);
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -211,7 +229,7 @@ export function App() {
         {!terminalOnly && <Header />}
         <UpdateBanner />
         <main className={fullBleed ? "min-h-0 flex-1 overflow-hidden" : "app-ambient flex-1 overflow-y-auto"}>
-          {page !== "terminal" && page !== "editor" && (
+          {page !== "terminal" && page !== "editor" && page !== "workspace" && (
             <div key={page} className={fullBleed ? "h-full animate-page-in" : "mx-auto max-w-[1400px] animate-page-in px-7 py-6"}>
               <Suspense
                 fallback={
@@ -226,10 +244,12 @@ export function App() {
           )}
           <PersistentPage visible={page === "terminal"}>{(visible) => <TerminalPage visible={visible} />}</PersistentPage>
           <PersistentPage visible={page === "editor"}>{(visible) => <EditorPage visible={visible} />}</PersistentPage>
+          <PersistentPage visible={page === "workspace"}>{(visible) => <WorkspacePage visible={visible} />}</PersistentPage>
         </main>
         {!terminalOnly && <StatusBar />}
       </div>
 
+      {!terminalOnly && <CapyBuddy />}
       <CommandPalette />
       <FocusDialogs />
       <TaskFormDialog open={quickTaskOpen} onClose={() => setQuickTaskOpen(false)} />

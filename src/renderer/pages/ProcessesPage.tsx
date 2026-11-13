@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ExternalLink, Play, Plug, RefreshCw, RotateCcw, Square, Terminal as TerminalIcon, Trash2, X } from "lucide-react";
 import type { ListeningPort, ProjectScripts, RunnerProcess } from "@shared/types";
 import { Button } from "@/components/ui/Button";
 import { Badge, EmptyState, ProjectIcon, Segmented, Spinner } from "@/components/ui/primitives";
 import { RunnerOutput } from "@/components/runner/RunnerOutput";
+import { MonitorView } from "@/components/runner/MonitorView";
 import { attempt } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { timeAgo } from "@/lib/format";
@@ -234,8 +235,9 @@ function ProcessRow({ proc, selected, onSelect }: { proc: RunnerProcess; selecte
 export function ProcessesPage() {
   const { processes, init, selectedId, select, stop, restart, remove } = useRunnerStore();
   const { load, loaded } = useProjectsStore();
-  const [view, setView] = useState<"processos" | "portas">("processos");
+  const [view, setView] = useState<"processos" | "portas" | "monitor">("monitor");
   const [launcherOpen, setLauncherOpen] = useState(false);
+  const previousSelection = useRef(selectedId);
   const Icon = PAGE_ICONS.processos;
 
   useEffect(() => {
@@ -248,7 +250,8 @@ export function ProcessesPage() {
 
   // Selecionar no painel de portas leva de volta à saída do processo.
   useEffect(() => {
-    if (selectedId) setView("processos");
+    if (selectedId && selectedId !== previousSelection.current) setView("processos");
+    previousSelection.current = selectedId;
   }, [selectedId]);
 
   return (
@@ -271,6 +274,7 @@ export function ProcessesPage() {
             onChange={setView}
             options={[
               { value: "processos", label: tr("Processos") },
+              { value: "monitor", label: tr("Monitor") },
               { value: "portas", label: tr("Portas") },
             ]}
           />
@@ -288,7 +292,11 @@ export function ProcessesPage() {
         </div>
       )}
 
-      {view === "portas" ? (
+      {view === "monitor" ? (
+        <div className="min-h-0 flex-1">
+          <MonitorView visible />
+        </div>
+      ) : view === "portas" ? (
         <div className="min-h-0 flex-1">
           <PortsView />
         </div>

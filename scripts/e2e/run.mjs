@@ -15,6 +15,8 @@ import { startMockServer } from "./mock-server.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const CDP_PORT = 9223;
+const DEV_PORT = Number(process.env.QYREX_DEV_PORT ?? 5173);
+if (!Number.isInteger(DEV_PORT) || DEV_PORT < 1024 || DEV_PORT > 65535) throw new Error("QYREX_DEV_PORT deve ser uma porta entre 1024 e 65535.");
 const SHOTS = process.env.E2E_SHOTS ?? null;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -48,7 +50,7 @@ async function waitTcp(port, timeout = 60_000) {
 }
 
 // ---------- preparação ----------
-for (const port of [5173, CDP_PORT, 43821]) {
+for (const port of [DEV_PORT, CDP_PORT, 43821]) {
   if (!(await portFree(port))) {
     console.error(`A porta ${port} está em uso. Feche o que estiver nela (outro dev server/instância de teste) e rode de novo.`);
     process.exit(2);
@@ -92,12 +94,12 @@ function cleanup() {
 process.on("exit", cleanup);
 process.on("SIGINT", () => process.exit(130));
 
-const vite = spawn(process.execPath, [path.join(ROOT, "node_modules/vite/bin/vite.js"), "--port", "5173", "--strictPort"], { cwd: ROOT, stdio: "ignore" });
+const vite = spawn(process.execPath, [path.join(ROOT, "node_modules/vite/bin/vite.js"), "--port", String(DEV_PORT), "--strictPort"], { cwd: ROOT, stdio: "ignore" });
 children.push(vite);
-await waitTcp(5173);
+await waitTcp(DEV_PORT);
 
 const electronExe = (await import("electron")).default;
-const appEnv = { ...process.env, QYREX_TEST_API: API };
+const appEnv = { ...process.env, QYREX_TEST_API: API, QYREX_DEV_PORT: String(DEV_PORT) };
 delete appEnv.ELECTRON_RUN_AS_NODE;
 const app = spawn(electronExe, [".", `--user-data-dir=${PROFILE}`, `--remote-debugging-port=${CDP_PORT}`], {
   cwd: ROOT,
@@ -118,7 +120,7 @@ async function connect() {
   for (let i = 0; i < 60; i++) {
     try {
       const targets = await (await fetch(`http://127.0.0.1:${CDP_PORT}/json`)).json();
-      const page = targets.find((t) => t.type === "page" && t.url.startsWith("http://localhost:5173"));
+      const page = targets.find((t) => t.type === "page" && t.url.startsWith(`http://localhost:${DEV_PORT}`));
       if (!page) throw new Error("sem página");
       ws = new WebSocket(page.webSocketDebuggerUrl);
       await new Promise((resolve, reject) => {
@@ -171,7 +173,7 @@ const HELPERS = `
   const findButton = (label, root = document) =>
     $$("button", root).filter(visible).find((b) => textOf(b) === label || b.getAttribute("aria-label") === label || b.title === label) ??
     $$("button", root).filter(visible).find((b) => textOf(b).includes(label));
-  const cardOf = (title) => $$("p").find((p) => textOf(p) === title)?.closest(".card-interactive") ?? null;
+  const cardOf = (title) => $$("p").filter(visible).find((p) => textOf(p) === title)?.closest(".card-interactive") ?? null;
   const dialog = () => $$("[role=dialog]").filter(visible).pop() ?? null;
   const setSelect = (sel, value) => {
     const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value").set;
@@ -217,6 +219,7 @@ async function type(selectorExpr, text, { enter = false } = {}) {
 const nav = async (label) => {
   const r = await ev(`const b = $$("aside nav button").find((e) => textOf(e) === ${JSON.stringify(label)}); if (!b) return false; b.click(); return true;`);
   if (!r) throw new Error(`item "${label}" não está na barra lateral`);
+  await waitFor(`$$("aside nav button[aria-current=page]").some(b => textOf(b) === ${JSON.stringify(label)})`, { label: `navegação para ${label}` });
   await sleep(700);
 };
 
@@ -235,6 +238,11 @@ async function step(name, fn) {
     check(name, newProblems.length === 0, [detail, ...newProblems].filter(Boolean).join(" | "));
   } catch (err) {
     check(name, false, err.message);
+    if (SHOTS) {
+      const html = await ev(`return document.body.outerHTML`).catch(() => "");
+      fs.mkdirSync(SHOTS, { recursive: true });
+      fs.writeFileSync(path.join(SHOTS, `falha-${name.replace(/[^\w]+/g, "-")}.html`), html);
+    }
     await shot(`falha-${name.replace(/[^\w]+/g, "-")}`);
   }
 }
@@ -470,7 +478,7 @@ await step("Notion: conectar, buscar, ler, criar página e mandar para a IA", as
   await nav("Notion");
   await waitFor(`textOf(document.querySelector("main")).includes("Briefing E2E")`, { label: "página na lista" });
   await click("Briefing E2E");
-  await waitFor(`textOf(document.querySelector("main")).includes("Vender assinaturas de café pelo site.")`, { label: "conteúdo da página" });
+  await waitFor(`textOf(document.querySelector("main")).includes("Vender assinaturas de café pelo site.")`, { timeout: 30_000, label: "conteúdo da página (Markdown carregado sob demanda)" });
 
   await click("Subpágina");
   await waitFor(`dialog() && textOf(dialog()).includes("Nova página no Notion")`, { label: "diálogo de nova página" });
@@ -515,7 +523,7 @@ await step("Tarefas: excluir pelo diálogo de edição", async () => {
   if (still) throw new Error("tarefa continua no banco");
 });
 
-await step("Projetos: excluir pelo card sem apagar a pasta", async () => {
+await step("Projetos: excluir pelo menu do card sem apagar a pasta", async () => {
   const dir = path.join(WORK, "descartavel");
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, "manter.txt"), "não pode sumir");
@@ -525,9 +533,12 @@ await step("Projetos: excluir pelo card sem apagar a pasta", async () => {
   await waitFor(`$$("p").some((p) => textOf(p) === "Projeto para excluir")`, { label: "card do projeto" });
   const clicked = await ev(`
     const card = $$("p").find((p) => textOf(p) === "Projeto para excluir").closest(".card-interactive");
-    const b = $$("button", card).find((x) => x.getAttribute("aria-label") === "Excluir projeto");
-    if (!b) return false; b.click(); return true;`);
-  if (!clicked) throw new Error("botão de excluir não está no card");
+    const menu = $$("button", card).find((x) => x.getAttribute("aria-label") === "Mais opções");
+    if (!menu) return false; menu.click(); return true;`);
+  if (!clicked) throw new Error("menu do card não encontrado");
+  // A exclusão fica no menu "⋯" do card (2.2), longe do clique acidental.
+  await waitFor(`$$("button").some((b) => textOf(b) === "Excluir projeto")`, { label: "item do menu" });
+  await ev(`$$("button").find((b) => textOf(b) === "Excluir projeto").click(); return true;`);
   await waitFor(`textOf(dialog()).includes("Nenhum arquivo da pasta é excluído")`, { label: "confirmação" });
   await click("Excluir", `dialog()`);
   await waitFor(`!$$("p").some((p) => textOf(p) === "Projeto para excluir") && !dialog()`, { label: "card sumiu" });
@@ -535,6 +546,84 @@ await step("Projetos: excluir pelo card sem apagar a pasta", async () => {
   if (still) throw new Error("projeto continua no banco");
   if (!fs.existsSync(path.join(dir, "manter.txt"))) throw new Error("a pasta do projeto foi apagada");
   return "cadastro excluído, pasta intacta";
+});
+
+await step("Preview: abre servidor local isolado e recusa endereço externo", async () => {
+  await nav("Preview");
+  const external = await ev(`return (await window.workspace.preview.open("https://example.com/")).ok`);
+  if (external !== false) throw new Error("abriu endereço externo");
+  const url = `${API}/github/user`;
+  const st = await ev(`return (await window.workspace.preview.open(${JSON.stringify(url)})).data`);
+  if (!st?.open || st.error) throw new Error(`preview não abriu: ${JSON.stringify(st)}`);
+  await waitFor(`!!document.querySelector("[data-preview-frame]")`, { label: "palco do preview" });
+  // Entra na própria página do preview (alvo separado no DevTools) e confere o isolamento.
+  const targets = await (await fetch(`http://127.0.0.1:${CDP_PORT}/json`)).json();
+  const target = targets.find((t) => t.url.startsWith(url));
+  if (!target) throw new Error("alvo do preview não encontrado no DevTools");
+  const isolated = await new Promise((resolve, reject) => {
+    const sock = new WebSocket(target.webSocketDebuggerUrl);
+    const timer = setTimeout(() => reject(new Error("CDP do preview sem resposta")), 8000);
+    sock.onopen = () =>
+      sock.send(JSON.stringify({ id: 1, method: "Runtime.evaluate", params: { expression: "[typeof window.workspace, typeof require, typeof process].join()", returnByValue: true } }));
+    sock.onmessage = (m) => {
+      const msg = JSON.parse(String(m.data));
+      if (msg.id !== 1) return;
+      clearTimeout(timer);
+      sock.close();
+      resolve(msg.result?.result?.value);
+    };
+  });
+  if (isolated !== "undefined,undefined,undefined") throw new Error(`a página do preview vê APIs do app: ${isolated}`);
+  await ev(`await window.workspace.preview.close(); return 1`);
+  return "localhost aberto sem window.workspace/require/process; externo recusado";
+});
+
+await step("Runner + Monitor: roda processo real, mede a árvore e encerra", async () => {
+  const projectId = await ev(`return (await window.workspace.projects.list()).data.find((p) => !p.archivedAt)?.id ?? null`);
+  if (!projectId) throw new Error("sem projeto para rodar");
+  // Sem confirmação o main recusa.
+  const refused = await ev(`return (await window.workspace.runner.start({ projectId: ${JSON.stringify(projectId)}, command: "node -v" }, false)).ok`);
+  if (refused !== false) throw new Error("runner rodou sem confirmação");
+  const proc = await ev(`return (await window.workspace.runner.start({ projectId: ${JSON.stringify(projectId)}, command: "node -e \\"console.log('qyrex-runner-ok'); setInterval(() => {}, 1000)\\"" }, true)).data`);
+  if (!proc?.id) throw new Error("runner não iniciou");
+  await waitFor(`(await window.workspace.runner.output(${JSON.stringify(proc.id)})).data.includes("qyrex-runner-ok")`, { timeout: 20_000, label: "saída do processo" });
+  await nav("Processos");
+  await ev(`await window.workspace.runner.monitor(); return 1`);
+  await sleep(1500);
+  const sample = await ev(`return (await window.workspace.runner.monitor()).data`);
+  const mine = sample?.processes?.find((p) => p.runnerId === proc.id);
+  if (!(sample?.memTotal > 0) || !(sample?.app?.memory > 0)) throw new Error(`leitura do sistema inválida: ${JSON.stringify(sample)}`);
+  if (!mine || mine.memory <= 0 || mine.processCount < 2) throw new Error(`árvore do processo não medida: ${JSON.stringify(mine)}`);
+  await ev(`await window.workspace.runner.stop(${JSON.stringify(proc.id)}); return 1`);
+  await waitFor(`(await window.workspace.runner.list()).data.find((p) => p.id === ${JSON.stringify(proc.id)})?.status === "stopped"`, { timeout: 15_000, label: "processo encerrado" });
+  return `árvore com ${mine.processCount} processos, ${Math.round(mine.memory / 1e6)} MB; encerrada`;
+});
+
+await step("Workspace: abre projeto, troca layout, salva e mantém o terminal", async () => {
+  const project = await ev(`return (await window.workspace.projects.list()).data.find((p) => !p.archivedAt) ?? null`);
+  if (!project) throw new Error("sem projeto");
+  await nav("Workspace");
+  await waitFor(`$$("main button").some((b) => textOf(b).includes(${JSON.stringify(project.name)})) || $$("[role=tab]").some((t) => textOf(t).includes(${JSON.stringify(project.name)}))`, { label: "projeto na lista" });
+  await ev(`const b = $$("main button").find((x) => textOf(x).includes(${JSON.stringify(project.name)})); if (b) b.click(); return 1;`);
+  // Layout padrão (Desenvolvimento): terminal num grupo, abas de painéis.
+  await waitFor(`$$("[role=tab]").some((t) => textOf(t) === "Terminal")`, { label: "aba Terminal do workspace" });
+  await ev(`$$("[role=tab]").find((t) => textOf(t) === "Terminal").click(); return 1;`);
+  await waitFor(`!!document.querySelector("main .xterm")`, { timeout: 15_000, label: "terminal do workspace" });
+  // Preset Git pelo menu de layouts.
+  await ev(`$$("button").find((b) => b.getAttribute("aria-label") === "Layouts").click(); return 1;`);
+  await waitFor(`$$("button").some((b) => textOf(b).startsWith("Git ·"))`, { label: "menu de layouts" });
+  await ev(`$$("button").find((b) => textOf(b).startsWith("Git ·")).click(); return 1;`);
+  const saved = await ev(`return JSON.parse(localStorage.getItem("qrz.ws.layout." + ${JSON.stringify(project.id)}))`);
+  const flat = JSON.stringify(saved);
+  if (!flat.includes('"git"') || saved.kind !== "split") throw new Error(`layout não salvo: ${flat}`);
+  const session = await ev(`return JSON.parse(localStorage.getItem("qrz.ws.session"))`);
+  if (!session?.open?.includes(project.id)) throw new Error("sessão não salva");
+  // Notas: salvar e ler de volta pelo canal.
+  await ev(`await window.workspace.notes.save(${JSON.stringify(project.id)}, "nota do E2E"); return 1`);
+  const note = await ev(`return (await window.workspace.notes.get(${JSON.stringify(project.id)})).data.content`);
+  if (note !== "nota do E2E") throw new Error("nota não salva");
+  await ev(`$$("[role=tab]").find((t) => textOf(t).includes(${JSON.stringify(project.name)}))?.querySelector("button[aria-label^='Fechar']")?.click(); return 1;`);
+  return "layout Git salvo, sessão restaurável, terminal e notas ok";
 });
 
 await step("Arquivos: navegar na pasta autorizada", async () => {
@@ -547,30 +636,45 @@ await step("Arquivos: navegar na pasta autorizada", async () => {
 
 await step("Terminal: executa comando no PowerShell", async () => {
   await nav("Terminal");
+  await waitFor(`!!findButton("Novo terminal")`, { timeout: 15_000, label: "terminal pronto" });
   await click("Novo terminal");
-  await waitFor(`document.querySelector(".xterm-helper-textarea")`, { timeout: 15_000, label: "xterm" });
+  await waitFor(`$$(".xterm-helper-textarea").find(visible)`, { timeout: 15_000, label: "xterm" });
   await sleep(2500);
-  await ev(`document.querySelector(".xterm-helper-textarea").focus(); return 1;`);
+  await ev(`$$(".xterm-helper-textarea").find(visible).focus(); return 1;`);
   await send("Input.insertText", { text: "echo qrz-terminal-ok" });
   await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, text: "\r" });
   await send("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
-  await waitFor(`(textOf(document.querySelector(".xterm-rows")).match(/qrz-terminal-ok/g) ?? []).length >= 2`, { timeout: 15_000, label: "saída do terminal" });
+  await waitFor(`(textOf($$(".xterm-rows").find(visible)).match(/qrz-terminal-ok/g) ?? []).length >= 2`, { timeout: 15_000, label: "saída do terminal" });
 
   // Trocar de aba não pode fechar o shell: volta e a mesma sessão continua respondendo.
   await nav("Projetos");
   await sleep(800);
   await nav("Terminal");
-  await waitFor(`/qrz-terminal-ok/.test(textOf(document.querySelector(".xterm-rows")))`, { timeout: 5_000, label: "terminal mantido após trocar de aba" });
-  await ev(`document.querySelector(".xterm-helper-textarea").focus(); return 1;`);
+  await waitFor(`/qrz-terminal-ok/.test(textOf($$(".xterm-rows").find(visible)))`, { timeout: 5_000, label: "terminal mantido após trocar de aba" });
+  await ev(`$$(".xterm-helper-textarea").find(visible).focus(); return 1;`);
   await send("Input.insertText", { text: "echo qrz-still-open" });
   await send("Input.dispatchKeyEvent", { type: "keyDown", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, text: "\r" });
   await send("Input.dispatchKeyEvent", { type: "keyUp", key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
-  await waitFor(`(textOf(document.querySelector(".xterm-rows")).match(/qrz-still-open/g) ?? []).length >= 2`, { timeout: 15_000, label: "sessão viva após trocar de aba" });
+  await waitFor(`(textOf($$(".xterm-rows").find(visible)).match(/qrz-still-open/g) ?? []).length >= 2`, { timeout: 15_000, label: "sessão viva após trocar de aba" });
+  await click("Novo terminal");
+  await click("Novo terminal");
+  await click("Todos os terminais lado a lado");
+  await waitFor(`$$("main .xterm").filter(visible).length === 3`, { label: "três terminais na grade" });
+  await sleep(800);
+  const fills = await ev(`
+    const terminals = $$("main .xterm").filter(visible).map(el => el.getBoundingClientRect());
+    const grid = document.querySelector("main .grid.gap-px").getBoundingClientRect();
+    const area = terminals.reduce((sum, r) => sum + r.width * r.height, 0);
+    return area / (grid.width * grid.height);
+  `);
+  if (fills < 0.8) throw new Error(`grade com espaço vazio: ${(fills * 100).toFixed(1)}% ocupado`);
   return "sessão mantida ao trocar de aba";
 });
 
 await step("interface em inglês: sem texto em português", async () => {
   await nav("Configurações");
+  // A página Configurações carrega sob demanda: espera o seletor de idioma aparecer.
+  await waitFor(`!!document.querySelector('[data-language-option="en"]')`, { label: "seletor de idioma" });
   await ev(`document.querySelector('[data-language-option="en"]').click(); return 1;`);
   await sleep(3500);
   await connect();

@@ -22,6 +22,104 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "2.2.0",
+    date: "2026-11-13",
+    title: { pt: "Qyrex 2.2: workspace, preview, monitor e cara nova", en: "Qyrex 2.2: workspace, preview, monitor and a new look" },
+    sections: [
+      {
+        kind: "new",
+        items: [
+          {
+            pt: "Workspace por projeto: arquivos, terminal, Git, preview, IA, tarefas, notas, processos e monitor lado a lado. Divida, arraste abas entre painéis, maximize e escolha um layout pronto (Desenvolvimento, Debug, Git, Foco). Cada projeto guarda o seu, e vários projetos abrem em abas.",
+            en: "Per-project Workspace: files, terminal, Git, preview, AI, tasks, notes, processes and monitor side by side. Split, drag tabs between panels, maximize and pick a ready layout (Development, Debug, Git, Focus). Each project keeps its own, and several projects open in tabs.",
+          },
+          {
+            pt: "Preview web: sua aplicação local dentro do Qyrex, isolada do app (só abre localhost), com tamanhos de desktop, tablet e celular, zoom, console da página e DevTools.",
+            en: "Web preview: your local app inside Qyrex, isolated from the app (localhost only), with desktop, tablet and phone sizes, zoom, page console and DevTools.",
+          },
+          {
+            pt: "Monitor: CPU e memória do PC, do Qyrex e de cada processo que o Qyrex iniciou, com histórico, alertas e intervalo ajustável.",
+            en: "Monitor: CPU and memory of your PC, of Qyrex and of each process Qyrex started, with history, alerts and adjustable interval.",
+          },
+          {
+            pt: "A capivara virou assistente: reage a tarefas concluídas, builds e foco, e responde perguntas rápidas só com os dados do seu PC. Perguntas livres à IA só com o seu consentimento.",
+            en: "The capybara became an assistant: it reacts to finished tasks, builds and focus, and answers quick questions using only your PC's data. Free questions to AI only with your consent.",
+          },
+          {
+            pt: "Plugins declarativos: links rápidos, modelos de projeto e notas, com permissões claras e sem rodar código de terceiros. Dá para instalar pacotes locais.",
+            en: "Declarative plugins: quick links, project templates and notes, with clear permissions and no third-party code running. Local packages can be installed.",
+          },
+          {
+            pt: "Processos: rode os scripts do package.json (ou qualquer comando) e acompanhe a saída ao vivo, com o endereço local detectado, reiniciar e encerrar. Tudo é encerrado ao fechar o Qyrex.",
+            en: "Processes: run package.json scripts (or any command) and follow the output live, with the local address detected, restart and stop. Everything is stopped when Qyrex closes.",
+          },
+          {
+            pt: "Painel de portas: veja quem está usando a 3000, a 5173... e libere a porta com um clique (sempre com confirmação).",
+            en: "Ports panel: see who is using 3000, 5173... and free the port with one click (always with confirmation).",
+          },
+          {
+            pt: "Utilitários offline: JSON, JWT, Base64, URL, timestamp, regex, comparar textos, UUID, hash, cores e conversão de nomes. Nada do que você cola sai do PC.",
+            en: "Offline utilities: JSON, JWT, Base64, URL, timestamp, regex, text diff, UUID, hash, colors and name casing. Nothing you paste leaves your PC.",
+          },
+          {
+            pt: "Sugerir mensagem de commit com IA, a partir do diff dos arquivos marcados. A IA só preenche o campo; o commit continua sendo seu.",
+            en: "Suggest a commit message with AI from the diff of the selected files. The AI only fills in the field; the commit is still yours.",
+          },
+          {
+            pt: "Resumo para a daily no Início: seus commits e tarefas desde o último dia útil, em Ontem / Hoje / Bloqueios.",
+            en: "Standup summary on Home: your commits and tasks since the last workday, as Yesterday / Today / Blockers.",
+          },
+          {
+            pt: "No projeto: scripts para rodar com um clique, status do CI (GitHub Actions) e conferência do .env contra o .env.example (só nomes, nunca valores).",
+            en: "In the project: one-click scripts, CI status (GitHub Actions) and a .env check against .env.example (names only, never values).",
+          },
+        ],
+      },
+      {
+        kind: "improved",
+        items: [
+          {
+            pt: "Arquivos com acesso rápido aos projetos e pastas autorizadas, caminho completo visível e botão para subir uma pasta. Processos abre no Monitor com CPU e memória do próprio Qyrex em destaque.",
+            en: "Files now has quick access to projects and authorized folders, a visible full path and a parent-folder button. Processes opens on Monitor with Qyrex CPU and memory usage highlighted.",
+          },
+          {
+            pt: "Abertura mais breve, com luz de pixels na cor do tema, carregamento discreto e movimento reduzido respeitado. Cabeçalhos recebem o mesmo brilho pontilhado do Início.",
+            en: "A shorter startup with pixel light in the theme color, a subtle loading indicator and reduced motion support. Page headers share Home's dithered glow.",
+          },
+          {
+            pt: "Central de notificações com o histórico do que aconteceu na sessão, atalhos configuráveis, modo compacto e uma paleta de comandos (Ctrl+K) que abre workspace, preview, monitor, layouts e links.",
+            en: "Notification center with the session's history, configurable shortcuts, compact mode and a command palette (Ctrl+K) that opens workspace, preview, monitor, layouts and links.",
+          },
+          {
+            pt: "Barra lateral reorganizada por momento de uso (dia a dia, Desenvolvimento, Ferramentas, Sistema) e Início com widgets de servidores ativos e avisos importantes.",
+            en: "Sidebar reorganized by what you're doing (day to day, Development, Tools, System) and Home with active servers and important notices widgets.",
+          },
+          {
+            pt: "Cara nova: o tema padrão ganhou o laranja da marca, a capivara aparece nos estados vazios e o Início ficou mais limpo, com \"continuar de onde parou\".",
+            en: "New look: the default theme got the brand orange, the capybara shows up in empty states and Home is cleaner, with \"pick up where you left off\".",
+          },
+          {
+            pt: "Barra de status no rodapé (projeto, branch, commits a enviar/receber, processos rodando, uso da IA) e barra lateral que recolhe para só ícones.",
+            en: "Status bar at the bottom (project, branch, commits to push/pull, running processes, AI usage) and a sidebar that collapses to icons.",
+          },
+          {
+            pt: "Cards de projeto com linguagens, último commit e atividade das últimas 12 semanas, e uma nova visão em lista.",
+            en: "Project cards with languages, last commit and activity over the last 12 weeks, plus a new list view.",
+          },
+        ],
+      },
+      {
+        kind: "fixed",
+        items: [
+          {
+            pt: "Três terminais em grade agora preenchem a área lado a lado, sem deixar uma quarta posição vazia.",
+            en: "Three terminals in grid view now fill the area side by side, without leaving an empty fourth slot.",
+          },
+        ],
+      },
+    ],
+  },
+  {
     version: "2.1.0",
     date: "2026-11-10",
     title: { pt: "Qyrex 2.1: 100% para desenvolvedores", en: "Qyrex 2.1: 100% for developers" },

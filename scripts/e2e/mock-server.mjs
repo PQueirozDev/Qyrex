@@ -207,6 +207,13 @@ async function route(req, res) {
       if (needAuth(req, res)) return;
       return json(res, 200, { login: "qrz-e2e" });
     }
+    if (/^\/github\/repos\/[\w.-]+\/[\w.-]+\/actions\/runs$/.test(p)) {
+      return json(res, 200, {
+        workflow_runs: [
+          { id: 1, name: "CI", display_title: "Commit simulado", head_branch: "main", event: "push", status: "completed", conclusion: "success", html_url: "https://github.com/qrz/e2e/actions/runs/1", created_at: new Date().toISOString() },
+        ],
+      });
+    }
     const m = /^\/github\/repos\/([\w.-]+)\/([\w.-]+)(\/issues|\/pulls)?$/.exec(p);
     if (m) {
       if (!m[3]) {

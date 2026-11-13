@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { useBuddyStore } from "@/stores/useBuddyStore";
 import type { Task } from "@shared/types";
 import { attempt, errorMessage, unwrap } from "@/lib/api";
 import { tr } from "@/lib/i18n";
@@ -48,7 +49,9 @@ export const useTasksStore = create<TasksState>((set, get) => ({
   toggleDone: async (task) => {
     const status = task.status === "concluido" ? "pendente" : "concluido";
     set({ tasks: get().tasks.map((t) => (t.id === task.id ? { ...t, status } : t)) });
-    await attempt(window.workspace.tasks.update(task.id, { status }));
+    const ok = await attempt(window.workspace.tasks.update(task.id, { status }));
+    // A capivara comemora a tarefa concluída (só quando o banco confirmou).
+    if (ok && status === "concluido") useBuddyStore.getState().react({ kind: "taskDone", title: task.title });
     await get().load();
   },
   remove: async (id) => {

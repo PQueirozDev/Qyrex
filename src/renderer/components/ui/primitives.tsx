@@ -5,7 +5,7 @@ import { Loader2, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/i18n";
 import { initials } from "@/lib/format";
-import { Mascot } from "@/components/ui/Brand";
+import { DitherGlow, Mascot } from "@/components/ui/Brand";
 
 export function Badge({
   children,
@@ -148,7 +148,8 @@ export function PageHeader({
   icon?: LucideIcon;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <div className="relative isolate mb-6 flex flex-wrap items-end justify-between gap-3">
+      <DitherGlow className="absolute -right-4 -top-5 -z-10 h-28 w-[55%] max-w-xl opacity-[0.15] [mask-image:linear-gradient(to_bottom,black,transparent)]" strength={0.42} />
       <div className="flex min-w-0 items-center gap-3.5">
         {Icon && (
           <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-accent/25 bg-gradient-to-br from-accent/20 to-accent/5 text-accent shadow-[0_8px_24px_-12px_rgb(var(--accent)/0.6)]">
@@ -254,7 +255,18 @@ export interface MenuItem {
 }
 
 /** Menu suspenso simples (ações de linha, "mais opções"). */
-export function Menu({ trigger, items, align = "right" }: { trigger: ReactNode; items: (MenuItem | "separator")[]; align?: "left" | "right" }) {
+export function Menu({
+  trigger,
+  items,
+  align = "right",
+  label,
+}: {
+  trigger: ReactNode;
+  items: (MenuItem | "separator")[];
+  align?: "left" | "right";
+  /** Nome acessível do botão (o gatilho costuma ser só um ícone "⋯"). */
+  label?: string;
+}) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -280,6 +292,10 @@ export function Menu({ trigger, items, align = "right" }: { trigger: ReactNode; 
       <button
         ref={btnRef}
         type="button"
+        aria-label={label}
+        title={label}
+        aria-haspopup="menu"
+        aria-expanded={open}
         onClick={(e) => {
           e.stopPropagation();
           const rect = btnRef.current!.getBoundingClientRect();
@@ -297,6 +313,7 @@ export function Menu({ trigger, items, align = "right" }: { trigger: ReactNode; 
       {open &&
         createPortal(
           <div
+            data-overlay
             className="fixed z-[60] w-[200px] animate-pop-in rounded-lg border border-border bg-bg-elevated p-1 shadow-pop"
             style={{ top: pos.top, left: pos.left }}
             onMouseDown={(e) => e.stopPropagation()}
@@ -356,7 +373,7 @@ export function Drawer({
 
   if (!open) return null;
   return createPortal(
-    <div className="fixed inset-0 z-40 flex justify-end bg-black/30 animate-fade-in" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div data-overlay className="fixed inset-0 z-40 flex justify-end bg-black/30 animate-fade-in" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <aside
         data-drawer
         aria-modal="true"

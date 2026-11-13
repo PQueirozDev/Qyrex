@@ -1,0 +1,30 @@
+{
+  "id": "exemplo.kit-do-dev",
+  "name": "Kit do dev (exemplo)",
+  "version": "1.0.0",
+  "author": "Qyrex",
+  "description": "Exemplo de plugin: links úteis e um modelo de biblioteca TypeScript.",
+  "homepage": "https://github.com/PQueirozDev/Qyrex/blob/main/docs/PLUGINS.md",
+  "qyrex": "2.2.0",
+  "permissions": ["quickLinks", "projectTemplates"],
+  "contributes": {
+    "quickLinks": [
+      { "title": "MDN Web Docs", "url": "https://developer.mozilla.org/" },
+      { "title": "Node.js Docs", "url": "https://nodejs.org/docs/latest/api/" }
+    ],
+    "projectTemplates": [
+      {
+        "id": "lib-typescript",
+        "name": "Biblioteca TypeScript",
+        "description": "Pacote npm com código, testes e exemplos.",
+        "technologies": ["TypeScript"],
+        "folders": ["src", "tests", "examples"],
+        "files": [
+          { "path": "README.md", "content": "# {name}\n\nBiblioteca em TypeScript.\n\n## Uso\n\n```ts\nimport { } from \"{name}\";\n```\n" },
+          { "path": ".gitignore", "content": "node_modules/\ndist/\n" }
+        ],
+        "tasks": ["Definir a API pública", "Escrever os testes", "Publicar no npm"]
+      }
+    ]
+  }
+}

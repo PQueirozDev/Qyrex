@@ -15,8 +15,17 @@ import {
   Search,
   SquareTerminal,
   Timer,
+  Gauge,
+  LayoutDashboard,
+  LayoutTemplate,
+  Link2,
+  MonitorPlay,
+  Play,
   type LucideIcon,
 } from "lucide-react";
+import type { QuickLink } from "@shared/types";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
+import type { PresetId } from "@/lib/workspaceLayout";
 import type { SearchResults } from "@shared/types";
 import { tm } from "@shared/i18n";
 import { cn } from "@/lib/cn";
@@ -42,7 +51,7 @@ interface Command {
 }
 
 // Nomes dos grupos (traduzidos na hora de exibir; tm() só marca para o extrator de chaves).
-const GROUP_ORDER = [tm("Ações"), tm("Projetos"), tm("Tarefas"), tm("Arquivos"), tm("Navegação")];
+const GROUP_ORDER = [tm("Ações"), tm("Projetos"), tm("Links"), tm("Tarefas"), tm("Arquivos"), tm("Navegação")];
 
 /**
  * Command Palette global (Ctrl+K), inspirada no Raycast: fuzzy search sobre
@@ -76,6 +85,7 @@ export function CommandPalette() {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
   const [results, setResults] = useState<SearchResults | null>(null);
+  const [links, setLinks] = useState<QuickLink[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -85,6 +95,8 @@ export function CommandPalette() {
     setSelected(0);
     setResults(null);
     if (!projectsLoaded) void loadProjects();
+    // Links rápidos (plugin): lista vazia se o plugin estiver desligado.
+    void window.workspace.quickLinks.list(null).then((r) => setLinks(r.ok ? r.data : []));
     setTimeout(() => inputRef.current?.focus(), 0);
   }, [open, projectsLoaded, loadProjects]);
 
@@ -158,11 +170,58 @@ export function CommandPalette() {
       );
     }
 
+    const wsActive = useWorkspaceStore.getState().active;
+    const layoutCommands: Command[] = wsActive
+      ? (
+          [
+            ["dev", tr("Layout: Desenvolvimento")],
+            ["debug", tr("Layout: Debug")],
+            ["git", tr("Layout: Git")],
+            ["focus", tr("Layout: Foco")],
+          ] as [PresetId, string][]
+        ).map(([id, label]) => ({
+          id: `layout-${id}`,
+          group: "Ações",
+          label,
+          keywords: "workspace painéis layout",
+          icon: LayoutTemplate,
+          run: act(() => {
+            useWorkspaceStore.getState().applyPreset(wsActive, id);
+            navigate("workspace");
+          }),
+        }))
+      : [];
+    actions.push(
+      {
+        id: "toggle-compact",
+        group: "Ações",
+        label: useUIStore.getState().compact ? tr("Sair do modo compacto") : tr("Ativar modo compacto"),
+        keywords: "densidade espaço compacto",
+        icon: LayoutDashboard,
+        run: act(() => useUIStore.getState().setCompact(!useUIStore.getState().compact)),
+      },
+      { id: "open-preview", group: "Ações", label: tr("Abrir o Preview"), keywords: "localhost navegador servidor dev", icon: MonitorPlay, run: act(() => navigate("preview")) },
+      { id: "open-monitor", group: "Ações", label: tr("Abrir o Monitor de recursos"), keywords: "cpu memória ram processos", icon: Gauge, run: act(() => navigate("processos", "monitor")) },
+      { id: "run-script", group: "Ações", label: tr("Rodar um script do projeto"), keywords: "npm dev build test runner", icon: Play, run: act(() => navigate("processos")) },
+      ...layoutCommands
+    );
+    const linkCommands: Command[] = links.map((l) => ({
+      id: `link-${l.id}`,
+      group: "Links",
+      label: l.title,
+      hint: l.url.replace(/^https?:\/\//, ""),
+      keywords: l.url,
+      icon: Link2,
+      run: act(() => void attempt(window.workspace.system.openExternalUrl(l.url))),
+    }));
+
     const projectCommands: Command[] = projects.flatMap((p) => [
       { id: `p-${p.id}`, group: "Projetos", label: tr("Abrir projeto {name}", { name: p.name }), hint: tr("VS Code"), keywords: p.technologies.join(" "), icon: Code2, run: act(() => void openProject(p, "vscode")) },
       { id: `pt-${p.id}`, group: "Projetos", label: tr("Terminal em {name}", { name: p.name }), icon: SquareTerminal, run: act(() => navigate("terminal", p.id)) },
       { id: `pe-${p.id}`, group: "Projetos", label: tr("Editar {name} no Qyrex", { name: p.name }), hint: tr("Editor"), icon: FileCode2, run: act(() => navigate("editor", p.localPath)) },
       { id: `pd-${p.id}`, group: "Projetos", label: tr("Detalhes de {name}", { name: p.name }), hint: tr("Git, GitHub, tarefas"), icon: Folder, run: act(() => navigate("projetos", p.id)) },
+      { id: `pw-${p.id}`, group: "Projetos", label: tr("Workspace de {name}", { name: p.name }), hint: tr("Painéis"), icon: LayoutDashboard, run: act(() => navigate("workspace", p.id)) },
+      { id: `pp-${p.id}`, group: "Projetos", label: tr("Preview de {name}", { name: p.name }), hint: "localhost", icon: MonitorPlay, run: act(() => navigate("preview", p.id)) },
     ]);
 
     const navCommands: Command[] = NAV_ITEMS.map((n) => ({
@@ -174,8 +233,8 @@ export function CommandPalette() {
       run: act(() => navigate(n.id)),
     }));
 
-    return [...actions, ...projectCommands, ...navCommands];
-  }, [projects, lastProject, settings?.theme, navigate, openProject, setOpen, setQuickTaskOpen, updateSettings, terminalOnly]);
+    return [...actions, ...linkCommands, ...projectCommands, ...navCommands];
+  }, [projects, lastProject, settings?.theme, navigate, openProject, setOpen, setQuickTaskOpen, updateSettings, terminalOnly, links]);
 
   const visible = useMemo(() => {
     const q = query.trim();
@@ -249,7 +308,7 @@ export function CommandPalette() {
   let lastGroup = "";
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex animate-fade-in items-start justify-center bg-black/40 pt-[14vh] backdrop-blur-[2px]" onMouseDown={() => setOpen(false)}>
+    <div data-overlay className="fixed inset-0 z-50 flex animate-fade-in items-start justify-center bg-black/40 pt-[14vh] backdrop-blur-[2px]" onMouseDown={() => setOpen(false)}>
       <div
         className="w-full max-w-xl animate-pop-in overflow-hidden rounded-2xl border border-border bg-bg-elevated/95 shadow-pop backdrop-blur-xl"
         onMouseDown={(e) => e.stopPropagation()}

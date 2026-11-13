@@ -167,6 +167,14 @@ body,
   height: 100%;
 }
 
+/* Modo compacto: toda a escala em rem (espaços, alturas, fontes do Tailwind) encolhe ~10%. */
+html.compact {
+  font-size: 14.5px;
+}
+html.compact body {
+  font-size: 13px;
+}
+
 body {
   margin: 0;
   font-size: 14px;
@@ -306,7 +314,7 @@ body {
     @apply transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-px hover:border-border hover:shadow-pop;
   }
   .nav-label {
-    @apply px-2.5 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-text-faint;
+    @apply px-2.5 pb-1 pt-2.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-text-faint;
   }
   .input {
     @apply w-full rounded-md border border-border bg-bg px-2.5 py-1.5 text-sm text-text placeholder:text-text-faint

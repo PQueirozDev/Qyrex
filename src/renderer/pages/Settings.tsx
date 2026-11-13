@@ -1,4 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { ShortcutsSettings } from "@/components/ShortcutsSettings";
+import { Keyboard } from "lucide-react";
+import { BuddySettings } from "@/components/buddy/BuddySettings";
 import { motion } from "motion/react";
 import {
   Bell,
@@ -50,6 +53,7 @@ import { UpdateCard } from "@/pages/PatchNotes";
 
 const SECTIONS: { id: string; label: string; icon: LucideIcon }[] = [
   { id: "aparencia", label: tr("Aparência"), icon: Palette },
+  { id: "atalhos", label: tr("Atalhos e densidade"), icon: Keyboard },
   { id: "idioma", label: tr("Idioma"), icon: Languages },
   { id: "geral", label: tr("Geral"), icon: User },
   { id: "pastas", label: tr("Pastas autorizadas"), icon: FolderPlus },
@@ -681,6 +685,11 @@ export function Settings() {
           <Row label={tr("Animação de abertura")} hint={tr("Mostra a capivara e o nome do Qyrex ao abrir o app.")}>
             <Switch checked={settings.splashAnimation} onChange={(v) => void update({ splashAnimation: v })} />
           </Row>
+          <BuddySettings />
+        </Section>
+
+        <Section id="atalhos" title={tr("Atalhos e densidade")} description={tr("Atalhos de teclado do app e o modo compacto.")}>
+          <ShortcutsSettings />
         </Section>
 
         <Section id="idioma" title={tr("Idioma")} description={tr("Idioma da interface, das notificações e das respostas da IA. O app recarrega ao trocar.")}>

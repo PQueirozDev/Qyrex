@@ -34,6 +34,11 @@ import * as focusService from "../services/focusService.js";
 import * as automationService from "../services/automationService.js";
 import * as runnerService from "../services/runnerService.js";
 import * as assistService from "../services/assistService.js";
+import { checkEnv } from "../services/envService.js";
+import * as previewService from "../services/previewService.js";
+import * as monitorService from "../services/monitorService.js";
+import * as notesService from "../services/notesService.js";
+import * as pluginService from "../services/pluginService.js";
 import { getProjectInsights, invalidateInsights } from "../services/projectInsightsService.js";
 import * as promptService from "../services/promptService.js";
 import * as syncService from "../services/syncService.js";
@@ -177,10 +182,25 @@ export function registerIpcHandlers(): void {
   handle("runner:restart", (_e, id) => runnerService.restart(v.parse(v.id, id)));
   handle("runner:remove", (_e, id) => runnerService.remove(v.parse(v.id, id)));
   handle("runner:ports", () => runnerService.listPorts());
+  // Monitor: só coleta quando a UI pede (página visível), no intervalo escolhido.
+  handle("monitor:sample", () => monitorService.sample());
   handle("runner:killPort", (_e, port, pid, confirmed) => {
     requireConfirmation(confirmed);
     return runnerService.killPort(v.parse(v.port, port), v.parse(v.pid, pid));
   });
+
+  // --- Preview web (só endereços locais; ver previewService) -------------------------
+  handle("preview:open", (_e, url) => previewService.open(v.parse(v.previewUrl, url)));
+  handle("preview:setBounds", (_e, bounds) => previewService.setBounds(v.parse(v.previewBounds, bounds)));
+  handle("preview:state", () => previewService.getState());
+  handle("preview:reload", () => previewService.reload());
+  handle("preview:back", () => previewService.back());
+  handle("preview:forward", () => previewService.forward());
+  handle("preview:setZoom", (_e, factor) => previewService.setZoom(v.parse(z.number().min(0.1).max(5), factor)));
+  handle("preview:devtools", () => previewService.openDevTools());
+  handle("preview:console", () => previewService.getConsole());
+  handle("preview:clearConsole", () => previewService.clearConsole());
+  handle("preview:close", () => previewService.close());
 
   // --- Foco ------------------------------------------------------------------------
   handle("focus:state", () => focusService.getState());
@@ -289,6 +309,30 @@ export function registerIpcHandlers(): void {
   // --- Projetos ----------------------------------------------------------------------
   handle("projects:list", () => projectService.listProjectsWithGit());
   handle("projects:insights", (_e, id) => getProjectInsights(v.parse(v.id, id)));
+  // Só nomes de variáveis: os valores do .env nunca saem do main.
+  handle("projects:envCheck", (_e, id) => checkEnv(v.parse(v.id, id)));
+  // --- Plugins declarativos (nenhum código de terceiro roda) ---------------------------
+  handle("plugins:list", () => pluginService.listPlugins());
+  handle("plugins:permissions", () => pluginService.PERMISSIONS);
+  handle("plugins:setEnabled", (_e, id, enabled) => pluginService.setEnabled(v.parse(z.string().max(120), id), v.parse(z.boolean(), enabled)));
+  // O arquivo vem SEMPRE do seletor nativo: o renderer nunca manda caminho.
+  handle("plugins:install", (e) => pluginService.installFromDialog(windowOf(e)));
+  handle("plugins:uninstall", (_e, id, confirmed) => {
+    requireConfirmation(confirmed);
+    return pluginService.uninstall(v.parse(z.string().max(120), id));
+  });
+  handle("quickLinks:list", (_e, projectId) => pluginService.listQuickLinks(projectId === undefined || projectId === null ? null : v.parse(v.id, projectId)));
+  handle("quickLinks:add", (_e, input) => pluginService.addQuickLink(v.parse(v.quickLinkCreate, input)));
+  handle("quickLinks:remove", (_e, id) => pluginService.removeQuickLink(v.parse(v.id, id)));
+  handle("templates:list", () => pluginService.listTemplates());
+  handle("templates:create", (_e, input, confirmed) => {
+    requireConfirmation(confirmed);
+    return pluginService.createFromTemplate(v.parse(v.templateCreate, input));
+  });
+  handle("notes:get", (_e, projectId) => notesService.getNote(v.parse(v.id, projectId)));
+  handle("notes:save", (_e, projectId, content) =>
+    notesService.saveNote(v.parse(v.id, projectId), v.parse(z.string().max(notesService.MAX_NOTE_CHARS), content))
+  );
   handle("projects:detect", (_e, p) => projectService.detectProject(v.parse(v.filePath, p)));
   handle("projects:create", (_e, input) => projectService.createProject(v.parse(v.projectCreate, input)));
   handle("projects:update", (_e, id, patch) => projectService.updateProject(v.parse(v.id, id), v.parse(v.projectUpdate, patch)));
@@ -432,6 +476,11 @@ export function registerIpcHandlers(): void {
     assistService.suggestCommitMessage(e.sender, v.parse(v.id, requestId), v.parse(v.assistCommit, input))
   );
   handle("assist:daily", (e, requestId) => assistService.dailyStandup(e.sender, v.parse(v.id, requestId)));
+  // Pergunta livre à capivara: a UI só envia depois do consentimento marcado na hora.
+  handle("assist:buddy", (e, requestId, question, consent) => {
+    requireConfirmation(consent);
+    return assistService.buddyAnswer(e.sender, v.parse(v.id, requestId), v.parse(z.string().trim().min(1).max(2000), question));
+  });
   handle("ai:council:run", (e, input) => {
     const parsed = v.parse(v.councilRun, input);
     // Proteção contra custo acidental: o número de providers confirmado pelo

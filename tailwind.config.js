@@ -65,6 +65,12 @@ export default {
         "slide-in": { from: { opacity: "0", transform: "translateX(12px)" }, to: { opacity: "1", transform: "translateX(0)" } },
         // A capivara boiando no onsen: sobe e desce em degraus inteiros (pixel art não pode borrar).
         bob: { "0%, 100%": { transform: "translateY(0)" }, "50%": { transform: "translateY(-3px)" } },
+        // Capivara assistente (degraus inteiros, como pixel art).
+        hop: { "0%, 100%": { transform: "translateY(0)" }, "30%": { transform: "translateY(-10px)" }, "60%": { transform: "translateY(-2px)" } },
+        shake: { "0%, 100%": { transform: "translateX(0)" }, "25%": { transform: "translateX(-2px)" }, "75%": { transform: "translateX(2px)" } },
+        walk: { "0%, 100%": { transform: "translateX(0) scaleX(1)" }, "45%": { transform: "translateX(-14px) scaleX(1)" }, "50%": { transform: "translateX(-14px) scaleX(-1)" }, "95%": { transform: "translateX(0) scaleX(-1)" } },
+        "float-up": { from: { opacity: "1", transform: "translateY(0)" }, to: { opacity: "0", transform: "translateY(-18px)" } },
+        breathe: { "0%, 100%": { transform: "scaleY(1)" }, "50%": { transform: "scaleY(0.94)" } },
       },
       animation: {
         "fade-in": "fade-in 120ms ease-out",
@@ -74,6 +80,12 @@ export default {
         "page-in": "page-in 280ms cubic-bezier(0.2, 0.9, 0.3, 1)",
         "slide-in": "slide-in 160ms cubic-bezier(0.2, 0.9, 0.3, 1)",
         bob: "bob 2.4s steps(2, jump-none) infinite",
+        hop: "hop 0.7s steps(4, jump-none) 3",
+        shake: "shake 0.3s steps(2, jump-none) 6",
+        walk: "walk 3s steps(12, jump-none) 1",
+        "float-up": "float-up 1.8s steps(6, jump-none) infinite",
+        breathe: "breathe 3.2s steps(2, jump-none) infinite",
+        "bob-fast": "bob 0.6s steps(2, jump-none) infinite",
       },
     },
   },

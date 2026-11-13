@@ -16,6 +16,7 @@ import { startNotifications, stopNotifications } from "./services/notificationSe
 import { startAppUsageTracker } from "./services/appUsageService.js";
 import { killAll as killAllTerminals } from "./services/terminalService.js";
 import { setRunnerListener, stopAll as stopAllRunners } from "./services/runnerService.js";
+import { setPreviewHost, setPreviewListener } from "./services/previewService.js";
 import { listIntegrationStatus } from "./services/integrationsService.js";
 import * as googleCalendar from "./integrations/googleCalendar.js";
 import { applyDiscordSettings, onDiscordStatus, stopDiscord } from "./integrations/discord.js";
@@ -43,7 +44,10 @@ const WINDOW_BG: Record<AppSettings["theme"], string> = {
 const tr = (text: string) => translate(getSettings().language, text);
 
 const isDev = !app.isPackaged;
-const DEV_SERVER_URL = "http://localhost:5173";
+// Só a porta é configurável em desenvolvimento; a origem continua local.
+const requestedDevPort = Number(process.env.QYREX_DEV_PORT ?? 5173);
+const devPort = Number.isInteger(requestedDevPort) && requestedDevPort >= 1024 && requestedDevPort <= 65535 ? requestedDevPort : 5173;
+const DEV_SERVER_URL = `http://localhost:${devPort}`;
 const startHidden = process.argv.includes("--hidden");
 
 let mainWindow: BrowserWindow | null = null;
@@ -135,6 +139,7 @@ function createWindow(): void {
   });
 
   attachUpdateListener(mainWindow.webContents);
+  setPreviewHost(mainWindow);
   const wc = mainWindow.webContents;
   onDiscordStatus((st) => {
     if (!wc.isDestroyed()) wc.send("discord:status", st);
@@ -247,7 +252,7 @@ const DEV_CSP = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https://i.scdn.co https://*.spotifycdn.com https://avatars.githubusercontent.com",
   "font-src 'self' data:",
-  `connect-src 'self' ${DEV_SERVER_URL} ws://localhost:5173`,
+  `connect-src 'self' ${DEV_SERVER_URL} ${DEV_SERVER_URL.replace("http:", "ws:")}`,
   `worker-src 'self' blob: ${DEV_SERVER_URL}`,
   "object-src 'none'",
   "base-uri 'none'",
@@ -346,6 +351,10 @@ app.whenReady().then(() => {
     }
   }, 20_000).unref();
   setAutomationProgress((run) => mainWindow?.webContents.send("automations:progress", run));
+  setPreviewListener((event) => {
+    if (event.type === "state") mainWindow?.webContents.send("preview:state", event.state);
+    else mainWindow?.webContents.send("preview:console", event.entry);
+  });
   setRunnerListener((event) => {
     if (event.type === "changed") mainWindow?.webContents.send("runner:changed", event.processes);
     else mainWindow?.webContents.send("runner:data", { id: event.id, chunk: event.chunk });

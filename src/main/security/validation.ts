@@ -138,6 +138,24 @@ export const assistCommit = z.object({
   files: z.array(z.string().min(1).max(1000)).min(1).max(500),
 });
 
+/** Área do preview na janela (px). */
+export const previewBounds = z
+  .object({ x: z.number().min(-10_000).max(20_000), y: z.number().min(-10_000).max(20_000), width: z.number().min(0).max(20_000), height: z.number().min(0).max(20_000) })
+  .nullable();
+export const previewUrl = z.string().trim().min(1).max(2000);
+
+export const quickLinkCreate = z.object({
+  title: z.string().trim().min(1).max(60),
+  url: z.string().trim().url().max(500),
+  projectId: id.nullable().optional(),
+});
+export const templateCreate = z.object({
+  pluginId: z.string().min(1).max(120),
+  templateId: z.string().min(1).max(60),
+  parentDir: z.string().min(1).max(1000),
+  name: z.string().trim().min(1).max(80),
+});
+
 export const port = z.number().int().min(1).max(65535);
 export const pid = z.number().int().min(5).max(4_294_967_295);
 

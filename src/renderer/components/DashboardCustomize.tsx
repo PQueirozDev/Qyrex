@@ -14,6 +14,8 @@ export const WIDGET_LABEL: Record<DashboardWidgetId, string> = {
   foco: tm("Foco"),
   projetos: tm("Projetos recentes"),
   automacoes: tm("Automações"),
+  servidores: tm("Servidores ativos"),
+  avisos: tm("Avisos importantes"),
 };
 
 /** Ordem final: a escolhida pelo usuário + widgets novos no fim, na ordem padrão. */

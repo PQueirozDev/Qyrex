@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Documentação do Qyrex</title>
+<meta name="description" content="Primeiros passos, configuração, workspace, IA, plugins, atalhos e solução de problemas do Qyrex.">
+<link rel="canonical" href="https://qyrex.pqueirozdev.com.br/docs">
+<meta property="og:site_name" content="Qyrex">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Documentação do Qyrex">
+<meta property="og:description" content="Primeiros passos, configuração, workspace, IA, plugins, atalhos e solução de problemas do Qyrex.">
+<meta property="og:url" content="https://qyrex.pqueirozdev.com.br/docs">
+<meta property="og:image" content="https://qyrex.pqueirozdev.com.br/assets/og-cover.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Documentação do Qyrex">
+<meta name="twitter:description" content="Primeiros passos, configuração, workspace, IA, plugins, atalhos e solução de problemas do Qyrex.">
+<meta name="twitter:image" content="https://qyrex.pqueirozdev.com.br/assets/og-cover.png">
+<meta name="theme-color" content="#0d1020">
+<link rel="icon" href="assets/icon-pixel.svg">
+<link rel="stylesheet" href="styles.css">
+<script src="app.js" defer>
+</script>
+<script src="common.js" defer>
+</script>
+</head>
+<body>
+<a class="skip" href="#conteudo">Pular para o conteúdo</a>
+<header class="topbar">
+<a class="brand" href="/" aria-label="Qyrex, início">
+<img src="assets/icon-pixel.svg" width="32" height="32" alt="" decoding="async">
+<span>QYREX</span>
+</a>
+<button class="menu-btn" aria-controls="menu" aria-expanded="false" hidden>Menu</button>
+<nav id="menu" aria-label="Navegação principal">
+<a href="/#recursos">Recursos</a>
+<a href="/#tour">Tour</a>
+<a href="/download">Download</a>
+<a href="/docs">Docs</a>
+<a href="/roadmap">Roadmap</a>
+<a href="/changelog">Changelog</a>
+<a data-link="repo" href="https://github.com/PQueirozDev/Qyrex">GitHub ↗</a>
+</nav>
+</header>
+<main id="conteudo">
+<div class="page-heading">
+<p class="eyebrow">Documentação</p>
+<h1>Do primeiro projeto ao seu fluxo.</h1>
+<p class="lead">Guias diretos para configurar o Qyrex e usar o workspace.</p>
+</div>
+<div class="docs-layout">
+<aside class="docs-nav">
+<label for="docs-search">Buscar na documentação</label>
+<input id="docs-search" type="search" placeholder="Ex.: porta, IA, plugin" autocomplete="off">
+<p data-search-status role="status">
+</p>
+<nav aria-label="Seções da documentação">
+<a href="#primeiros-passos">Primeiros passos</a>
+<a href="#instalacao">Instalação</a>
+<a href="#configuracao">Configuração inicial</a>
+<a href="#projetos">Projetos</a>
+<a href="#workspace">Workspace</a>
+<a href="#terminal">Terminal</a>
+<a href="#arquivos">Arquivos</a>
+<a href="#git">Git</a>
+<a href="#ia">IA</a>
+<a href="#preview">Preview</a>
+<a href="#processos-monitor">Processos e Monitor</a>
+<a href="#plugins">Plugins</a>
+<a href="#atalhos">Atalhos</a>
+<a href="#problemas">Solução de problemas</a>
+</nav>
+</aside>
+<div class="docs-content">
+<section id="primeiros-passos" data-doc-section>
+<h2>Primeiros passos</h2>
+<p>Instale o app, autorize uma pasta e abra seu primeiro projeto. O Qyrex reúne o contexto, mas as ferramentas do projeto continuam instaladas no seu PC.</p>
+<ol>
+<li>Baixe o instalador oficial.</li>
+<li>Autorize, por exemplo, <code>C:\Projetos</code>.</li>
+<li>Adicione um projeto e abra seu workspace.</li>
+</ol>
+</section>
+<section id="instalacao" data-doc-section>
+<h2>Instalação</h2>
+<p>Use Windows 10/11 64-bit. Abra o <code>Qyrex-Setup.exe</code> e siga o assistente, sem precisar de administrador. O app recebe atualizações automaticamente.</p>
+<p>
+<a href="/download">Download, requisitos e aviso do SmartScreen →</a>
+</p>
+</section>
+<section id="configuracao" data-doc-section>
+<h2>Configuração inicial</h2>
+<p>Em <strong>Configurações → Pastas autorizadas</strong>, escolha onde ficam os projetos. O acesso aos arquivos fica limitado a essas pastas; não autorize a raiz do disco, pastas do sistema ou sua pasta pessoal inteira.</p>
+<p>Em <strong>Integrações</strong>, configure só o que precisar. Chaves e tokens são guardados cifrados no cofre do Windows.</p>
+<ul>
+<li>GitHub: token pessoal ou <code>gh</code> já autenticado.</li>
+<li>Google Agenda: credenciais OAuth de app para computador.</li>
+<li>Notion: token de integração interna, com as páginas compartilhadas com ela.</li>
+<li>Claude/OpenAI: assinatura pelo CLI autenticado ou API key; Gemini: API key.</li>
+</ul>
+</section>
+<section id="projetos" data-doc-section>
+<h2>Projetos</h2>
+<p>Organize os repositórios pela pasta local. Abra VS Code, terminal ou Explorer no contexto do projeto. Use status ativo, pausado ou concluído e arquive o que não participa mais do dia a dia.</p>
+<figure class="shot">
+<img src="assets/app-projetos.webp" alt="Lista de projetos no Qyrex" width="1440" height="900" loading="lazy" decoding="async">
+<figcaption>Demonstração com dados fictícios</figcaption>
+</figure>
+</section>
+<section id="workspace" data-doc-section>
+<h2>Workspace</h2>
+<p>Abra vários projetos em abas. Use painéis de arquivos, terminal, Git, preview, IA, tarefas, notas, processos e monitor. Divida o espaço, arraste abas ou maximize um painel.</p>
+<p>Layouts disponíveis: <strong>Desenvolvimento, Debug, Git e Foco</strong>. O layout é salvo por projeto; restauração de sessões de terminal ainda está em desenvolvimento.</p>
+</section>
+<section id="terminal" data-doc-section>
+<h2>Terminal</h2>
+<p>Use o terminal integrado para comandos na pasta do projeto. Para acompanhar scripts longos com saída ao vivo e controle de processos, use o painel Processos.</p>
+<p>Alterne entre abas e grade. Com três sessões abertas, os terminais ficam lado a lado e preenchem a área disponível.</p>
+<p>Exemplo: em um projeto que possui o script <code>dev</code> no package.json, execute <code>npm run dev</code>. É preciso ter Node.js/npm instalados.</p>
+</section>
+<section id="arquivos" data-doc-section>
+<h2>Arquivos</h2>
+<p>Use <strong>Acesso rápido</strong> para ir direto aos projetos e pastas autorizadas. O caminho completo fica visível, os segmentos do caminho são clicáveis e <strong>Pasta acima</strong> retorna um nível.</p>
+<p>Busque por nome, selecione um arquivo para pré-visualizar ou abra-o no editor. A navegação continua limitada às pastas autorizadas.</p>
+<figure class="shot"><img src="assets/app-arquivos.webp" alt="Arquivos com acesso rápido aos projetos" width="1440" height="900" loading="lazy" decoding="async"><figcaption>Demonstração com dados fictícios</figcaption></figure>
+</section>
+<section id="git" data-doc-section>
+<h2>Git</h2>
+<p>Confira o diff e marque os arquivos que devem entrar no commit. Crie ou troque de branch, faça fetch, pull e push, sem <code>--force</code>. O status de CI vem do GitHub Actions.</p>
+<p>Revise a mensagem sugerida pela IA antes de confirmar o commit. Staging por trecho ainda está planejado.</p>
+</section>
+<section id="ia" data-doc-section>
+<h2>IA</h2>
+<p>Abra <strong>Integrações</strong>. Para usar a assinatura, escolha Claude com Claude Code ou ChatGPT/OpenAI com Codex já logados no PC. Você também pode informar uma API key de Claude, OpenAI ou Gemini.</p>
+<p>Use o AI Council para reunir respostas de modelos. A IA também sugere mensagem de commit a partir dos arquivos marcados e resume a daily. Comandos sugeridos precisam de confirmação para executar.</p>
+</section>
+<section id="preview" data-doc-section>
+<h2>Preview</h2>
+<p>Inicie o servidor local do projeto e abra seu endereço, como <code>http://localhost:5173</code>. O Preview aceita somente localhost e fica isolado do app.</p>
+<p>Alterne entre desktop, tablet, celular e tamanho personalizado. Use zoom, console da página e DevTools para investigar o que está renderizado.</p>
+</section>
+<section id="processos-monitor" data-doc-section>
+<h2>Processos e Monitor</h2>
+<p>Selecione um script do package.json ou informe um comando livre, revise e confirme. Acompanhe a saída ao vivo e as URLs detectadas. Reinicie ou encerre o processo quando precisar; os processos são encerrados ao fechar o Qyrex.</p>
+<p>Na aba <strong>Portas</strong>, confira qual processo está usando uma porta e confirme antes de liberá-la.</p>
+<p>A página abre no <strong>Monitor</strong>, com CPU e memória do próprio Qyrex em destaque. Os totais do PC servem de referência, e os processos iniciados pelo app têm seu consumo individual. Ajuste o intervalo de leitura conforme precisar.</p>
+</section>
+<section id="plugins" data-doc-section>
+<h2>Plugins</h2>
+<p>Abra <strong>Plugins → Instalar pacote local</strong> e escolha a pasta com <code>qyrex-plugin.json</code> ou o próprio arquivo JSON.</p>
+<p>Exemplo de manifesto:</p>
+<pre>
+<code>{
+  &quot;id&quot;: &quot;autor.links-do-time&quot;,
+  &quot;name&quot;: &quot;Links do time&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;author&quot;: &quot;Seu nome&quot;,
+  &quot;description&quot;: &quot;Atalhos para a documentação do time.&quot;,
+  &quot;qyrex&quot;: &quot;2.2.0&quot;,
+  &quot;permissions&quot;: [
+    &quot;quickLinks&quot;
+  ],
+  &quot;contributes&quot;: {
+    &quot;quickLinks&quot;: [
+      {
+        &quot;title&quot;: &quot;Guia de estilo&quot;,
+        &quot;url&quot;: &quot;https://example.com/guia&quot;
+      }
+    ]
+  }
+}</code>
+</pre>
+<p>Permissões existentes:</p>
+<ul>
+<li>
+<code>quickLinks</code>: links rápidos.</li>
+<li>
+<code>projectTemplates</code>: modelos com <code>folders</code>, <code>files</code> de texto com <code>{name}</code> e <code>tasks</code>.</li>
+<li>
+<code>notes</code>: notas.</li>
+</ul>
+<p>Campos desconhecidos são recusados. Nenhum código de terceiros roda. Notas do projeto, Links rápidos e Modelos de projeto já vêm embutidos.</p>
+</section>
+<section id="atalhos" data-doc-section>
+<h2>Atalhos</h2>
+<dl class="shortcuts">
+<dt>
+<kbd>Ctrl+K</kbd>
+</dt>
+<dd>Paleta de comandos</dd>
+<dt>
+<kbd>Ctrl+Shift+T</kbd>
+</dt>
+<dd>Nova tarefa</dd>
+<dt>
+<kbd>Ctrl+Shift+P</kbd>
+</dt>
+<dd>Projetos</dd>
+<dt>
+<kbd>Ctrl+Shift+A</kbd>
+</dt>
+<dd>IA</dd>
+</dl>
+</section>
+<section id="problemas" data-doc-section>
+<h2>Solução de problemas</h2>
+<h3>O SmartScreen bloqueou o instalador</h3>
+<p>O instalador não tem assinatura digital. Depois de conferir a origem oficial, use <strong>Mais informações → Executar assim mesmo</strong>.</p>
+<h3>A porta está ocupada</h3>
+<p>Abra a aba <strong>Portas</strong>, confira o processo responsável e confirme a liberação da porta.</p>
+<h3>A IA não conecta</h3>
+<p>Revise o provedor e a autenticação em <strong>Integrações</strong>. No modo assinatura, confira se Claude Code/Codex estão logados no PC. No modo API key, confira a chave. A conexão precisa de internet.</p>
+<p>
+<a href="https://github.com/PQueirozDev/Qyrex/issues">Reportar outro problema no GitHub →</a>
+</p>
+</section>
+<p data-no-results hidden>Nenhuma seção encontrada. Tente outro termo ou limpe a busca.</p>
+</div>
+</div>
+</main>
+<footer class="foot">
+<div class="foot-top">
+<div>
+<a class="brand" href="/" aria-label="Qyrex, início">
+<img src="assets/icon-pixel.svg" width="32" height="32" alt="" decoding="async">
+<span>QYREX</span>
+</a>
+<p>Seu ambiente de desenvolvimento.<br>Feito para Windows. Aberto para contribuir.</p>
+</div>
+<nav aria-label="Navegação do rodapé">
+<a href="/#recursos">Recursos</a>
+<a href="/#tour">Tour</a>
+<a href="/download">Download</a>
+<a href="/docs">Docs</a>
+<a href="/roadmap">Roadmap</a>
+<a href="/changelog">Changelog</a>
+<a data-link="repo" href="https://github.com/PQueirozDev/Qyrex">GitHub ↗</a>
+</nav>
+</div>
+<div class="foot-scene" aria-hidden="true">
+<canvas class="dither" data-dither="scene">
+</canvas>
+</div>
+<div class="foot-base">
+<span>Qyrex · gratuito e open source<br><span class="foot-credit">Criado por <a href="https://pqueirozdev.com.br" rel="author">Pedro Queiroz</a></span></span>
+<a data-link="license" href="https://github.com/PQueirozDev/Qyrex/blob/main/LICENSE">Licença MIT</a>
+<a data-link="issues" href="https://github.com/PQueirozDev/Qyrex/issues">Reportar um problema ↗</a>
+</div>
+</footer>
+<aside class="buddy" aria-label="Capivara do site">
+<img src="assets/icon-pixel.svg" width="32" height="32" alt="Capivara" decoding="async">
+<p data-buddy-text>Um projeto de cada vez.</p>
+<button aria-label="Fechar capivara" data-buddy-close>×</button>
+</aside>
+</body>
+</html>

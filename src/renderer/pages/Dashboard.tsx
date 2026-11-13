@@ -18,6 +18,7 @@ import { FocusCardBody } from "@/components/Focus";
 import { DashboardCustomizeDialog, dashboardOrder } from "@/components/DashboardCustomize";
 import { useFocusStore } from "@/stores/useFocusStore";
 import { RUN_STATUS } from "@/components/AutomationRun";
+import { NoticesWidget, ServersWidget } from "@/components/DashboardExtras";
 import type { AutomationRun } from "@shared/types";
 
 /**
@@ -345,6 +346,16 @@ export function Dashboard() {
     automacoes: (
       <Widget title={tr("Automações")} action={<WidgetLink onClick={() => navigate("automacoes")}>{tr("Abrir")}</WidgetLink>}>
         <AutomationRunsList />
+      </Widget>
+    ),
+    servidores: (
+      <Widget title={tr("Servidores ativos")} action={<WidgetLink onClick={() => navigate("processos", "monitor")}>{tr("Monitor")}</WidgetLink>}>
+        <ServersWidget />
+      </Widget>
+    ),
+    avisos: (
+      <Widget title={tr("Avisos importantes")}>
+        <NoticesWidget />
       </Widget>
     ),
     projetos: (

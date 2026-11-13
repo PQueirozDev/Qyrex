@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useSettingsStore } from "@/stores/useSettingsStore";
+import { DitherGlow } from "@/components/ui/Brand";
+import { CHANGELOG } from "@shared/changelog";
 // Só a capivara com a laranja, sem o quadrado de fundo do ícone (site/pixel/pixel.mjs).
 import markUrl from "@/assets/logo-mark.svg";
 import { tr } from "@/lib/i18n";
@@ -8,7 +10,7 @@ import { tr } from "@/lib/i18n";
 /** Espelho da preferência no localStorage: decide antes das configurações carregarem. */
 const SPLASH_KEY = "qrz.splash";
 /** Tempo mínimo em tela para a animação terminar (a saída vem depois). */
-const MIN_MS = 2600;
+const MIN_MS = 1700;
 const NAME = "Qyrex";
 
 function storedEnabled(): boolean {
@@ -24,10 +26,11 @@ function storedEnabled(): boolean {
  * com brilho laranja e vapor em pixels; o nome sobe letra a letra por uma
  * máscara e a barrinha acompanha o carregamento real. A tela se dissolve no
  * app quando as configurações carregam.
- * Desligável em Configurações → Aparência (a preferência manda, não o "reduzir
- * movimento" do Windows, que otimizadores costumam ligar).
+ * Desligável em Configurações → Aparência; com movimento reduzido, a marca fica
+ * estática e a tela sai assim que as configurações carregam.
  */
 export function SplashScreen() {
+  const reducedMotion = useReducedMotion();
   const settings = useSettingsStore((s) => s.settings);
   const [enabled] = useState(storedEnabled);
   const [started, setStarted] = useState(false);
@@ -40,13 +43,13 @@ export function SplashScreen() {
     let timer = 0;
     const raf = requestAnimationFrame(() => {
       setStarted(true);
-      timer = window.setTimeout(() => setMinElapsed(true), MIN_MS);
+      timer = window.setTimeout(() => setMinElapsed(true), reducedMotion ? 0 : MIN_MS);
     });
     return () => {
       cancelAnimationFrame(raf);
       window.clearTimeout(timer);
     };
-  }, []);
+  }, [reducedMotion]);
 
   const pref = settings?.splashAnimation;
   useEffect(() => {
@@ -65,7 +68,7 @@ export function SplashScreen() {
       {visible && (
         <motion.div
           key="splash"
-          className="drag-region fixed inset-0 z-[200] flex items-center justify-center bg-bg"
+          className="drag-region fixed inset-0 z-[200] flex items-center justify-center overflow-hidden bg-bg"
           // Saída: um círculo se abre a partir do símbolo e revela o app inteiro.
           style={{
             maskImage: "radial-gradient(circle at 50% 50%, transparent var(--hole), #000 calc(var(--hole) + 1px))",
@@ -73,11 +76,14 @@ export function SplashScreen() {
           }}
           initial={{ "--hole": "0vmax" }}
           animate={{ "--hole": "0vmax" }}
-          exit={{ "--hole": "80vmax", transition: { delay: 0.2, duration: 0.7, ease: [0.65, 0, 0.35, 1] } }}
+          exit={{ "--hole": "80vmax", transition: { duration: reducedMotion ? 0 : 0.65, ease: [0.65, 0, 0.35, 1] } }}
           aria-hidden
           data-splash
         >
-          {started && <SplashContent ready={settings !== null} />}
+          <DitherGlow className="absolute inset-0 h-full w-full opacity-[0.15]" strength={0.4} />
+          <div className="pointer-events-none absolute h-[360px] w-[500px] max-w-full rounded-full bg-[radial-gradient(ellipse,rgb(var(--accent)/0.08),transparent_65%)]" />
+          {started && <SplashContent ready={settings !== null} reducedMotion={!!reducedMotion} />}
+          <span className="absolute bottom-8 font-mono text-[10px] tracking-widest text-text-faint">v{CHANGELOG[0].version}</span>
         </motion.div>
       )}
     </AnimatePresence>
@@ -92,23 +98,23 @@ const STEAM = [
   { x: 24, delay: 1.8, size: 3 },
 ];
 
-function SplashContent({ ready }: { ready: boolean }) {
+function SplashContent({ ready, reducedMotion }: { ready: boolean; reducedMotion: boolean }) {
   return (
     <motion.div
       className="relative flex flex-col items-center"
-      exit={{ opacity: 0, scale: 1.12, transition: { duration: 0.4, ease: "easeIn" } }}
+      exit={{ opacity: 0, scale: reducedMotion ? 1 : 1.06, transition: { duration: reducedMotion ? 0 : 0.3, ease: "easeIn" } }}
     >
       {/* Brilho laranja da marca que acende atrás da capivara. */}
       <motion.div
         aria-hidden
-        className="pointer-events-none absolute -top-8 h-36 w-36 rounded-full bg-[radial-gradient(circle,rgb(255_154_60/0.28),transparent_65%)] blur-xl"
+        className="pointer-events-none absolute -top-8 h-36 w-36 rounded-full bg-[radial-gradient(circle,rgb(var(--accent)/0.24),transparent_65%)] blur-xl"
         initial={{ opacity: 0, scale: 0.6 }}
         animate={{ opacity: [0, 1, 0.75], scale: [0.6, 1.1, 1] }}
         transition={{ duration: 1.6, ease: "easeOut", times: [0, 0.55, 1] }}
       />
 
       <div className="relative h-[69px] w-[87px]">
-        {STEAM.map((p, i) => (
+        {!reducedMotion && STEAM.map((p, i) => (
           <motion.span
             key={i}
             aria-hidden
@@ -124,9 +130,9 @@ function SplashContent({ ready }: { ready: boolean }) {
           alt=""
           draggable={false}
           // 29×23 px desenhados em 3× (escala inteira: o pixel art não borra).
-          className="relative h-[69px] w-[87px] [image-rendering:pixelated] drop-shadow-[0_10px_28px_rgb(255_154_60/0.35)]"
-          initial={{ opacity: 0, y: -28 }}
-          animate={{ opacity: 1, y: [-28, 0, -4, 0], scaleY: [1, 0.9, 1.03, 1], scaleX: [1, 1.08, 0.98, 1] }}
+          className="relative h-[69px] w-[87px] [image-rendering:pixelated] drop-shadow-[0_10px_28px_rgb(var(--accent)/0.25)]"
+          initial={{ opacity: 0, y: reducedMotion ? 0 : -18 }}
+          animate={reducedMotion ? { opacity: 1 } : { opacity: 1, y: [-18, 0, -3, 0], scaleY: [1, 0.94, 1.02, 1], scaleX: [1, 1.04, 0.99, 1] }}
           transition={{ duration: 1.1, times: [0, 0.45, 0.7, 1], ease: "easeOut", opacity: { duration: 0.3 } }}
           style={{ originY: 1 }}
         />
@@ -145,9 +151,9 @@ function SplashContent({ ready }: { ready: boolean }) {
         {NAME.split("").map((letter, i) => (
           <motion.span
             key={i}
-            initial={{ y: "110%" }}
+            initial={{ y: reducedMotion ? "0%" : "110%" }}
             animate={{ y: "0%" }}
-            transition={{ delay: 0.75 + i * 0.07, type: "spring", stiffness: 260, damping: 24 }}
+            transition={{ delay: reducedMotion ? 0 : 0.45 + i * 0.05, type: "spring", stiffness: 260, damping: 24 }}
           >
             {letter}
           </motion.span>
@@ -157,25 +163,28 @@ function SplashContent({ ready }: { ready: boolean }) {
         className="mt-0.5 text-[11px] tracking-wide text-text-faint"
         initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.3, duration: 0.5 }}
+        transition={{ delay: reducedMotion ? 0 : 0.8, duration: 0.35 }}
       >
         {tr("Seu espaço de trabalho de dev")}
       </motion.p>
 
       {/* Barrinha ligada ao carregamento real: anda até ~85% e só completa quando o app está pronto. */}
       <motion.div
-        className="mt-4 h-[3px] w-24 overflow-hidden rounded-full bg-bg-hover"
+        className="mt-6 h-[2px] w-32 overflow-hidden rounded-full bg-bg-hover"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1.1, duration: 0.3 }}
+        transition={{ delay: reducedMotion ? 0 : 0.7, duration: 0.3 }}
       >
         <motion.div
-          className="h-full rounded-full bg-gradient-to-r from-accent to-[#ff9a3c]"
+          className="h-full rounded-full bg-accent"
           initial={{ width: "0%" }}
           animate={{ width: ready ? "100%" : "85%" }}
           transition={ready ? { duration: 0.5, ease: "easeOut" } : { delay: 1.2, duration: 1.6, ease: [0.65, 0, 0.35, 1] }}
         />
       </motion.div>
+      <motion.p className="mt-2 text-[10px] text-text-faint" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: reducedMotion ? 0 : 0.85 }}>
+        {ready ? tr("Tudo pronto") : tr("Preparando seu ambiente")}
+      </motion.p>
     </motion.div>
   );
 }

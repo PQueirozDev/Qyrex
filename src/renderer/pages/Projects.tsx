@@ -24,9 +24,14 @@ import {
   ImagePlus,
   ScanSearch,
   LayoutGrid,
+  LayoutDashboard,
   List,
+  Loader2,
+  CircleCheck,
+  CircleX,
+  CircleSlash,
 } from "lucide-react";
-import type { GitHubOverview, ProjectIconMode, ProjectStatus, ProjectWithGit } from "@shared/types";
+import type { GitHubOverview, GitHubWorkflowRun, ProjectIconMode, ProjectStatus, ProjectWithGit } from "@shared/types";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Dialog } from "@/components/ui/Dialog";
@@ -35,6 +40,7 @@ import { TaskFormDialog } from "@/components/TaskFormDialog";
 import { GitPanel } from "@/components/GitPanel";
 import { CommitSparkline, LanguageBar, useProjectInsights } from "@/components/ProjectInsights";
 import { ProjectScriptsSection } from "@/components/runner/ProjectScripts";
+import { EnvSection } from "@/components/EnvSection";
 import { useFocusSummary } from "@/components/Focus";
 import { formatUsage } from "@/components/AppUsage";
 import { useFocusStore } from "@/stores/useFocusStore";
@@ -282,6 +288,14 @@ function ProjectFormDialog({
 
 // --- Drawer de detalhes -------------------------------------------------------------
 
+/** Ícone e cor de uma execução do Actions. */
+function RunStatus({ run }: { run: GitHubWorkflowRun }) {
+  if (run.status !== "completed") return <Loader2 size={12} className="shrink-0 animate-spin text-warning" aria-label={tr("Rodando")} />;
+  if (run.conclusion === "success") return <CircleCheck size={12} className="shrink-0 text-success" aria-label={tr("Passou")} />;
+  if (run.conclusion === "failure" || run.conclusion === "timed_out") return <CircleX size={12} className="shrink-0 text-danger" aria-label={tr("Falhou")} />;
+  return <CircleSlash size={12} className="shrink-0 text-text-faint" aria-label={run.conclusion ?? ""} />;
+}
+
 function GitHubSection({ url }: { url: string }) {
   const [data, setData] = useState<GitHubOverview | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -343,6 +357,22 @@ function GitHubSection({ url }: { url: string }) {
           <ExternalLink size={12} />
         </Button>
       </div>
+      {data.runs.length > 0 && (
+        <div>
+          <p className="section-title mb-1">{tr("CI (GitHub Actions)")}</p>
+          <div className="space-y-1">
+            {data.runs.slice(0, 5).map((r) => (
+              <button key={r.id} onClick={() => open(r.htmlUrl)} className="flex w-full items-center gap-2 rounded-md px-1 py-1 text-left text-xs hover:bg-bg-hover">
+                <RunStatus run={r} />
+                <span className="shrink-0 font-medium text-text-muted">{r.name}</span>
+                <span className="min-w-0 flex-1 truncate text-text">{r.title}</span>
+                {r.branch && <span className="max-w-[90px] shrink-0 truncate font-mono text-[10.5px] text-text-faint">{r.branch}</span>}
+                <span className="shrink-0 text-text-faint">{timeAgo(r.createdAt)}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <div>
         <p className="section-title mb-1">{tr("Pull requests abertos")}</p>
         {list(data.pulls, GitPullRequest, "Nenhum PR aberto.")}
@@ -433,6 +463,9 @@ function ProjectDrawer({
           <div className="flex flex-wrap gap-1.5 pt-1">
             <Button size="sm" onClick={() => void open(project, "vscode")}>
               <Code2 size={13} />{" "}{tr("VS Code")}</Button>
+            <Button size="sm" variant="secondary" onClick={() => navigate("workspace", project.id)} title={tr("Abrir no Workspace")}>
+              <LayoutDashboard size={13} /> {tr("Workspace")}
+            </Button>
             <Button size="sm" variant="secondary" onClick={() => navigate("editor", project.localPath)} title={tr("Editar no Qyrex")}>
               <FileCode2 size={13} />{" "}{tr("Editor")}</Button>
             <Button size="sm" variant="secondary" onClick={() => navigate("terminal", project.id)}>
@@ -449,6 +482,7 @@ function ProjectDrawer({
         </div>
 
         {!project.archivedAt && <ProjectScriptsSection projectId={project.id} />}
+        {!project.archivedAt && <EnvSection projectId={project.id} projectPath={project.localPath} />}
 
         <section>
           <p className="section-title mb-2">{tr("Git")}</p>
@@ -522,11 +556,14 @@ function QuickActions({ project, className }: { project: ProjectWithGit; classNa
 
 function ProjectMenu({ project, onOpen, onDelete }: { project: ProjectWithGit; onOpen: () => void; onDelete: () => void }) {
   const { toggleFavorite } = useProjectsStore();
+  const navigate = useUIStore((s) => s.navigate);
   return (
     <Menu
       trigger={<MoreHorizontal size={15} />}
+      label={tr("Mais opções")}
       items={[
         { label: tr("Detalhes"), icon: Code2, onSelect: onOpen },
+        { label: tr("Abrir no Workspace"), icon: LayoutDashboard, onSelect: () => navigate("workspace", project.id) },
         { label: project.favorite ? tr("Remover dos favoritos") : tr("Favoritar"), icon: Star, onSelect: () => void toggleFavorite(project.id) },
         project.archivedAt
           ? { label: tr("Desarquivar"), icon: ArchiveRestore, onSelect: () => void toggleArchive(project) }

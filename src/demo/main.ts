@@ -1,6 +1,7 @@
 // Demo web do Qyrex (portfólio): a interface REAL do app, com `window.workspace`
 // simulado. A simulação é instalada antes de importar o app.
 import { resetDemo, workspaceMock } from "./workspaceMock";
+import { CHANGELOG } from "../shared/changelog";
 
 window.workspace = workspaceMock;
 
@@ -16,7 +17,7 @@ if (lang && sessionStorage.getItem("qrz-demo-lang") !== lang) {
 const en = (localStorage.getItem("qrz.language") ?? "pt") === "en";
 const badge = document.createElement("div");
 badge.className = "demo-badge";
-badge.innerHTML = `<span class="demo-dot"></span><b>${en ? "Demo" : "Demo"}</b><span>${en ? "sample data · changes last only this visit" : "dados fictícios · alterações valem só nesta visita"}</span><button type="button">${en ? "Reset" : "Restaurar"}</button>`;
+badge.innerHTML = `<span class="demo-dot"></span><b>Demo ${CHANGELOG[0].version}</b><span>${en ? "sample data · changes last only this visit" : "dados fictícios · alterações valem só nesta visita"}</span><button type="button">${en ? "Reset" : "Restaurar"}</button>`;
 badge.querySelector("button")!.addEventListener("click", resetDemo);
 document.body.appendChild(badge);
 

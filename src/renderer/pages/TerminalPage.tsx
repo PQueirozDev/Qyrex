@@ -13,9 +13,9 @@ import { useSettingsStore } from "@/stores/useSettingsStore";
 import { toast, useUIStore } from "@/stores/useUIStore";
 
 import { tr } from "@/lib/i18n";
-type Shell = "powershell" | "cmd" | "claude" | "codex";
+export type Shell = "powershell" | "cmd" | "claude" | "codex";
 /** starting: abrindo; busy: produzindo saída; idle: parado esperando o usuário; ended: processo encerrado. */
-type Status = "starting" | "busy" | "idle" | "ended";
+export type Status = "starting" | "busy" | "idle" | "ended";
 type Layout = "tabs" | "grid";
 
 const SHELL_LABEL: Record<Shell, string> = { powershell: "PowerShell", cmd: "CMD", claude: "Claude Code", codex: "Codex" };
@@ -67,7 +67,7 @@ function cssColor(name: string, alpha?: number): string {
   return alpha === undefined ? `rgb(${rgb})` : `rgba(${rgb}, ${alpha})`;
 }
 
-interface Tab {
+export interface Tab {
   key: string;
   cwd: string;
   shell: Shell;
@@ -91,7 +91,7 @@ function StatusDot({ status }: { status: Status | undefined }) {
   );
 }
 
-function TerminalView({
+export function TerminalView({
   tab,
   layout,
   shown,
@@ -427,7 +427,7 @@ export function TerminalPage({ visible = true }: { visible?: boolean }) {
 
   const targetLabel = locations.find((l) => l.value === target)?.label ?? basename(target);
   const grid = layout === "grid" && tabs.length > 0;
-  const columns = Math.ceil(Math.sqrt(tabs.length));
+  const columns = tabs.length === 3 ? 3 : Math.ceil(Math.sqrt(tabs.length));
   const rows = Math.ceil(tabs.length / Math.max(1, columns));
 
   const toolbar = (

@@ -1,563 +1,373 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Qyrex: a central de trabalho do desenvolvedor</title>
-  <meta name="description" content="Qyrex é um app desktop open source para Windows que reúne projetos com git, terminal, IA pela sua assinatura, automações e tarefas. Roda no seu PC, sem conta e sem nuvem." />
-  <link rel="canonical" href="https://qyrex.pqueirozdev.com.br/" />
-  <meta property="og:site_name" content="Qyrex" />
-  <meta property="og:locale" content="pt_BR" />
-  <meta property="og:title" content="Qyrex: seu dia de trabalho numa janela só" />
-  <meta property="og:description" content="Projetos com git, terminal, IA, automações e tarefas num app desktop open source. Roda no seu PC, sem conta e sem nuvem." />
-  <meta property="og:image" content="https://qyrex.pqueirozdev.com.br/assets/og-cover.png" />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://qyrex.pqueirozdev.com.br/" />
-  <meta name="twitter:title" content="Qyrex: seu dia de trabalho numa janela só" />
-  <meta name="twitter:description" content="App desktop open source para desenvolvedores. Roda no seu PC, sem conta e sem nuvem." />
-  <meta name="twitter:image" content="https://qyrex.pqueirozdev.com.br/assets/og-cover.png" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="theme-color" content="#0d1020" />
-  <link rel="icon" href="assets/icon-pixel.svg" type="image/svg+xml" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Silkscreen:wght@400;700&display=swap" />
-  <link rel="stylesheet" href="styles.css" />
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "Qyrex",
-    "applicationCategory": "DeveloperApplication",
-    "operatingSystem": "Windows 10, Windows 11",
-    "description": "Central de trabalho desktop open source para desenvolvedores: projetos com git, terminal, IA, automações e tarefas num app só.",
-    "url": "https://qyrex.pqueirozdev.com.br/",
-    "downloadUrl": "https://github.com/PQueirozDev/QrzSpace-releases/releases/latest/download/Qyrex-Setup.exe",
-    "license": "https://opensource.org/licenses/MIT",
-    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "BRL" },
-    "author": { "@type": "Person", "name": "Pedro Queiroz" }
-  }
-  </script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qyrex — seu ambiente de desenvolvimento</title>
+<meta name="description" content="Projetos, terminal, Git, preview e IA em um workspace integrado para Windows. Gratuito e open source.">
+<link rel="canonical" href="https://qyrex.pqueirozdev.com.br/">
+<meta property="og:site_name" content="Qyrex">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Qyrex — seu ambiente de desenvolvimento">
+<meta property="og:description" content="Projetos, terminal, Git, preview e IA em um workspace integrado para Windows. Gratuito e open source.">
+<meta property="og:url" content="https://qyrex.pqueirozdev.com.br/">
+<meta property="og:image" content="https://qyrex.pqueirozdev.com.br/assets/og-cover.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Qyrex — seu ambiente de desenvolvimento">
+<meta name="twitter:description" content="Projetos, terminal, Git, preview e IA em um workspace integrado para Windows. Gratuito e open source.">
+<meta name="twitter:image" content="https://qyrex.pqueirozdev.com.br/assets/og-cover.png">
+<meta name="theme-color" content="#0d1020">
+<link rel="icon" href="assets/icon-pixel.svg">
+<link rel="stylesheet" href="styles.css">
+<script src="app.js" defer>
+</script>
+<script src="common.js" defer>
+</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Qyrex", "operatingSystem": "Windows", "applicationCategory": "DeveloperApplication", "offers": {"@type": "Offer", "price": 0, "priceCurrency": "BRL"}, "license": "https://opensource.org/licenses/MIT", "url": "https://qyrex.pqueirozdev.com.br/"}</script>
 </head>
 <body>
 <a class="skip" href="#conteudo">Pular para o conteúdo</a>
-<div class="page">
-  <div class="frame">
-    <span class="corner bl"></span><span class="corner br"></span>
-
-    <header class="topbar">
-      <a class="brand" href="#top" aria-label="Qyrex, início">
-        <img src="assets/icon-pixel.svg" alt="" width="24" height="24" />
-        <span>QYREX</span>
-      </a>
-      <nav class="nav" aria-label="Seções">
-        <a href="#orquestra">orquestra</a>
-        <a href="#recursos">recursos</a>
-        <a href="#temas">temas</a>
-        <a href="#seguranca">segurança</a>
-        <a href="#perguntas">perguntas</a>
-      </nav>
-      <div class="actions">
-        <a class="btn-ghost" data-link="repo" href="https://github.com/PQueirozDev/Qyrex" target="_blank" rel="noopener noreferrer" aria-label="Código no GitHub">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
-          <span>GitHub</span>
-        </a>
-        <a class="btn" href="#download">Baixar</a>
-        <button type="button" class="menu-btn" aria-label="Abrir menu" aria-expanded="false" aria-controls="menu"><i></i><i></i></button>
-      </div>
-    </header>
-
-    <div class="menu" id="menu" hidden>
-      <nav aria-label="Menu">
-        <a href="#orquestra">Orquestra</a>
-        <a href="#interface">O app</a>
-        <a href="#recursos">Recursos</a>
-        <a href="#temas">Temas</a>
-        <a href="#seguranca">Segurança</a>
-        <a href="#perguntas">Perguntas</a>
-        <a href="#download">Baixar para Windows</a>
-      </nav>
-    </div>
-
-    <main id="conteudo">
-      <!-- Hero: o nome atrás, a capivara no meio, o contorno na frente; depois a promessa e o app -->
-      <section id="top" class="hero">
-        <span class="brk"></span>
-        <div class="stage">
-          <div class="text-col">
-            <p class="kicker"><span class="dot"></span> v<span data-version>2.0.0</span> · open source · Windows</p>
-            <span class="word word-back">QYREX</span>
-            <span class="word word-front" aria-hidden="true">QYREX</span>
-          </div>
-          <div class="capy" aria-hidden="true"><img src="assets/capy-sheet.png" alt="" class="px" /></div>
-        </div>
-        <div class="hero-copy">
-          <h1 class="hero-title">Seu dia de trabalho<br />numa janela só.</h1>
-          <p class="hero-sub">Projetos com git, terminal, IA, automações e tarefas num app que roda no seu PC e abre o VS Code, o terminal e o GitHub já na pasta certa.</p>
-          <div class="hero-cta">
-            <a class="btn big" data-link="download" href="https://github.com/PQueirozDev/QrzSpace-releases/releases/latest/download/Qyrex-Setup.exe">Baixar para Windows <span class="mono">.exe</span></a>
-            <a class="tlink" data-link="repo" href="https://github.com/PQueirozDev/Qyrex" target="_blank" rel="noopener noreferrer">Ver o código no GitHub <span aria-hidden="true">→</span></a>
-          </div>
-          <p class="fine mono">grátis · licença MIT · sem conta · sem nuvem</p>
-        </div>
-
-        <!-- A pixel art original: o onsen noturno, em vídeo -->
-        <figure class="hero-shot">
-          <div class="win-bar">
-            <span class="lights"><i></i><i></i><i></i></span>
-            <span class="win-title">qyrex · onsen noturno</span>
-            <span class="win-meta">320×180 · 12 fps</span>
-          </div>
-          <video class="px" autoplay muted loop playsinline preload="auto" poster="assets/qyrex-onsen-poster.png" aria-label="Pixel art animada: uma capivara com uma laranja na cabeça relaxa num onsen à noite enquanto um notebook numa bandeja de madeira digita código sozinho.">
-            <source src="assets/qyrex-onsen.webm" type="video/webm" />
-            <source src="assets/qyrex-onsen.mp4" type="video/mp4" />
-          </video>
-        </figure>
-      </section>
-
-      <!-- Frase central: as palavras acendem conforme a página rola -->
-      <section class="section manifesto" aria-label="O que o Qyrex faz">
-        <p class="eyebrow">a ideia</p>
-        <p class="reveal-words" data-reveal-words>O Qyrex não tenta substituir o seu editor, o seu terminal nem o seu git. Ele lembra onde cada projeto mora e abre tudo no lugar certo, na hora certa.</p>
-      </section>
-
-      <!-- Vídeo de divulgação -->
-      <section id="video" class="section">
-        <div class="sec-head">
-          <p class="eyebrow">em 28 segundos</p>
-          <h2>Veja o Qyrex por dentro.</h2>
-        </div>
-        <figure class="promo">
-          <video controls playsinline preload="metadata" poster="assets/qyrex-divulgacao-poster.webp" width="1280" height="720" aria-label="Vídeo de 28 segundos mostrando as telas do Qyrex: Início, Projetos, Git visual, IA, Automações e Tarefas.">
-            <source src="assets/qyrex-divulgacao.mp4" type="video/mp4" />
-          </video>
-        </figure>
-      </section>
-
-      <!-- As telas de verdade, sobre o onsen pontilhado -->
-      <section id="interface" class="section shot-sec">
-        <div class="sec-head">
-          <p class="eyebrow">por dentro</p>
-          <h2>Abre no que importa hoje.</h2>
-          <p class="sub">Tarefas em foco, compromissos, commits recentes e atalhos para o que você mais abre. As telas abaixo são o app de verdade, com dados de exemplo.</p>
-        </div>
-        <div class="shot-tabs" role="group" aria-label="Telas do app">
-          <button type="button" class="chip on" data-shot="inicio" data-title="Início" aria-pressed="true">início</button>
-          <button type="button" class="chip" data-shot="projetos" data-title="Projetos" aria-pressed="false">projetos</button>
-          <button type="button" class="chip" data-shot="git" data-title="Git visual" aria-pressed="false">git visual</button>
-          <button type="button" class="chip" data-shot="ia" data-title="IA" aria-pressed="false">IA</button>
-          <button type="button" class="chip" data-shot="automacoes" data-title="Automações" aria-pressed="false">automações</button>
-          <button type="button" class="chip" data-shot="tarefas" data-title="Tarefas" aria-pressed="false">tarefas</button>
-        </div>
-        <div class="app-stage">
-          <canvas class="dither" data-dither="image" data-src="assets/qyrex-onsen-poster.png" data-focus="0.5" aria-hidden="true"></canvas>
-          <figure class="app-shot">
-            <div class="win-bar"><span class="lights"><i></i><i></i><i></i></span><span class="win-title">Qyrex · <span data-shot-title>Início</span></span><span class="win-meta">dados de exemplo</span></div>
-            <img data-shot-img src="assets/app-inicio.webp" width="1440" height="804" loading="lazy" alt="Tela do Qyrex com dados de exemplo." />
-          </figure>
-        </div>
-      </section>
-
-      <!-- Orquestra: o Qyrex no centro, os programas em volta -->
-      <section id="orquestra" class="section orch-sec">
-        <div class="sec-head">
-          <p class="eyebrow">orquestra</p>
-          <h2>Ele abre o que você já usa.</h2>
-          <p class="sub">Escolha um cenário e acompanhe o caminho. Cada passo chama o programa certo, com a pasta certa, sem você procurar nada.</p>
-        </div>
-        <div class="orch">
-          <span class="brk"></span>
-          <div class="orch-grid"></div>
-          <svg class="wires" aria-hidden="true"></svg>
-          <div class="hub" data-node="hub">
-            <img src="assets/icon-pixel.svg" alt="" class="px" width="28" height="28" />
-            <div><b>qyrex</b><span data-hub-status>esperando</span></div>
-            <i class="led"></i>
-          </div>
-          <!-- Cartões posicionados em % (script liga os fios) -->
-          <div class="node" data-node="vscode" style="--x:14%;--y:22%"><span class="n-ico">{ }</span><span class="n-name">VS Code</span><span class="n-task">abrir projeto</span></div>
-          <div class="node" data-node="terminal" style="--x:14%;--y:52%"><span class="n-ico">&gt;_</span><span class="n-name">Terminal</span><span class="n-task">PowerShell na pasta</span></div>
-          <div class="node" data-node="github" style="--x:14%;--y:82%"><span class="n-ico">⑂</span><span class="n-name">GitHub</span><span class="n-task">issues e PRs</span></div>
-          <div class="node" data-node="claude" style="--x:50%;--y:14%"><span class="n-ico">✳</span><span class="n-name">Claude Code</span><span class="n-task">pela assinatura</span></div>
-          <div class="node" data-node="codex" style="--x:50%;--y:88%"><span class="n-ico">◎</span><span class="n-name">Codex</span><span class="n-task">pela assinatura</span></div>
-          <div class="node" data-node="explorer" style="--x:86%;--y:22%"><span class="n-ico">▤</span><span class="n-name">Explorer</span><span class="n-task">pasta do projeto</span></div>
-          <div class="node" data-node="agenda" style="--x:86%;--y:52%"><span class="n-ico">▦</span><span class="n-name">Agenda</span><span class="n-task">Google Agenda</span></div>
-          <div class="node" data-node="spotify" style="--x:86%;--y:82%"><span class="n-ico">♫</span><span class="n-name">Mídia</span><span class="n-task">mini player</span></div>
-          <div class="orch-log" aria-live="polite">
-            <div class="log-head"><span>registro</span><span data-log-scene>feature</span></div>
-            <ol data-log></ol>
-          </div>
-          <div class="scenes" role="group" aria-label="Cenários">
-            <span class="sc-label">cenário</span>
-            <button type="button" class="chip on" data-scene="feature" aria-pressed="true">feature nova</button>
-            <button type="button" class="chip" data-scene="bug" aria-pressed="false">caçar bug</button>
-            <button type="button" class="chip" data-scene="release" aria-pressed="false">release</button>
-            <button type="button" class="chip" data-scene="review" aria-pressed="false">code review</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- Recursos -->
-      <section id="recursos" class="section flush">
-        <div class="sec-head pad">
-          <p class="eyebrow">recursos</p>
-          <h2>Um dia inteiro de trabalho, numa janela.</h2>
-        </div>
-        <div class="grid">
-          <article class="cell">
-            <p class="ck"><span class="i">▣</span> projetos</p>
-            <h3>Projetos com git</h3>
-            <p class="cp">Cards com tecnologias lidas do <code>package.json</code>, diff de cada arquivo, commit só do que você marcar, branches e aviso de conflito. Pull e push sempre com confirmação.</p>
-            <div class="mock">
-              <div class="m-win">
-                <div class="m-bar"><span class="m-sw" style="--c:#ff9a3c"></span><b>barbearia-site</b><span class="pill">main</span><span class="st ok"></span></div>
-                <div class="m-body mono">
-                  <div class="dim">3 alterações · 2 commits à frente</div>
-                  <div><span class="add">M</span> src/pages/Agenda.tsx</div>
-                  <div><span class="add">A</span> src/lib/horarios.ts</div>
-                  <div class="row-btns"><span class="mbtn">Commit</span><span class="mbtn">Push</span><span class="mbtn ghost">VS Code</span></div>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <article class="cell">
-            <p class="ck"><span class="i">&gt;_</span> terminal</p>
-            <h3>Terminal de verdade</h3>
-            <p class="cp">xterm.js com node-pty, abas, PowerShell ou CMD, já aberto na pasta do projeto. Troque de aba e ele continua rodando.</p>
-            <div class="mock">
-              <div class="m-win">
-                <div class="m-bar"><span class="tab on">loja-online</span><span class="tab">bot-discord</span><span class="tab">+</span></div>
-                <div class="m-body mono">
-                  <div><span class="dim">PS C:\Projetos\loja-online&gt;</span> npm run dev</div>
-                  <div class="ok-t">✓ ready in 412 ms</div>
-                  <div class="dim">➜ Local: http://localhost:5173/</div>
-                  <div><span class="dim">PS&gt;</span> <span class="cur"></span></div>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <article class="cell">
-            <p class="ck"><span class="i">✳</span> ia</p>
-            <h3>IA pela sua assinatura</h3>
-            <p class="cp">Usa o Claude Code e o Codex já logados no seu PC, sem API key. Comandos sugeridos só rodam depois da sua permissão.</p>
-            <div class="mock">
-              <div class="m-win">
-                <div class="m-body">
-                  <div class="bubble me">Como subo o ambiente desse projeto?</div>
-                  <div class="bubble ai">No terminal do projeto:
-                    <div class="code mono"><span>npm run dev</span><span class="mbtn run">Executar</span></div>
-                  </div>
-                  <div class="perm mono">risco baixo · permitir uma vez?</div>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <article class="cell">
-            <p class="ck"><span class="i">⚖</span> council</p>
-            <h3>AI Council</h3>
-            <p class="cp">A mesma pergunta para vários modelos, respostas lado a lado e uma síntese no fim. Ele avisa quantos providers vai usar antes de enviar.</p>
-            <div class="mock">
-              <div class="council">
-                <div class="cc"><b>Claude</b><i></i><i class="w70"></i><i class="w50"></i></div>
-                <div class="cc"><b>OpenAI</b><i class="w80"></i><i></i><i class="w40"></i></div>
-                <div class="cc"><b>Gemini</b><i class="w60"></i><i class="w90"></i><i class="w30"></i></div>
-                <div class="cc syn"><b>síntese</b><i></i><i class="w80"></i></div>
-              </div>
-            </div>
-          </article>
-
-          <article class="cell">
-            <p class="ck"><span class="i">☑</span> tarefas</p>
-            <h3>Tarefas e kanban</h3>
-            <p class="cp">Hoje, Próximas e Concluídas, ou em colunas. Prioridade, prazo e projeto. <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>T</kbd> cria de qualquer lugar.</p>
-            <div class="mock">
-              <div class="kanban">
-                <div class="kc"><span class="kh">a fazer</span><span class="kt"><i class="pr hi"></i>Corrigir fuso da agenda</span><span class="kt"><i class="pr"></i>Testes do checkout</span></div>
-                <div class="kc"><span class="kh">fazendo</span><span class="kt hot"><i class="pr md"></i>Tela de agenda</span></div>
-                <div class="kc"><span class="kh">feito</span><span class="kt done">Deploy v2.3.1</span><span class="kt done">Migrar para Vite</span></div>
-              </div>
-            </div>
-          </article>
-
-          <article class="cell">
-            <p class="ck"><span class="i">{ }</span> editor</p>
-            <h3>Editor embutido</h3>
-            <p class="cp">Monaco para o ajuste rápido sem abrir o VS Code: um <code>.env</code>, um README, uma linha de config. Avisa se o arquivo mudou fora do app antes de salvar.</p>
-            <div class="mock">
-              <div class="m-win">
-                <div class="m-bar"><span class="tab on">vite.config.ts</span><span class="tab">.env.example</span></div>
-                <div class="m-body mono">
-                  <div><span class="dim">12</span>  server: {</div>
-                  <div><span class="dim">13</span>    port: <span class="add">5174</span>,</div>
-                  <div><span class="dim">14</span>  },<span class="cur"></span></div>
-                  <div class="row-btns"><span class="mbtn">Salvar</span><span class="mbtn ghost">Abrir no VS Code</span></div>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <article class="cell">
-            <p class="ck"><span class="i">⑂</span> github</p>
-            <h3>Issues e pull requests</h3>
-            <p class="cp">As issues e os PRs abertos de cada repositório ao lado do projeto. Conecte pelo <code>gh</code> que já está logado no seu PC, sem colar token.</p>
-            <div class="mock">
-              <div class="clients">
-                <div class="cl"><span class="av" style="--c:#7bd88f">#43</span><span><b>Corrige parse de data no Safari</b><em>PR · loja-online · 2 checks ok</em></span><span class="due">aberto</span></div>
-                <div class="cl"><span class="av" style="--c:#ff9a3c">#42</span><span><b>Agenda não salva no Safari</b><em>issue · bug</em></span><span class="due soon">hoje</span></div>
-                <div class="cl"><span class="av" style="--c:#7fd4d8">#39</span><span><b>Exportar relatório em CSV</b><em>issue · enhancement</em></span><span class="due off">—</span></div>
-              </div>
-            </div>
-          </article>
-
-          <article class="cell">
-            <p class="ck"><span class="i">▦</span> agenda</p>
-            <h3>Agenda e mini player</h3>
-            <p class="cp">Dia, semana e mês com seus eventos e os do Google Agenda. O mini player lê a mídia que estiver tocando no Windows.</p>
-            <div class="mock">
-              <div class="week">
-                <span class="d">seg<i class="ev" style="--h:40%"></i></span><span class="d">ter</span><span class="d today">qua<i class="ev" style="--h:70%"></i><i class="ev t" style="--h:25%"></i></span><span class="d">qui<i class="ev" style="--h:30%"></i></span><span class="d">sex</span>
-              </div>
-              <div class="player"><span class="cover"></span><span><b>Lo-fi para onsen</b><em>tocando no Windows</em></span><span class="pbar"><i></i></span></div>
-            </div>
-          </article>
-
-          <article class="cell">
-            <p class="ck"><span class="i">⌘</span> palette</p>
-            <h3>Tudo pelo teclado</h3>
-            <p class="cp"><kbd>Ctrl</kbd> <kbd>K</kbd> abre a palette com busca fuzzy em projetos, tarefas, arquivos e ações. Fica na bandeja e avisa por notificação.</p>
-            <div class="mock">
-              <div class="palette">
-                <div class="pq mono"><span class="dim">›</span> barb<span class="cur"></span></div>
-                <div class="pi on"><span>▣</span> barbearia-site <em>projeto</em></div>
-                <div class="pi"><span>☑</span> Barbearia: horário de sábado <em>tarefa</em></div>
-                <div class="pi"><span>&gt;_</span> Abrir terminal em barbearia-site <em>ação</em></div>
-              </div>
-            </div>
-          </article>
-
-          <article class="cell">
-            <p class="ck"><span class="i">◷</span> foco</p>
-            <h3>Modo foco</h3>
-            <p class="cp">Um temporizador no topo, ligado ao projeto. Pausa, retoma e mostra quanto tempo cada projeto recebeu na semana. Meta diária só se você quiser.</p>
-            <div class="mock">
-              <div class="m-win">
-                <div class="m-bar"><b>foco</b><span class="pill">barbearia-site</span></div>
-                <div class="m-body mono">
-                  <div>18:42 <span class="dim">restantes de 25:00</span></div>
-                  <div class="row-btns"><span class="mbtn">Pausar</span><span class="mbtn ghost">Encerrar</span></div>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <article class="cell">
-            <p class="ck"><span class="i">⟳</span> automações</p>
-            <h3>Automações</h3>
-            <p class="cp">Testes, lint, build e checagem do git em sequência, na pasta do projeto. Modelos saem dos scripts do <code>package.json</code>. Nada roda sem você confirmar.</p>
-            <div class="mock">
-              <div class="m-win">
-                <div class="m-bar"><b>verificar o projeto</b><span class="st ok"></span></div>
-                <div class="m-body mono">
-                  <div><span class="ok-t">✓</span> npm run lint</div>
-                  <div><span class="ok-t">✓</span> npm run typecheck</div>
-                  <div><span class="ok-t">✓</span> npm run build</div>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <article class="cell">
-            <p class="ck"><span class="i">⛁</span> backup</p>
-            <h3>Backup e sincronização</h3>
-            <p class="cp">Cópia local verificada todo dia e antes de cada atualização. Para usar em outro PC, sincronize por uma pasta da nuvem, cifrada com a sua senha.</p>
-            <div class="mock">
-              <div class="m-win">
-                <div class="m-body mono">
-                  <div><span class="ok-t">✓</span> automático <span class="dim">· hoje</span></div>
-                  <div><span class="ok-t">✓</span> antes de atualizar <span class="dim">· ontem</span></div>
-                  <div class="row-btns"><span class="mbtn">Fazer backup agora</span><span class="mbtn ghost">Restaurar</span></div>
-                </div>
-              </div>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <!-- Como funciona -->
-      <section id="como" class="section">
-        <div class="sec-head">
-          <p class="eyebrow">como funciona</p>
-          <h2>Do download ao primeiro projeto em três passos.</h2>
-        </div>
-        <ol class="steps">
-          <li>
-            <span class="step-n mono">01</span>
-            <h3>Baixe e abra</h3>
-            <p>Um instalador para Windows 10 e 11. Não existe cadastro: abriu, já está usando.</p>
-          </li>
-          <li>
-            <span class="step-n mono">02</span>
-            <h3>Aponte as suas pastas</h3>
-            <p>Diga onde os projetos ficam. O Qyrex lê as tecnologias do <code>package.json</code> e o estado do git de cada um.</p>
-          </li>
-          <li>
-            <span class="step-n mono">03</span>
-            <h3>Trabalhe de um lugar só</h3>
-            <p><kbd>Ctrl</kbd> <kbd>K</kbd> encontra qualquer projeto, tarefa ou arquivo e abre o programa certo já na pasta certa.</p>
-          </li>
-        </ol>
-      </section>
-
-      <!-- Temas: recolore a página -->
-      <section id="temas" class="section themes-sec">
-        <div class="themes-copy">
-          <p class="eyebrow">temas</p>
-          <h2>Do jeito que você trabalha.</h2>
-          <p class="sub">São os seis temas do app. Escolha um para recolorir esta página inteira, inclusive a paisagem do rodapé. Português ou inglês na interface, nas notificações e nas respostas da IA.</p>
-          <div class="theme-list" role="radiogroup" aria-label="Tema da página">
-            <button type="button" class="tchip on" role="radio" aria-checked="true" data-theme-id="onsen"><i style="--a:#ff9a3c;--b:#0d1020"></i>Onsen</button>
-            <button type="button" class="tchip" role="radio" aria-checked="false" data-theme-id="dark"><i style="--a:#688cff;--b:#0b0d10"></i>Escuro</button>
-            <button type="button" class="tchip" role="radio" aria-checked="false" data-theme-id="light"><i style="--a:#4c6ef5;--b:#f6f7f9"></i>Claro</button>
-            <button type="button" class="tchip" role="radio" aria-checked="false" data-theme-id="midnight"><i style="--a:#22d3ee;--b:#070b16"></i>Meia-noite</button>
-            <button type="button" class="tchip" role="radio" aria-checked="false" data-theme-id="violet"><i style="--a:#a78bfa;--b:#0d0b14"></i>Violeta</button>
-            <button type="button" class="tchip" role="radio" aria-checked="false" data-theme-id="sand"><i style="--a:#c95a26;--b:#f7f3ec"></i>Areia</button>
-          </div>
-          <p class="theme-desc mono" data-theme-desc>Noite azul e laranja de yuzu. O tema deste site.</p>
-        </div>
-        <div class="theme-preview" aria-hidden="true">
-          <div class="tp-side">
-            <div class="tp-brand"><img src="assets/icon-pixel.svg" alt="" class="px" width="16" height="16" /> Qyrex</div>
-            <span class="tp-item on">Início</span><span class="tp-item">Projetos</span><span class="tp-item">Terminal</span><span class="tp-item">IA</span><span class="tp-item">Tarefas</span><span class="tp-item">Automações</span>
-          </div>
-          <div class="tp-main">
-            <div class="tp-hello">Boa noite, Pedro</div>
-            <div class="tp-cards">
-              <div class="tp-card"><em>tarefas em foco</em><b>3</b></div>
-              <div class="tp-card"><em>alterações no git</em><b>12</b></div>
-              <div class="tp-card"><em>commits hoje</em><b>7</b></div>
-            </div>
-            <div class="tp-list"><span><i class="pr hi"></i>Tela de agenda · barbearia-site</span><span><i class="pr md"></i>Revisar PR #43 · loja-online</span><span><i class="pr"></i>Atualizar dependências · bot-discord</span></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Segurança -->
-      <section id="seguranca" class="section">
-        <div class="sec-head">
-          <p class="eyebrow">segurança</p>
-          <h2>Seu PC, suas regras.</h2>
-          <p class="sub">Tudo roda local. O que é sensível pede confirmação, e a IA nunca executa nada sozinha.</p>
-        </div>
-        <dl class="spec">
-          <div><dt>pastas</dt><dd>Só lê e altera arquivos nas pastas que você autorizar. Raiz de disco, pastas do sistema e a sua home inteira são recusadas.</dd></div>
-          <div><dt>segredos</dt><dd>Chaves e tokens ficam no cofre do Windows (DPAPI). Nunca vão para o banco, para a interface nem para os logs.</dd></div>
-          <div><dt>comandos</dt><dd>Processos rodam com <code>spawn</code>, argumentos em lista e sem shell. Comando perigoso nunca pode ser "permitido sempre".</dd></div>
-          <div><dt>git</dt><dd>Commit, pull e push só depois do diálogo. Push nunca é automático e nunca usa <code>--force</code>. Trocar de branch com alterações não commitadas é recusado.</dd></div>
-          <div><dt>automações</dt><dd>Nada é agendado nem roda sozinho. Cada execução mostra os comandos e o risco de cada um e só começa depois da sua confirmação.</dd></div>
-          <div><dt>backup</dt><dd>As cópias ficam no seu PC. Chaves e tokens nunca entram no backup nem na exportação de configurações.</dd></div>
-          <div><dt>janela</dt><dd><code>contextIsolation</code>, <code>sandbox</code> e CSP restritiva. Cada canal IPC confere a origem e valida a entrada com zod.</dd></div>
-          <div><dt>updates</dt><dd>Atualização automática pelo GitHub Releases, com SHA-512 conferido. Instalador adulterado é descartado e nunca há downgrade.</dd></div>
-        </dl>
-      </section>
-
-      <!-- Código aberto -->
-      <section id="codigo" class="section code-sec">
-        <div class="code-copy">
-          <p class="eyebrow">código aberto</p>
-          <h2>Leia, rode, mude.</h2>
-          <p class="sub">O Qyrex é open source. Electron, React e TypeScript strict, com banco SQLite local, 285 testes automatizados e um E2E que percorre a interface inteira.</p>
-          <ul class="stack mono">
-            <li>Electron</li><li>React 18</li><li>TypeScript</li><li>Vite</li><li>Tailwind</li><li>Zustand</li><li>better-sqlite3</li><li>zod</li><li>xterm.js</li><li>Vitest</li>
-          </ul>
-          <p class="sub small">Achou um bug ou tem uma ideia? Abra uma issue ou mande um pull request.</p>
-        </div>
-        <div class="term">
-          <div class="win-bar"><span class="lights"><i></i><i></i><i></i></span><span class="win-title">PowerShell</span><button type="button" class="copy" data-copy>copiar</button></div>
-<pre class="mono" data-copy-src><span class="dim"># Node.js 20+ no Windows</span>
-git clone <span data-repo-url>https://github.com/PQueirozDev/Qyrex</span>
-cd Qyrex
-npm install
-npm run dev:app   <span class="dim"># Vite + Electron com hot reload</span>
-npm run check     <span class="dim"># typecheck + lint + testes</span></pre>
-        </div>
-      </section>
-
-      <!-- Perguntas -->
-      <section id="perguntas" class="section faq-sec">
-        <div class="faq-head">
-          <p class="eyebrow">perguntas</p>
-          <h2>Antes de baixar.</h2>
-          <p class="sub">Não achou a sua? <a class="tlink" data-link="issues" href="https://github.com/PQueirozDev/Qyrex/issues" target="_blank" rel="noopener noreferrer">Abra uma issue no GitHub <span aria-hidden="true">→</span></a></p>
-        </div>
-        <dl class="faq" data-faq>
-          <div><dt>O Qyrex é grátis?</dt><dd>Sim. É open source com licença MIT: você pode usar, ler o código e modificar sem pagar nada.</dd></div>
-          <div><dt>Preciso criar uma conta?</dt><dd>Não. Os dados ficam num banco SQLite no seu PC e as chaves ficam no cofre do Windows. Não existe servidor do Qyrex recebendo nada.</dd></div>
-          <div><dt>O Windows mostrou um aviso ao instalar. É normal?</dt><dd>É. O instalador ainda não tem assinatura de código, então o SmartScreen avisa na primeira execução. Clique em "Mais informações" e depois em "Executar assim mesmo". O código é aberto e cada atualização tem o SHA-512 conferido.</dd></div>
-          <div><dt>Preciso pagar API para usar a IA?</dt><dd>Não. O Qyrex usa o Claude Code e o Codex que já estão logados no seu PC, pela assinatura que você já tem. Se preferir, também aceita chaves de API do Claude, da OpenAI e do Gemini.</dd></div>
-          <div><dt>Ele substitui o VS Code?</dt><dd>Não. Ele abre o VS Code, o terminal e o Explorer na pasta do projeto. O editor embutido serve para ajustes rápidos, não para trocar de editor.</dd></div>
-          <div><dt>Funciona em macOS ou Linux?</dt><dd>Por enquanto só em Windows 10 e 11 (x64). Não há suporte oficial para outros sistemas.</dd></div>
-          <div><dt>E se eu trocar de PC ou perder os dados?</dt><dd>O app faz um backup local verificado todo dia e antes de cada atualização. Para usar em outro PC, sincronize por uma pasta da nuvem, cifrada com a sua senha (AES 256).</dd></div>
-          <div><dt>Como ele se atualiza?</dt><dd>Sozinho, pelo GitHub Releases. Um instalador adulterado é descartado e nunca acontece downgrade.</dd></div>
-        </dl>
-      </section>
-
-      <!-- Download -->
-      <section id="download" class="section dl-sec">
-        <span class="brk"></span>
-        <div class="dl-capy" aria-hidden="true"><img src="assets/capy-sheet.png" alt="" class="px" /></div>
-        <p class="eyebrow">download · v<span data-version>2.0.0</span></p>
-        <h2 class="dl-title">Entre na água.</h2>
-        <p class="sub">Instalador para Windows 10 e 11 (x64). O download começa na hora: é só abrir o arquivo. Depois de instalado, o Qyrex se atualiza sozinho.</p>
-        <div class="dl-btns">
-          <a class="btn big" data-link="download" href="https://github.com/PQueirozDev/QrzSpace-releases/releases/latest/download/Qyrex-Setup.exe">Baixar para Windows <span class="mono">.exe</span></a>
-          <a class="tlink" data-link="releases" href="https://github.com/PQueirozDev/QrzSpace-releases/releases" target="_blank" rel="noopener noreferrer">Todas as versões <span aria-hidden="true">→</span></a>
-        </div>
-        <p class="fine mono">grátis · sem conta · sem nuvem · licença MIT</p>
-      </section>
-    </main>
-
-    <!-- Rodapé: links em cima, a capivara no onsen embaixo -->
-    <footer class="foot">
-      <div class="foot-top">
-        <div class="foot-brand">
-          <span class="brand"><img src="assets/icon-pixel.svg" alt="" width="24" height="24" /> QYREX</span>
-          <p>A central de trabalho do desenvolvedor. Feita com calma, no ritmo de uma capivara no onsen.</p>
-          <p class="mono dim">Este site não usa cookies nem rastreio.</p>
-        </div>
-        <nav class="foot-col" aria-label="Produto">
-          <h3>Produto</h3>
-          <a href="#recursos">Recursos</a>
-          <a href="#temas">Temas</a>
-          <a href="#seguranca">Segurança</a>
-          <a href="#perguntas">Perguntas</a>
-          <a href="#download">Baixar</a>
-        </nav>
-        <nav class="foot-col" aria-label="Código">
-          <h3>Código</h3>
-          <a data-link="repo" href="https://github.com/PQueirozDev/Qyrex" target="_blank" rel="noopener noreferrer">Repositório</a>
-          <a data-link="issues" href="https://github.com/PQueirozDev/Qyrex/issues" target="_blank" rel="noopener noreferrer">Reportar um bug</a>
-          <a data-link="license" href="https://github.com/PQueirozDev/Qyrex/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">Licença MIT</a>
-        </nav>
-        <nav class="foot-col" aria-label="Versões">
-          <h3>Versões</h3>
-          <a data-link="releases" href="https://github.com/PQueirozDev/QrzSpace-releases/releases" target="_blank" rel="noopener noreferrer">Novidades</a>
-          <a data-link="download" href="https://github.com/PQueirozDev/QrzSpace-releases/releases/latest/download/Qyrex-Setup.exe">Instalador <span class="mono dim">v<span data-version>2.0.0</span></span></a>
-        </nav>
-      </div>
-      <div class="foot-scene" aria-hidden="true">
-        <canvas class="dither" data-dither="scene"></canvas>
-        <div class="foot-capy"><img src="assets/capy-sheet.png" alt="" class="px" /></div>
-      </div>
-      <div class="foot-base mono">
-        <span>© 2026 Pedro Queiroz</span>
-        <span>código aberto · feito no Brasil</span>
-      </div>
-    </footer>
-  </div>
+<header class="topbar">
+<a class="brand" href="/" aria-label="Qyrex, início">
+<img src="assets/icon-pixel.svg" width="32" height="32" alt="" decoding="async">
+<span>QYREX</span>
+</a>
+<button class="menu-btn" aria-controls="menu" aria-expanded="false" hidden>Menu</button>
+<nav id="menu" aria-label="Navegação principal">
+<a href="/#recursos">Recursos</a>
+<a href="/#tour">Tour</a>
+<a href="/download">Download</a>
+<a href="/docs">Docs</a>
+<a href="/roadmap">Roadmap</a>
+<a href="/changelog">Changelog</a>
+<a data-link="repo" href="https://github.com/PQueirozDev/Qyrex">GitHub ↗</a>
+</nav>
+</header>
+<main id="conteudo">
+<section class="hero" data-buddy="Seu workspace, do seu jeito.">
+<div class="hero-intro">
+<div class="hero-copy">
+<p class="eyebrow">Para devs · Windows · Open source</p>
+<h1>Seu ambiente de dev.<br><span>Em um só lugar.</span></h1>
+<p class="lead">Do primeiro comando ao último commit: projetos, terminal, Git, preview e IA no mesmo workspace. Tudo no seu PC.</p>
+<div class="cta">
+<a class="btn" data-link="download" href="https://github.com/PQueirozDev/QrzSpace-releases/releases/latest/download/Qyrex-Setup.exe">Baixar Qyrex <span aria-hidden="true">↓</span>
+</a>
+<a class="btn secondary" href="https://pqueirozdev.com.br/qyrex-demo/">Experimentar no navegador <span aria-hidden="true">↗</span></a>
 </div>
-<script src="app.js"></script>
+<p class="fine">Gratuito · licença MIT · Windows 10/11 64-bit</p>
+<ul class="hero-highlights" aria-label="Destaques do Qyrex">
+<li>Dados locais</li><li>Sem criar conta</li><li>Código aberto</li>
+</ul>
+</div>
+<div class="hero-visual" aria-hidden="true">
+<div class="stage">
+<span class="word">QYREX</span>
+<div class="capy"><img src="assets/capy-sheet.png" width="1440" height="44" alt="" decoding="async"></div>
+</div>
+<div class="hero-caption"><span class="hero-caption-dot"></span>Menos abas. Mais contexto.</div>
+</div>
+</div>
+<div class="onsen">
+<canvas class="dither" data-dither="video" aria-hidden="true">
+</canvas>
+<video class="dither-src" muted loop playsinline preload="none" poster="assets/qyrex-onsen-poster.png" aria-hidden="true">
+<source src="assets/qyrex-onsen.webm" type="video/webm">
+<source src="assets/qyrex-onsen.mp4" type="video/mp4">
+</video>
+<figure class="shot">
+<img src="assets/app-inicio.webp" alt="Início do Qyrex com resumo do dia e projetos" width="1440" height="900" loading="lazy" decoding="async">
+<figcaption>Demonstração com dados fictícios</figcaption>
+</figure>
+</div>
+</section>
+<section id="tour" class="section " data-buddy="Um projeto. Todas as perspectivas.">
+<p class="eyebrow">01 / Por dentro</p>
+<h2>Um projeto. Todas as perspectivas.</h2>
+<p class="intro">Explore capturas reais do app. Este tour não executa comandos.</p>
+<div class="tabs" role="tablist" aria-label="Tour do Qyrex">
+<button role="tab" id="tab-workspace" aria-controls="panel-workspace" aria-selected="true" tabindex="0">Workspace</button>
+<button role="tab" id="tab-processos" aria-controls="panel-processos" aria-selected="false" tabindex="-1">Terminal/Processos</button>
+<button role="tab" id="tab-git" aria-controls="panel-git" aria-selected="false" tabindex="-1">Git</button>
+<button role="tab" id="tab-preview" aria-controls="panel-preview" aria-selected="false" tabindex="-1">Preview</button>
+<button role="tab" id="tab-ia" aria-controls="panel-ia" aria-selected="false" tabindex="-1">IA</button>
+<button role="tab" id="tab-monitor" aria-controls="panel-monitor" aria-selected="false" tabindex="-1">Monitor</button>
+<button role="tab" id="tab-plugins" aria-controls="panel-plugins" aria-selected="false" tabindex="-1">Plugins</button>
+</div>
+<div role="tabpanel" id="panel-workspace" aria-labelledby="tab-workspace" tabindex="0" >
+<div class="tour-copy">
+<h3>Organize o espaço de cada projeto.</h3>
+<p>Divida painéis, arraste abas e maximize o que precisa. Alterne entre Desenvolvimento, Debug, Git e Foco; o layout fica salvo por projeto.</p>
+</div>
+<figure class="shot">
+<img src="assets/app-workspace.webp" alt="Workspace no Qyrex" width="1440" height="900" loading="lazy" decoding="async">
+<figcaption>Demonstração com dados fictícios</figcaption>
+</figure>
+</div>
+<div role="tabpanel" id="panel-processos" aria-labelledby="tab-processos" tabindex="0" hidden>
+<div class="tour-copy">
+<h3>Execute e acompanhe sem perder a saída.</h3>
+<p>Rode scripts do package.json ou um comando livre, sempre com confirmação. Veja a saída ao vivo, abra URLs detectadas e libere uma porta ocupada no painel de portas.</p>
+</div>
+<figure class="shot">
+<img src="assets/app-processos.webp" alt="Terminal/Processos no Qyrex" width="1440" height="900" loading="lazy" decoding="async">
+<figcaption>Demonstração com dados fictícios</figcaption>
+</figure>
+</div>
+<div role="tabpanel" id="panel-git" aria-labelledby="tab-git" tabindex="0" hidden>
+<div class="tour-copy">
+<h3>Veja exatamente o que vai para o commit.</h3>
+<p>Confira alterações por arquivo, selecione o que entra no commit e troque de branch. Faça pull/push sem --force e acompanhe o CI do GitHub Actions.</p>
+</div>
+<figure class="shot">
+<img src="assets/app-git.webp" alt="Git no Qyrex" width="1440" height="900" loading="lazy" decoding="async">
+<figcaption>Demonstração com dados fictícios</figcaption>
+</figure>
+</div>
+<div role="tabpanel" id="panel-preview" aria-labelledby="tab-preview" tabindex="0" hidden>
+<div class="tour-copy">
+<h3>Confira seu localhost no próprio workspace.</h3>
+<p>O preview fica isolado do app e aceita apenas localhost. Teste desktop, tablet, celular ou tamanho personalizado, com zoom, console da página e DevTools.</p>
+</div>
+<figure class="shot">
+<img src="assets/app-preview.webp" alt="Preview no Qyrex" width="1440" height="900" loading="lazy" decoding="async">
+<figcaption>Demonstração com dados fictícios</figcaption>
+</figure>
+</div>
+<div role="tabpanel" id="panel-ia" aria-labelledby="tab-ia" tabindex="0" hidden>
+<div class="tour-copy">
+<h3>Traga seus modelos para o fluxo.</h3>
+<p>Converse com Claude, ChatGPT e Gemini; compare respostas no AI Council. Gere uma sugestão de mensagem de commit ou um resumo para a daily.</p>
+</div>
+<figure class="shot">
+<img src="assets/app-ia.webp" alt="IA no Qyrex" width="1440" height="900" loading="lazy" decoding="async">
+<figcaption>Demonstração com dados fictícios</figcaption>
+</figure>
+</div>
+<div role="tabpanel" id="panel-monitor" aria-labelledby="tab-monitor" tabindex="0" hidden>
+<div class="tour-copy">
+<h3>Entenda o consumo antes de interromper o fluxo.</h3>
+<p>Veja quanto o próprio Qyrex usa de CPU e memória, com os totais do PC como referência. Os scripts iniciados pelo app também têm consumo individual.</p>
+</div>
+<figure class="shot">
+<img src="assets/app-monitor.webp" alt="Monitor no Qyrex" width="1440" height="900" loading="lazy" decoding="async">
+<figcaption>Demonstração com dados fictícios</figcaption>
+</figure>
+</div>
+<div role="tabpanel" id="panel-plugins" aria-labelledby="tab-plugins" tabindex="0" hidden>
+<div class="tour-copy">
+<h3>Adicione recursos declarativos ao projeto.</h3>
+<p>Instale um manifesto JSON com permissões explícitas. Notas do projeto, Links rápidos e Modelos de projeto já vêm embutidos; nenhum código de terceiros é executado.</p>
+</div>
+<figure class="shot">
+<img src="assets/app-plugins.webp" alt="Plugins no Qyrex" width="1440" height="900" loading="lazy" decoding="async">
+<figcaption>Demonstração com dados fictícios</figcaption>
+</figure>
+</div>
+</section>
+<section id="recursos" class="section " data-buddy="Menos troca de contexto. Mais desenvolvimento.">
+<p class="eyebrow">02 / Recursos</p>
+<h2>Menos troca de contexto. Mais desenvolvimento.</h2>
+<div class="cards">
+<article class="card">
+<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M3 4h18v16H3z M3 9h18 M9 9v11"/>
+</svg>
+<h3>Menos janelas, mais contexto</h3>
+<p>Arquivos, editor leve, terminal, Git, preview, IA, tarefas, notas, processos e monitor no workspace do projeto.</p>
+</article>
+<article class="card">
+<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M5 6l6 6-6 6 M13 18h6"/>
+</svg>
+<h3>Do script à saída, sem desvios</h3>
+<p>Execute ferramentas com confirmação e acompanhe processos, URLs locais e portas.</p>
+</article>
+<article class="card">
+<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M3 13h4l3-8 4 14 3-6h4"/>
+</svg>
+<h3>Saiba o que está consumindo recursos</h3>
+<p>CPU, RAM e alertas para o PC, o Qyrex e os processos que ele iniciou.</p>
+</article>
+<article class="card">
+<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M8 3v5l-4 8v5h16v-5l-4-8V3 M8 3h8 M7 15h10"/>
+</svg>
+<h3>Resolva pequenas tarefas offline</h3>
+<p>JSON, JWT, Base64, URL, timestamp, regex, diff, UUID, hash, cores e nomes.</p>
+</article>
+<article class="card">
+<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M5 4h14v16H5z M8 9h8 M8 13h6 M8 17h4"/>
+</svg>
+<h3>Mantenha o dia organizado</h3>
+<p>Tarefas, agenda Google, Notion, automações e foco junto dos projetos.</p>
+</article>
+<article class="card">
+<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M12 3l8 4v6c0 5-8 8-8 8s-8-3-8-8V7z M8 12l3 3 5-6"/>
+</svg>
+<h3>Seu trabalho continua no PC</h3>
+<p>Backup local e sincronização por pasta da nuvem. O app funciona offline; IA, GitHub, Google e Notion precisam de internet.</p>
+</article>
+</div>
+</section>
+<section id="workspace" class="section " data-buddy="O layout acompanha o raciocínio.">
+<p class="eyebrow">03 / Seu espaço</p>
+<h2>O layout acompanha o raciocínio.</h2>
+<p class="intro">Abra vários projetos em abas. Divida o espaço entre arquivos, terminal e preview, arraste abas e maximize um painel quando precisar. O layout fica salvo por projeto.</p>
+<figure class="shot">
+<img src="assets/app-workspace.webp" alt="Workspace com painéis divididos" width="1440" height="900" loading="lazy" decoding="async">
+<figcaption>Demonstração com dados fictícios</figcaption>
+</figure>
+<div class="themes">
+<div>
+<h3>Também tem o seu tema.</h3>
+<p>Escuro, Claro, Meia-noite, Violeta, Areia e Onsen no app, com interface em português ou inglês.</p>
+</div>
+<div>
+<label for="texture">Tema do site</label>
+<select id="texture">
+<option value="onsen">Onsen</option>
+<option value="dark">Escuro</option>
+<option value="light">Claro</option>
+<option value="midnight">Meia-noite</option>
+<option value="violet">Violeta</option>
+<option value="sand">Areia</option>
+</select>
+<p class="fine">As mesmas cores do app. Escolha o seu tema.</p>
+</div>
+</div>
+</section>
+<section id="ia" class="section " data-buddy="Sua IA, dentro do fluxo.">
+<p class="eyebrow">04 / Inteligência, com escolha</p>
+<h2>Sua IA, dentro do fluxo.</h2>
+<div class="split">
+<div>
+<p>Use Claude e ChatGPT pela assinatura do Claude Code/Codex já logados no PC ou por API key. Gemini também está disponível por API key.</p>
+<p>O AI Council reúne perspectivas de vários modelos. Peça uma sugestão de mensagem de commit ou um resumo para a daily. A decisão de executar continua com você.</p>
+<a href="/docs#ia">Configurar a IA →</a>
+</div>
+<figure class="shot">
+<img src="assets/app-ia.webp" alt="Conversa com IA no Qyrex" width="1440" height="900" loading="lazy" decoding="async">
+<figcaption>Demonstração com dados fictícios</figcaption>
+</figure>
+</div>
+</section>
+<section id="capivara" class="section " data-buddy="Uma capivara que entende o momento.">
+<p class="eyebrow">05 / Companhia de código</p>
+<h2>Uma capivara que entende o momento.</h2>
+<div class="split">
+<div>
+<p>Ela reage a tarefas, builds e sessões de foco. Responde perguntas rápidas usando apenas dados locais.</p>
+<p>Uma pergunta livre só vai para a IA com seu consentimento.</p>
+<img class="pixel" src="assets/capy.png" width="120" height="88" alt="Capivara do Qyrex com uma laranja" loading="lazy" decoding="async">
+</div>
+<figure class="shot">
+<img src="assets/app-capivara.webp" alt="Capivara assistente no Qyrex" width="1440" height="900" loading="lazy" decoding="async">
+<figcaption>Demonstração com dados fictícios</figcaption>
+</figure>
+</div>
+</section>
+<section id="plugins" class="section " data-buddy="Pequenas extensões. Permissões explícitas.">
+<p class="eyebrow">06 / Extensível por definição</p>
+<h2>Pequenas extensões. Permissões explícitas.</h2>
+<div class="split">
+<div>
+<p>Notas do projeto, Links rápidos e Modelos de projeto já vêm embutidos. Adicione pacotes locais com um manifesto JSON.</p>
+<p>Plugins são declarativos: campos desconhecidos são recusados e nenhum código de terceiros roda.</p>
+<a href="/docs#plugins">Ver o manifesto e as permissões →</a>
+</div>
+<figure class="shot">
+<img src="assets/app-plugins.webp" alt="Plugins declarativos do Qyrex" width="1440" height="900" loading="lazy" decoding="async">
+<figcaption>Demonstração com dados fictícios</figcaption>
+</figure>
+</div>
+</section>
+<section id="download" class="section download-summary" data-buddy="Seu próximo projeto cabe aqui.">
+<p class="eyebrow">07 / Comece por aqui</p>
+<h2>Seu próximo projeto cabe aqui.</h2>
+<p class="intro">Qyrex para Windows 10/11 64-bit. Gratuito, open source e com atualização automática pelo app.</p>
+<div class="cta">
+<a class="btn" href="/download">Download e instalação ↓</a>
+<a href="/docs">Ler os primeiros passos →</a>
+</div>
+</section>
+<section id="perguntas" class="section " data-buddy="Antes de abrir o workspace.">
+<p class="eyebrow">08 / FAQ</p>
+<h2>Antes de abrir o workspace.</h2>
+<div class="faq">
+<details>
+<summary>O Qyrex é gratuito?</summary>
+<p>Sim. O Qyrex é gratuito, open source e distribuído sob a licença MIT.</p>
+</details>
+<details>
+<summary>Preciso de internet?</summary>
+<p>O app funciona offline. IA, GitHub, Google e Notion precisam de conexão; baixar e atualizar o app também.</p>
+</details>
+<details>
+<summary>Quais sistemas são suportados?</summary>
+<p>Somente Windows 10/11 64-bit. Linux e macOS não são suportados.</p>
+</details>
+<details>
+<summary>Como instalar?</summary>
+<p>Baixe o Qyrex-Setup.exe e siga o assistente. O instalador não tem assinatura digital; no SmartScreen, use Mais informações → Executar assim mesmo. <a href="/download">Veja as instruções de instalação.</a>
+</p>
+</details>
+<details>
+<summary>Como configurar a IA?</summary>
+<p>Em Integrações, use sua assinatura com Claude Code ou Codex já logados no PC, ou informe uma API key. Gemini usa API key.</p>
+</details>
+<details>
+<summary>Como funcionam os plugins?</summary>
+<p>São manifestos JSON com permissões para links rápidos, modelos de projeto e notas. Nenhum código de terceiros é executado.</p>
+</details>
+<details>
+<summary>Onde reportar problemas?</summary>
+<p>Abra uma <a data-link="issues" href="https://github.com/PQueirozDev/Qyrex/issues">issue no GitHub</a> com os passos para reproduzir o problema.</p>
+</details>
+<details>
+<summary>Como atualizar?</summary>
+<p>O próprio app faz a atualização automática. Você também pode conferir as versões na página de releases.</p>
+</details>
+</div>
+</section>
+</main>
+<footer class="foot">
+<div class="foot-top">
+<div>
+<a class="brand" href="/" aria-label="Qyrex, início">
+<img src="assets/icon-pixel.svg" width="32" height="32" alt="" decoding="async">
+<span>QYREX</span>
+</a>
+<p>Seu ambiente de desenvolvimento.<br>Feito para Windows. Aberto para contribuir.</p>
+</div>
+<nav aria-label="Navegação do rodapé">
+<a href="/#recursos">Recursos</a>
+<a href="/#tour">Tour</a>
+<a href="/download">Download</a>
+<a href="/docs">Docs</a>
+<a href="/roadmap">Roadmap</a>
+<a href="/changelog">Changelog</a>
+<a data-link="repo" href="https://github.com/PQueirozDev/Qyrex">GitHub ↗</a>
+</nav>
+</div>
+<div class="foot-scene" aria-hidden="true">
+<canvas class="dither" data-dither="scene">
+</canvas>
+</div>
+<div class="foot-base">
+<span>Qyrex · gratuito e open source<br><span class="foot-credit">Criado por <a href="https://pqueirozdev.com.br" rel="author">Pedro Queiroz</a></span></span>
+<a data-link="license" href="https://github.com/PQueirozDev/Qyrex/blob/main/LICENSE">Licença MIT</a>
+<a data-link="issues" href="https://github.com/PQueirozDev/Qyrex/issues">Reportar um problema ↗</a>
+</div>
+</footer>
+<aside class="buddy" aria-label="Capivara do site">
+<img src="assets/icon-pixel.svg" width="32" height="32" alt="Capivara" decoding="async">
+<p data-buddy-text>Um projeto de cada vez.</p>
+<button aria-label="Fechar capivara" data-buddy-close>×</button>
+</aside>
 </body>
 </html>

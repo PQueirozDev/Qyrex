@@ -329,6 +329,23 @@ export interface GitHubOverview {
   repo: GitHubRepoInfo;
   issues: GitHubItem[];
   pulls: GitHubItem[];
+  /** Últimas execuções do GitHub Actions (vazio se o repositório não usa Actions). */
+  runs: GitHubWorkflowRun[];
+}
+
+export interface GitHubWorkflowRun {
+  id: number;
+  /** Nome do workflow (ex.: "CI"). */
+  name: string;
+  /** Título da execução (normalmente a mensagem do commit ou o título do PR). */
+  title: string;
+  branch: string | null;
+  event: string;
+  status: "queued" | "in_progress" | "completed" | "waiting" | "pending" | "requested";
+  /** Só quando `completed`: success, failure, cancelled, skipped... */
+  conclusion: string | null;
+  htmlUrl: string;
+  createdAt: string;
 }
 
 // --- Notion ------------------------------------------------------------------
@@ -471,7 +488,7 @@ export interface FocusSummary {
   dailyGoalMinutes: number;
 }
 
-export const DASHBOARD_WIDGETS = ["agenda", "tarefas", "atividade", "foco", "projetos", "automacoes"] as const;
+export const DASHBOARD_WIDGETS = ["agenda", "tarefas", "atividade", "foco", "projetos", "automacoes", "servidores", "avisos"] as const;
 export type DashboardWidgetId = (typeof DASHBOARD_WIDGETS)[number];
 
 export interface DashboardPrefs {
@@ -739,4 +756,121 @@ export interface ProjectInsights {
   /** Commits por semana, das mais antigas para a atual (12 posições). */
   weeklyCommits: number[];
   lastCommit: GitCommit | null;
+}
+
+/** Conferência do .env contra o .env.example (só nomes de variáveis, nunca valores). */
+export interface EnvCheck {
+  /** Arquivo de exemplo encontrado (.env.example, .env.sample...), ou null. */
+  exampleFile: string | null;
+  /** Arquivos .env lidos (.env, .env.local...). */
+  envFiles: string[];
+  /** Quantas variáveis o exemplo pede. */
+  expected: number;
+  /** Quantas variáveis os .env definem. */
+  defined: number;
+  /** Pedidas pelo exemplo e ausentes nos .env. */
+  missing: string[];
+  /** Definidas nos .env e ausentes do exemplo (talvez falte documentar). */
+  extra: string[];
+  /** Definidas sem valor. */
+  empty: string[];
+}
+
+// --- Preview web (2.2) --------------------------------------------------------------
+
+export interface PreviewBounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface PreviewState {
+  open: boolean;
+  url: string | null;
+  title: string | null;
+  loading: boolean;
+  canGoBack: boolean;
+  canGoForward: boolean;
+  /** Falha ao carregar (servidor fora do ar, porta errada...). */
+  error: string | null;
+  zoom: number;
+}
+
+export interface PreviewConsoleEntry {
+  level: "info" | "warning" | "error" | "debug";
+  message: string;
+  source: string | null;
+  at: string;
+}
+
+// --- Monitor de recursos (2.2) ------------------------------------------------------
+
+export interface MonitorSample {
+  at: string;
+  /** CPU do PC inteiro, em %. */
+  cpu: number;
+  cores: number;
+  memUsed: number;
+  memTotal: number;
+  /** O próprio Qyrex (todos os processos do Electron). */
+  app: { cpu: number; memory: number };
+  /** Processos do runner: a árvore inteira de cada um (PowerShell → npm → node...). */
+  processes: { runnerId: string; pid: number; processCount: number; cpu: number; memory: number }[];
+}
+
+export interface ProjectNote {
+  projectId: string;
+  content: string;
+  updatedAt: string | null;
+}
+
+// --- Plugins declarativos (2.2) -----------------------------------------------------
+
+export type PluginPermission = "quickLinks" | "projectTemplates" | "notes";
+
+export interface ProjectTemplate {
+  id: string;
+  name: string;
+  description: string;
+  technologies: string[];
+  /** Caminhos relativos (sem "..") criados dentro da pasta nova. */
+  folders: string[];
+  /** Arquivos de texto; "{name}" vira o nome do projeto. */
+  files: { path: string; content: string }[];
+  tasks: string[];
+}
+
+export interface PluginManifest {
+  id: string;
+  name: string;
+  version: string;
+  author: string;
+  description: string;
+  homepage?: string;
+  /** Versão mínima do Qyrex. */
+  qyrex: string;
+  permissions: PluginPermission[];
+  contributes: {
+    quickLinks?: { title: string; url: string }[];
+    projectTemplates?: ProjectTemplate[];
+  };
+}
+
+export interface PluginInfo {
+  manifest: PluginManifest;
+  source: "builtin" | "local";
+  enabled: boolean;
+  compatible: boolean;
+  error: string | null;
+  installedAt: string | null;
+}
+
+export interface QuickLink {
+  id: string;
+  projectId: string | null;
+  title: string;
+  url: string;
+  /** Plugin que trouxe o link (null = criado pelo usuário). */
+  pluginId: string | null;
 }

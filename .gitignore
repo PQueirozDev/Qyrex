@@ -8,3 +8,4 @@ release/
 *.sqlite
 *.sqlite-journal
 dist-demo
+.tmp/
