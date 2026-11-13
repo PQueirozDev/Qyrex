@@ -19,16 +19,16 @@ export const THEMES: ThemeDefinition[] = [
   {
     id: "dark",
     name: tr("Escuro"),
-    description: tr("Grafite neutro com azul. O padrão."),
+    description: tr("Grafite neutro com o laranja da marca. O padrão."),
     dark: true,
-    preview: { bg: "#0b0d10", sidebar: "#111418", card: "#15181d", border: "#262a31", text: "#e6e8eb", muted: "#686f7a", accent: "#688cff" },
+    preview: { bg: "#0a0b0d", sidebar: "#0f1013", card: "#131418", border: "#25272d", text: "#e8e9ec", muted: "#686c76", accent: "#ff9a3c" },
   },
   {
     id: "light",
     name: tr("Claro"),
     description: tr("Limpo e neutro para ambientes iluminados."),
     dark: false,
-    preview: { bg: "#f6f7f9", sidebar: "#ffffff", card: "#ffffff", border: "#dee1e6", text: "#16181d", muted: "#8a909c", accent: "#4c6ef5" },
+    preview: { bg: "#f6f7f9", sidebar: "#ffffff", card: "#ffffff", border: "#dee1e6", text: "#16181d", muted: "#8a909c", accent: "#c2570c" },
   },
   {
     id: "midnight",

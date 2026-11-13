@@ -63,6 +63,8 @@ export default {
           to: { opacity: "1", transform: "translateY(0)", filter: "blur(0)" },
         },
         "slide-in": { from: { opacity: "0", transform: "translateX(12px)" }, to: { opacity: "1", transform: "translateX(0)" } },
+        // A capivara boiando no onsen: sobe e desce em degraus inteiros (pixel art não pode borrar).
+        bob: { "0%, 100%": { transform: "translateY(0)" }, "50%": { transform: "translateY(-3px)" } },
       },
       animation: {
         "fade-in": "fade-in 120ms ease-out",
@@ -71,6 +73,7 @@ export default {
         eq: "eq 0.9s ease-in-out infinite",
         "page-in": "page-in 280ms cubic-bezier(0.2, 0.9, 0.3, 1)",
         "slide-in": "slide-in 160ms cubic-bezier(0.2, 0.9, 0.3, 1)",
+        bob: "bob 2.4s steps(2, jump-none) infinite",
       },
     },
   },

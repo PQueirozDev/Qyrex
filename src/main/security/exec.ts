@@ -213,3 +213,57 @@ export function runCapture(
     });
   });
 }
+
+/**
+ * Processo de longa duração com saída em fluxo (ex.: `npm run dev` no runner).
+ * stdout e stderr chegam juntos, na ordem em que saem; `stop()` derruba a árvore
+ * inteira (o servidor aberto pelo npm não fica órfão).
+ */
+export function spawnStreaming(
+  command: string,
+  args: string[],
+  options: ExecOptions & { onData: (chunk: string) => void; onExit: (code: number | null) => void }
+): { pid: number | undefined; stop: () => void } {
+  assertNoShellMetaInExecutable(command);
+  const child = spawn(command, args, { cwd: options.cwd, shell: false, windowsHide: true, env: options.env });
+  let exited = false;
+  const forward = (chunk: Buffer) => options.onData(chunk.toString("utf8"));
+  child.stdout?.on("data", forward);
+  child.stderr?.on("data", forward);
+  child.stdin?.on("error", () => undefined);
+  child.on("error", (err) => {
+    if (exited) return;
+    exited = true;
+    options.onData(`\r\n${err.message}\r\n`);
+    options.onExit(null);
+  });
+  child.on("close", (code) => {
+    if (exited) return;
+    exited = true;
+    options.onExit(code);
+  });
+  return {
+    pid: child.pid,
+    stop: () => {
+      if (!exited) killTree(child);
+    },
+  };
+}
+
+/** Encerra uma árvore de processos pelo PID (ex.: o processo dono de uma porta). */
+export function killPid(pid: number): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (process.platform !== "win32") {
+      try {
+        process.kill(pid);
+        resolve();
+      } catch (err) {
+        reject(err instanceof Error ? err : new Error(String(err)));
+      }
+      return;
+    }
+    const killer = spawn("taskkill.exe", ["/pid", String(pid), "/T", "/F"], { shell: false, windowsHide: true, stdio: "ignore" });
+    killer.once("error", reject);
+    killer.once("close", (code) => (code === 0 ? resolve() : reject(new Error("Não foi possível encerrar o processo."))));
+  });
+}

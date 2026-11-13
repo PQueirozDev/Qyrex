@@ -16,9 +16,9 @@
   --text: 22 24 29;
   --text-muted: 88 94 106;
   --text-faint: 138 144 156;
-  --accent: 76 110 245;
-  --accent-hover: 62 94 226;
-  --accent-muted: 228 234 255;
+  --accent: 194 87 12;
+  --accent-hover: 170 74 8;
+  --accent-muted: 255 237 220;
   --accent-fg: 255 255 255;
   --danger: 220 53 69;
   --success: 22 163 74;
@@ -29,19 +29,19 @@
 }
 
 :root.dark {
-  --bg: 11 13 16;
-  --bg-elevated: 17 20 24;
-  --bg-card: 21 24 29;
-  --bg-hover: 28 32 38;
-  --border: 38 42 49;
-  --border-subtle: 28 31 37;
-  --text: 230 232 235;
-  --text-muted: 154 161 172;
-  --text-faint: 104 111 122;
-  --accent: 104 140 255;
-  --accent-hover: 128 160 255;
-  --accent-muted: 36 48 84;
-  --accent-fg: 255 255 255;
+  --bg: 10 11 13;
+  --bg-elevated: 15 16 19;
+  --bg-card: 19 20 24;
+  --bg-hover: 27 29 34;
+  --border: 37 39 45;
+  --border-subtle: 27 29 34;
+  --text: 232 233 236;
+  --text-muted: 155 159 168;
+  --text-faint: 104 108 118;
+  --accent: 255 154 60;
+  --accent-hover: 255 180 105;
+  --accent-muted: 62 38 18;
+  --accent-fg: 31 15 2;
   --danger: 229 72 77;
   --success: 61 214 140;
   --warning: 245 166 35;
@@ -298,6 +298,10 @@ body {
 }
 
 @layer components {
+  /* Item da barra de status do rodapé. */
+  .status-item {
+    @apply flex h-[22px] items-center gap-1.5 whitespace-nowrap rounded px-1.5 transition-colors hover:bg-bg-hover hover:text-text;
+  }
   .card-interactive {
     @apply transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-px hover:border-border hover:shadow-pop;
   }

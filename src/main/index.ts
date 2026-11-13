@@ -15,6 +15,7 @@ import { spawnDetached } from "./security/exec.js";
 import { startNotifications, stopNotifications } from "./services/notificationService.js";
 import { startAppUsageTracker } from "./services/appUsageService.js";
 import { killAll as killAllTerminals } from "./services/terminalService.js";
+import { setRunnerListener, stopAll as stopAllRunners } from "./services/runnerService.js";
 import { listIntegrationStatus } from "./services/integrationsService.js";
 import * as googleCalendar from "./integrations/googleCalendar.js";
 import { applyDiscordSettings, onDiscordStatus, stopDiscord } from "./integrations/discord.js";
@@ -345,6 +346,10 @@ app.whenReady().then(() => {
     }
   }, 20_000).unref();
   setAutomationProgress((run) => mainWindow?.webContents.send("automations:progress", run));
+  setRunnerListener((event) => {
+    if (event.type === "changed") mainWindow?.webContents.send("runner:changed", event.processes);
+    else mainWindow?.webContents.send("runner:data", { id: event.id, chunk: event.chunk });
+  });
   log.info(`Qyrex ${app.getVersion()} iniciado${isDev ? " (dev)" : ""}`);
 
   // Sincronização do Google Calendar sob demanda: só se estiver conectado, e
@@ -371,6 +376,7 @@ app.on("before-quit", () => {
   stopAutoBackup();
   pauseFocusOnQuit();
   killAllTerminals();
+  stopAllRunners();
   stopDiscord();
   stopLocalMedia();
 });

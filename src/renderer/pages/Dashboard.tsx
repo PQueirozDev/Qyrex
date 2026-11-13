@@ -1,25 +1,9 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import {
-  ArrowUpRight,
-  Bot,
-  CalendarDays,
-  CheckCircle2,
-  CheckSquare,
-  Code2,
-  FileText,
-  FolderOpen,
-  GitCommitHorizontal,
-  Github,
-  Plus,
-  Settings2,
-  SquareTerminal,
-  Timer,
-  Workflow,
-} from "lucide-react";
-import type { CalendarEvent, DashboardWidgetId, GitCommit, RecentItem } from "@shared/types";
-import { Card, CardContent, CardHeader } from "@/components/ui/Card";
+import { CheckCircle2, Code2, FileCode2, FileText, FolderOpen, GitBranch, GitCommitHorizontal, Plus, Settings2, SquareTerminal, Timer } from "lucide-react";
+import type { CalendarEvent, DashboardWidgetId, GitCommit, ProjectWithGit, RecentItem } from "@shared/types";
 import { Button } from "@/components/ui/Button";
 import { Badge, EmptyState, LoadingRows, ProjectIcon } from "@/components/ui/primitives";
+import { DitherGlow } from "@/components/ui/Brand";
 import { useTasksStore } from "@/stores/useTasksStore";
 import { useProjectsStore } from "@/stores/useProjectsStore";
 import { useSettingsStore } from "@/stores/useSettingsStore";
@@ -28,16 +12,37 @@ import { attempt } from "@/lib/api";
 import { addDays, toLocalDateTime, formatTime, greeting, shortDay, timeAgo, todayISO, toLocalDate } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import { PRIORITY_LABEL } from "@/components/TaskFormDialog";
-
 import { getLocale, tr, trn } from "@/lib/i18n";
-import { AnimatedValue } from "@/components/ui/AnimatedValue";
-import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { AppUsageButton } from "@/components/AppUsage";
 import { FocusCardBody } from "@/components/Focus";
 import { DashboardCustomizeDialog, dashboardOrder } from "@/components/DashboardCustomize";
 import { useFocusStore } from "@/stores/useFocusStore";
 import { RUN_STATUS } from "@/components/AutomationRun";
 import type { AutomationRun } from "@shared/types";
+
+/**
+ * Bloco do Início. De propósito mais leve que o `Card` das outras páginas:
+ * sem sombra e sem ícone no título, para a tela respirar.
+ */
+function Widget({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
+  return (
+    <section className="flex h-full flex-col rounded-card border border-border-subtle bg-bg-card/60 px-4 pb-4 pt-3">
+      <header className="mb-2 flex min-h-7 items-center justify-between gap-2">
+        <h2 className="text-[13px] font-medium text-text-muted">{title}</h2>
+        {action}
+      </header>
+      <div className="min-h-0 flex-1">{children}</div>
+    </section>
+  );
+}
+
+function WidgetLink({ children, onClick }: { children: ReactNode; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="text-[11px] text-text-faint transition-colors hover:text-text">
+      {children}
+    </button>
+  );
+}
 
 /** Últimas execuções de automações (dados reais do histórico). */
 function AutomationRunsList() {
@@ -51,7 +56,7 @@ function AutomationRunsList() {
   if (runs === null) return <LoadingRows rows={2} />;
   if (runs.length === 0) {
     return (
-      <p className="py-3 text-sm text-text-faint">
+      <p className="py-2 text-sm text-text-faint">
         {tr("Nenhuma automação executada ainda.")}{" "}
         <button className="text-accent hover:underline" onClick={() => navigate("automacoes")}>
           {tr("Criar uma")}
@@ -60,7 +65,7 @@ function AutomationRunsList() {
     );
   }
   return (
-    <ul className="space-y-1">
+    <ul className="-mx-1 space-y-0.5">
       {runs.map((r) => (
         <li key={r.id}>
           <button onClick={() => navigate("automacoes", r.projectId)} className="flex w-full items-center gap-2 rounded-md px-1 py-1.5 text-left hover:bg-bg-hover">
@@ -71,6 +76,48 @@ function AutomationRunsList() {
         </li>
       ))}
     </ul>
+  );
+}
+
+/** Faixa "continuar de onde parou": o último projeto aberto, a um clique. */
+function ContinueStrip({ project, lastCommit }: { project: ProjectWithGit; lastCommit: GitCommit | null }) {
+  const navigate = useUIStore((s) => s.navigate);
+  const open = useProjectsStore((s) => s.open);
+  const git = project.git;
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-card border border-border-subtle bg-bg-card/60 px-4 py-3">
+      <button className="flex min-w-0 flex-1 items-center gap-3 text-left" onClick={() => navigate("projetos", project.id)}>
+        <ProjectIcon name={project.name} icon={project.icon} size={34} />
+        <span className="min-w-0">
+          <span className="flex items-center gap-2 text-[11px] text-text-faint">{tr("Continuar de onde parou")}</span>
+          <span className="block truncate text-sm font-semibold text-text">{project.name}</span>
+          <span className="flex min-w-0 items-center gap-1.5 text-[11px] text-text-faint">
+            {git?.isRepo && (
+              <>
+                <GitBranch size={11} />
+                <span className="font-mono">{git.branch ?? "?"}</span>
+                {git.modifiedCount > 0 && <span className="text-warning">· {trn(git.modifiedCount, "{n} alteração", "{n} alterações")}</span>}
+              </>
+            )}
+            {lastCommit && <span className="truncate">· {lastCommit.subject}</span>}
+          </span>
+        </span>
+      </button>
+      <div className="flex shrink-0 gap-1.5">
+        <Button size="sm" onClick={() => void open(project, "vscode")}>
+          <Code2 size={13} /> {tr("VS Code")}
+        </Button>
+        <Button size="icon" variant="ghost" onClick={() => navigate("terminal", project.id)} title={tr("Terminal")} aria-label={tr("Terminal")}>
+          <SquareTerminal size={15} />
+        </Button>
+        <Button size="icon" variant="ghost" onClick={() => navigate("editor", project.localPath)} title={tr("Editar no Qyrex")} aria-label={tr("Editar no Qyrex")}>
+          <FileCode2 size={15} />
+        </Button>
+        <Button size="icon" variant="ghost" onClick={() => void open(project, "explorer")} title={tr("Explorer")} aria-label={tr("Explorer")}>
+          <FolderOpen size={15} />
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -94,66 +141,6 @@ const ACTIVITY_TEXT: Record<string, string> = {
   automation: tr("Automação executada"),
 };
 
-const TILE_TONES = {
-  accent: "bg-accent/10 text-accent ring-accent/20",
-  success: "bg-success/10 text-success ring-success/20",
-  warning: "bg-warning/10 text-warning ring-warning/20",
-  danger: "bg-danger/10 text-danger ring-danger/20",
-  neutral: "bg-bg-hover text-text-muted ring-border",
-} as const;
-
-/** Variável CSS da cor de cada tom (para o brilho do hover). */
-const TILE_GLOW: Record<keyof typeof TILE_TONES, string> = {
-  accent: "var(--accent)",
-  success: "var(--success)",
-  warning: "var(--warning)",
-  danger: "var(--danger)",
-  neutral: "var(--text-faint)",
-};
-
-function StatTile({
-  icon: Icon,
-  label,
-  value,
-  sub,
-  tone,
-  onClick,
-}: {
-  icon: typeof Code2;
-  label: string;
-  value: string | number;
-  sub: string;
-  tone: keyof typeof TILE_TONES;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="card-interactive surface group relative overflow-hidden rounded-card border border-border-subtle bg-bg-card p-4 text-left shadow-card"
-    >
-      {/* Brilho na cor do card que acende no hover. */}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100"
-        style={{ background: `rgb(${TILE_GLOW[tone]} / 0.22)` }}
-      />
-      <div className="relative flex items-center justify-between">
-        <span className="flex items-center gap-1 text-xs font-medium text-text-muted">
-          {label}
-          <ArrowUpRight size={12} className="-translate-x-1 text-text-faint opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100" />
-        </span>
-        <span className={cn("flex h-8 w-8 items-center justify-center rounded-lg ring-1 ring-inset", TILE_TONES[tone])}>
-          <Icon size={15} />
-        </span>
-      </div>
-      <p className="relative mt-2 text-[26px] font-semibold leading-tight tabular-nums tracking-tight text-text">
-        <AnimatedValue value={value} />
-      </p>
-      <p className="relative mt-0.5 truncate text-[11px] text-text-faint">{sub}</p>
-    </button>
-  );
-}
-
 export function Dashboard() {
   const navigate = useUIStore((s) => s.navigate);
   const setQuickTaskOpen = useUIStore((s) => s.setQuickTaskOpen);
@@ -166,7 +153,7 @@ export function Dashboard() {
 
   const [events, setEvents] = useState<CalendarEvent[] | null>(null);
   const [activity, setActivity] = useState<RecentItem[]>([]);
-  const [commits, setCommits] = useState<(GitCommit & { project: string })[]>([]);
+  const [commits, setCommits] = useState<(GitCommit & { project: string; projectId: string })[]>([]);
 
   const today = todayISO();
 
@@ -183,18 +170,26 @@ export function Dashboard() {
     () =>
       [...projects]
         .sort((a, b) => Number(b.favorite) - Number(a.favorite) || (b.lastOpenedAt ?? b.createdAt).localeCompare(a.lastOpenedAt ?? a.createdAt))
-        .slice(0, 3),
+        .slice(0, 5),
+    [projects]
+  );
+  // "Continuar": o último aberto de verdade (favorito não fura a fila aqui).
+  const lastProject = useMemo(
+    () => [...projects].filter((p) => p.lastOpenedAt).sort((a, b) => (b.lastOpenedAt ?? "").localeCompare(a.lastOpenedAt ?? ""))[0] ?? null,
     [projects]
   );
 
   // Commits recentes dos projetos mais usados (git local, sem rede).
   useEffect(() => {
-    const repos = recentProjects.filter((p) => p.git?.isRepo).slice(0, 2);
+    const repos = recentProjects.filter((p) => p.git?.isRepo).slice(0, 3);
     if (repos.length === 0) return;
     void Promise.all(
-      repos.map(async (p) => ((await attempt(window.workspace.git.commits(p.localPath, 4))) ?? []).map((c) => ({ ...c, project: p.name })))
-    ).then((lists) => setCommits(lists.flat().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5)));
+      repos.map(async (p) =>
+        ((await attempt(window.workspace.git.commits(p.localPath, 4))) ?? []).map((c) => ({ ...c, project: p.name, projectId: p.id }))
+      )
+    ).then((lists) => setCommits(lists.flat().sort((a, b) => b.date.localeCompare(a.date))));
   }, [recentProjects]);
+  const lastCommit = lastProject ? commits.find((c) => c.projectId === lastProject.id) ?? null : null;
 
   const focusTasks = useMemo(
     () =>
@@ -207,331 +202,252 @@ export function Dashboard() {
   const doneToday = tasks.filter((t) => t.status === "concluido" && t.completedAt && toLocalDate(new Date(t.completedAt)) === today);
   const todayEvents = (events ?? []).filter((e) => e.startsAt.slice(0, 10) === today);
   const nextEvents = (events ?? []).filter((e) => e.startsAt.slice(0, 10) > today).slice(0, 3);
-  const lastProject = recentProjects[0];
   const overdue = tasks.filter((t) => t.status !== "concluido" && t.dueDate && t.dueDate < today).length;
   const nowTime = toLocalDateTime(new Date());
   const nextToday = todayEvents.find((e) => e.startsAt >= nowTime);
-  const pendingChanges = projects.filter((p) => (p.git?.modifiedCount ?? 0) > 0).length;
-
-  const quickActions = [
-    { label: tr("Nova tarefa"), icon: Plus, run: () => setQuickTaskOpen(true) },
-    { label: tr("Novo projeto"), icon: Code2, run: () => navigate("projetos", "new") },
-    { label: tr("Abrir VS Code"), icon: Code2, run: () => (lastProject ? void openProject(lastProject, "vscode") : navigate("projetos")) },
-    { label: tr("Abrir terminal"), icon: SquareTerminal, run: () => navigate("terminal", lastProject?.id ?? null) },
-    { label: tr("Perguntar para IA"), icon: Bot, run: () => navigate("ia") },
-  ];
 
   const widgets: Record<DashboardWidgetId, ReactNode> = {
     agenda: (
-        <Card>
-          <CardHeader
-            title={tr("Agenda de hoje")}
-            icon={<CalendarDays size={12} />}
-            action={
-              <Button variant="ghost" size="xs" onClick={() => navigate("agenda")}>{tr("Abrir")}</Button>
-            }
-          />
-          <CardContent>
-            {events === null ? (
-              <LoadingRows rows={2} />
-            ) : todayEvents.length === 0 ? (
-              <p className="py-3 text-sm text-text-faint">{tr("Nenhum compromisso hoje.")}</p>
-            ) : (
-              // Linha do tempo: o que já passou fica apagado e o próximo compromisso pulsa.
-              <ul className="relative">
-                <span aria-hidden className="absolute bottom-4 left-[64.5px] top-4 w-px bg-border" />
-                {todayEvents.map((e) => {
-                  const past = (e.endsAt ?? e.startsAt) < nowTime;
-                  const isNext = e.id === nextToday?.id;
-                  return (
-                    <li key={e.id} className={cn("relative flex items-center gap-3 rounded-md px-1 py-1.5", past && "opacity-45")}>
-                      <span className={cn("w-11 font-mono text-xs tabular-nums", isNext ? "text-accent" : "text-text-muted")}>{formatTime(e.startsAt)}</span>
-                      <span className="relative flex h-2.5 w-2.5 shrink-0 items-center justify-center">
-                        {isNext && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/50" />}
-                        <span
-                          className={cn(
-                            "relative h-2.5 w-2.5 rounded-full ring-[3px] ring-bg-card",
-                            isNext ? "bg-accent" : past ? "bg-text-faint" : "bg-border"
-                          )}
-                        />
-                      </span>
-                      <span className={cn("min-w-0 flex-1 truncate text-sm", isNext ? "font-medium text-text" : "text-text")}>{e.title}</span>
-                      {isNext && <Badge tone="accent">{tr("Próximo")}</Badge>}
-                      {e.source === "google" && <Badge>{tr("Google")}</Badge>}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-            {nextEvents.length > 0 && (
-              <div className="mt-2 border-t border-border-subtle pt-2">
-                {nextEvents.map((e) => (
-                  <div key={e.id} className="flex items-center gap-3 px-1 py-1 text-xs text-text-muted">
-                    <span className="w-14 shrink-0 text-text-faint first-letter:uppercase">{shortDay(e.startsAt)}</span>
-                    <span className="truncate">
-                      {formatTime(e.startsAt)} · {e.title}
-                    </span>
-                  </div>
-                ))}
+      <Widget title={tr("Agenda de hoje")} action={<WidgetLink onClick={() => navigate("agenda")}>{tr("Abrir")}</WidgetLink>}>
+        {events === null ? (
+          <LoadingRows rows={2} />
+        ) : todayEvents.length === 0 ? (
+          <p className="py-2 text-sm text-text-faint">{tr("Nenhum compromisso hoje.")}</p>
+        ) : (
+          // Linha do tempo: o que já passou fica apagado e o próximo compromisso pulsa.
+          <ul className="relative">
+            <span aria-hidden className="absolute bottom-4 left-[64.5px] top-4 w-px bg-border-subtle" />
+            {todayEvents.map((e) => {
+              const past = (e.endsAt ?? e.startsAt) < nowTime;
+              const isNext = e.id === nextToday?.id;
+              return (
+                <li key={e.id} className={cn("relative flex items-center gap-3 rounded-md px-1 py-1.5", past && "opacity-45")}>
+                  <span className={cn("w-11 font-mono text-xs tabular-nums", isNext ? "text-accent" : "text-text-muted")}>{formatTime(e.startsAt)}</span>
+                  <span className="relative flex h-2.5 w-2.5 shrink-0 items-center justify-center">
+                    {isNext && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/50" />}
+                    <span className={cn("relative h-2 w-2 rounded-full ring-[3px] ring-bg-card", isNext ? "bg-accent" : past ? "bg-text-faint" : "bg-border")} />
+                  </span>
+                  <span className={cn("min-w-0 flex-1 truncate text-sm text-text", isNext && "font-medium")}>{e.title}</span>
+                  {e.source === "google" && <span className="text-[10px] text-text-faint">{tr("Google")}</span>}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        {nextEvents.length > 0 && (
+          <div className="mt-2 border-t border-border-subtle pt-2">
+            {nextEvents.map((e) => (
+              <div key={e.id} className="flex items-center gap-3 px-1 py-1 text-xs text-text-muted">
+                <span className="w-14 shrink-0 text-text-faint first-letter:uppercase">{shortDay(e.startsAt)}</span>
+                <span className="truncate">
+                  {formatTime(e.startsAt)} · {e.title}
+                </span>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            ))}
+          </div>
+        )}
+      </Widget>
     ),
     tarefas: (
-        <Card>
-          <CardHeader
-            title={tr("Tarefas")}
-            icon={<CheckSquare size={12} />}
+      <Widget
+        title={tr("Tarefas")}
+        action={
+          <div className="flex items-center gap-3">
+            {doneToday.length > 0 && <span className="text-[11px] text-success">{trn(doneToday.length, "{n} feita hoje", "{n} feitas hoje")}</span>}
+            <WidgetLink onClick={() => navigate("tarefas")}>{tr("Ver todas")}</WidgetLink>
+          </div>
+        }
+      >
+        {!tasksLoaded ? (
+          <LoadingRows rows={3} />
+        ) : focusTasks.length === 0 ? (
+          <EmptyState
+            mascot
+            title={tr("Nada pendente para hoje")}
+            className="py-3"
             action={
-              <div className="flex items-center gap-2">
-                {doneToday.length > 0 && <span className="text-[11px] text-success">{trn(doneToday.length, "{n} feita hoje", "{n} feitas hoje")}</span>}
-                <Button variant="ghost" size="xs" onClick={() => navigate("tarefas")}>{tr("Ver todas")}</Button>
-              </div>
+              <Button size="xs" variant="secondary" onClick={() => setQuickTaskOpen(true)}>
+                <Plus size={12} /> {tr("Nova tarefa")}
+              </Button>
             }
           />
-          <CardContent>
-            {!tasksLoaded ? (
-              <LoadingRows rows={3} />
-            ) : focusTasks.length === 0 ? (
-              <EmptyState
-                icon={CheckCircle2}
-                title={tr("Nada pendente para hoje")}
-                className="py-4"
-                action={
-                  <Button size="xs" variant="secondary" onClick={() => setQuickTaskOpen(true)}>
-                    <Plus size={12} />{" "}{tr("Nova tarefa")}</Button>
-                }
-              />
-            ) : (
-              <ul className="space-y-0.5">
-                {focusTasks.map((task) => (
-                  <li key={task.id} className="group flex items-center gap-2.5 rounded-md px-1 py-1.5 hover:bg-bg-hover">
-                    <input
-                      type="checkbox"
-                      checked={task.status === "concluido"}
-                      onChange={() => void toggleDone(task)}
-                      className="h-3.5 w-3.5 cursor-pointer accent-accent"
-                      aria-label={tr("Concluir {name}", { name: task.title })}
-                    />
-                    <button className="min-w-0 flex-1 truncate text-left text-sm text-text" onClick={() => navigate("tarefas", task.id)}>
-                      {task.title}
-                    </button>
-                    {(task.priority === "urgente" || task.priority === "alta") && (
-                      <Badge tone={task.priority === "urgente" ? "danger" : "warning"}>{PRIORITY_LABEL[task.priority]}</Badge>
-                    )}
-                    {task.dueDate && task.dueDate < today && <Badge tone="danger">{tr("Atrasada")}</Badge>}
-                    {task.dueTime && <span className="font-mono text-[11px] text-text-faint">{task.dueTime}</span>}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+        ) : (
+          <ul className="-mx-1 space-y-0.5">
+            {focusTasks.map((task) => (
+              <li key={task.id} className="group flex items-center gap-2.5 rounded-md px-1 py-1.5 hover:bg-bg-hover">
+                <input
+                  type="checkbox"
+                  checked={task.status === "concluido"}
+                  onChange={() => void toggleDone(task)}
+                  aria-label={tr("Concluir {name}", { name: task.title })}
+                />
+                <button className="min-w-0 flex-1 truncate text-left text-sm text-text" onClick={() => navigate("tarefas", task.id)}>
+                  {task.title}
+                </button>
+                {task.dueDate && task.dueDate < today ? (
+                  <Badge tone="danger">{tr("Atrasada")}</Badge>
+                ) : (
+                  (task.priority === "urgente" || task.priority === "alta") && (
+                    <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", task.priority === "urgente" ? "bg-danger" : "bg-warning")} title={PRIORITY_LABEL[task.priority]} />
+                  )
+                )}
+                {task.dueTime && <span className="font-mono text-[11px] text-text-faint">{task.dueTime}</span>}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Widget>
     ),
     atividade: (
-        <Card>
-          <CardHeader title={tr("Atividade")} icon={<GitCommitHorizontal size={12} />} />
-          <CardContent>
-            {activity.length === 0 && commits.length === 0 ? (
-              <p className="py-3 text-sm text-text-faint">{tr("Sua atividade recente aparece aqui.")}</p>
-            ) : (
-              <ul className="space-y-1">
-                {commits.slice(0, 3).map((c) => (
-                  <li key={c.hash} className="flex items-start gap-2.5 py-1">
-                    <GitCommitHorizontal size={14} className="mt-0.5 shrink-0 text-text-faint" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[13px] text-text">{c.subject}</p>
-                      <p className="text-[11px] text-text-faint">
-                        {c.project} · {c.shortHash} · {timeAgo(c.date)}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-                {activity.slice(0, 6).map((a) => {
-                  const Icon = ACTIVITY_ICON[a.itemType] ?? FileText;
-                  return (
-                    <li key={a.id} className="flex items-start gap-2.5 py-1">
-                      <Icon size={14} className={cn("mt-0.5 shrink-0", a.itemType === "task_completed" ? "text-success" : "text-text-faint")} />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[13px] text-text">{a.label}</p>
-                        <p className="text-[11px] text-text-faint">
-                          {ACTIVITY_TEXT[a.itemType]} · {timeAgo(a.openedAt)}
-                        </p>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+      <Widget title={tr("Atividade")}>
+        {activity.length === 0 && commits.length === 0 ? (
+          <p className="py-2 text-sm text-text-faint">{tr("Sua atividade recente aparece aqui.")}</p>
+        ) : (
+          <ul className="space-y-1">
+            {commits.slice(0, 3).map((c) => (
+              <li key={c.hash} className="flex items-start gap-2.5 py-1">
+                <GitCommitHorizontal size={14} className="mt-0.5 shrink-0 text-text-faint" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[13px] text-text">{c.subject}</p>
+                  <p className="text-[11px] text-text-faint">
+                    {c.project} · {c.shortHash} · {timeAgo(c.date)}
+                  </p>
+                </div>
+              </li>
+            ))}
+            {activity.slice(0, 4).map((a) => {
+              const Icon = ACTIVITY_ICON[a.itemType] ?? FileText;
+              return (
+                <li key={a.id} className="flex items-start gap-2.5 py-1">
+                  <Icon size={14} className={cn("mt-0.5 shrink-0", a.itemType === "task_completed" ? "text-success" : "text-text-faint")} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13px] text-text">{a.label}</p>
+                    <p className="text-[11px] text-text-faint">
+                      {ACTIVITY_TEXT[a.itemType]} · {timeAgo(a.openedAt)}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Widget>
     ),
     foco: (
-        <Card>
-          <CardHeader
-            title={tr("Foco")}
-            icon={<Timer size={12} />}
-            action={
-              <Button variant="ghost" size="xs" onClick={() => setFocusDialog("history")}>{tr("Histórico")}</Button>
-            }
-          />
-          <CardContent>
-            <FocusCardBody />
-          </CardContent>
-        </Card>
+      <Widget title={tr("Foco")} action={<WidgetLink onClick={() => setFocusDialog("history")}>{tr("Histórico")}</WidgetLink>}>
+        <FocusCardBody />
+      </Widget>
     ),
     automacoes: (
-        <Card>
-          <CardHeader
-            title={tr("Automações")}
-            icon={<Workflow size={12} />}
-            action={
-              <Button variant="ghost" size="xs" onClick={() => navigate("automacoes")}>{tr("Abrir")}</Button>
-            }
-          />
-          <CardContent>
-            <AutomationRunsList />
-          </CardContent>
-        </Card>
+      <Widget title={tr("Automações")} action={<WidgetLink onClick={() => navigate("automacoes")}>{tr("Abrir")}</WidgetLink>}>
+        <AutomationRunsList />
+      </Widget>
     ),
     projetos: (
-        <Card>
-          <CardHeader
-            title={tr("Projetos recentes")}
-            icon={<Code2 size={12} />}
+      <Widget title={tr("Projetos recentes")} action={<WidgetLink onClick={() => navigate("projetos")}>{tr("Todos os projetos")}</WidgetLink>}>
+        {!projectsLoaded ? (
+          <LoadingRows rows={2} />
+        ) : recentProjects.length === 0 ? (
+          <EmptyState
+            mascot
+            title={tr("Nenhum projeto ainda")}
+            description={tr("Adicione a pasta de um projeto para abrir no VS Code, terminal e GitHub com um clique.")}
+            className="py-4"
             action={
-              <Button variant="ghost" size="xs" onClick={() => navigate("projetos")}>{tr("Todos os projetos")}</Button>
+              <Button size="sm" onClick={() => navigate("projetos", "new")}>
+                <Plus size={13} /> {tr("Adicionar projeto")}
+              </Button>
             }
           />
-          <CardContent>
-            {!projectsLoaded ? (
-              <LoadingRows rows={2} />
-            ) : recentProjects.length === 0 ? (
-              <EmptyState
-                icon={Code2}
-                title={tr("Nenhum projeto ainda")}
-                description={tr("Adicione a pasta de um projeto para abrir no VS Code, terminal e GitHub com um clique.")}
-                action={
-                  <Button size="sm" onClick={() => navigate("projetos", "new")}>
-                    <Plus size={13} />{" "}{tr("Adicionar projeto")}</Button>
-                }
-              />
-            ) : (
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                {recentProjects.map((project) => (
-                  <div key={project.id} className="card-interactive flex flex-col rounded-lg border border-border-subtle bg-bg-elevated/50 p-3">
-                    <button className="flex items-center gap-2.5 text-left" onClick={() => navigate("projetos", project.id)}>
-                      <ProjectIcon name={project.name} icon={project.icon} size={30} />
-                      <span className="min-w-0">
-                        <span className="block truncate text-sm font-semibold text-text">{project.name}</span>
-                        <span className="mt-0.5 block truncate text-xs text-text-faint">{project.technologies.join(" • ") || "—"}</span>
-                      </span>
-                    </button>
-                    {project.git?.isRepo && (
-                      <p className="mt-1.5 text-[11px] text-text-faint">
-                        <span className="font-mono text-text-muted">{project.git.branch}</span>
-                        {project.git.modifiedCount > 0 && <span className="text-warning"> · {trn(project.git.modifiedCount, "{n} alteração", "{n} alterações")}</span>}
-                      </p>
-                    )}
-                    <div className="mt-auto flex gap-1 pt-3">
-                      <Button size="xs" variant="secondary" onClick={() => void openProject(project, "vscode")} title={tr("Abrir no VS Code")}>
-                        <Code2 size={12} />{" "}{tr("VS Code")}</Button>
-                      <Button size="xs" variant="secondary" onClick={() => navigate("terminal", project.id)} title={tr("Terminal")}>
-                        <SquareTerminal size={12} />
-                      </Button>
-                      <Button size="xs" variant="secondary" onClick={() => void openProject(project, "explorer")} title={tr("Pasta")}>
-                        <FolderOpen size={12} />
-                      </Button>
-                      {project.githubUrl && (
-                        <Button size="xs" variant="secondary" onClick={() => void openProject(project, "github")} title={tr("GitHub")}>
-                          <Github size={12} />
-                        </Button>
+        ) : (
+          // Lista compacta: nome, branch e alterações; as ações aparecem só no hover.
+          <ul className="-mx-1">
+            {recentProjects.map((project) => (
+              <li key={project.id} className="group flex items-center gap-3 rounded-md px-1 py-1.5 hover:bg-bg-hover">
+                <button className="flex min-w-0 flex-1 items-center gap-3 text-left" onClick={() => navigate("projetos", project.id)}>
+                  <ProjectIcon name={project.name} icon={project.icon} size={24} className="rounded-md" />
+                  <span className="min-w-0 flex-1 truncate text-sm text-text">{project.name}</span>
+                  {project.git?.isRepo && (
+                    <span className="hidden shrink-0 items-center gap-1.5 text-[11px] text-text-faint sm:flex">
+                      <span className="font-mono">{project.git.branch}</span>
+                      {project.git.modifiedCount > 0 && (
+                        <span className="text-warning" title={trn(project.git.modifiedCount, "{n} alteração", "{n} alterações")}>
+                          ●{project.git.modifiedCount}
+                        </span>
                       )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                    </span>
+                  )}
+                  <span className="w-20 shrink-0 text-right text-[11px] text-text-faint group-hover:hidden">
+                    {project.lastOpenedAt ? timeAgo(project.lastOpenedAt) : "—"}
+                  </span>
+                </button>
+                <span className="hidden w-20 shrink-0 justify-end gap-0.5 group-hover:flex">
+                  <Button size="icon-sm" variant="ghost" onClick={() => void openProject(project, "vscode")} title={tr("Abrir no VS Code")} aria-label={tr("Abrir no VS Code")}>
+                    <Code2 size={12} />
+                  </Button>
+                  <Button size="icon-sm" variant="ghost" onClick={() => navigate("terminal", project.id)} title={tr("Terminal")} aria-label={tr("Terminal")}>
+                    <SquareTerminal size={12} />
+                  </Button>
+                  <Button size="icon-sm" variant="ghost" onClick={() => void openProject(project, "explorer")} title={tr("Pasta")} aria-label={tr("Pasta")}>
+                    <FolderOpen size={12} />
+                  </Button>
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Widget>
     ),
   };
   const visibleWidgets = dashboardOrder(settings?.dashboard).filter((id) => !settings?.dashboard.hidden.includes(id));
 
+  // Resumo do dia numa linha só (substitui os cards de número).
+  const summary: { text: string; tone?: "danger"; onClick: () => void }[] = [
+    { text: trn(focusTasks.length, "{n} tarefa em foco", "{n} tarefas em foco"), onClick: () => navigate("tarefas") },
+    ...(overdue > 0 ? [{ text: trn(overdue, "{n} atrasada", "{n} atrasadas"), tone: "danger" as const, onClick: () => navigate("tarefas") }] : []),
+    {
+      text: nextToday
+        ? tr("Próximo compromisso às {time}", { time: formatTime(nextToday.startsAt) })
+        : trn(todayEvents.length, "{n} compromisso hoje", "{n} compromissos hoje"),
+      onClick: () => navigate("agenda"),
+    },
+  ];
+
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="flex items-center gap-4">
-          <ProfileAvatar size={54} className="shadow-card ring-2 ring-accent/30" />
-          <div>
-            <h1 className="text-[26px] font-semibold leading-tight tracking-tight text-text">
-              {greeting()}
-              {settings?.userName && (
-                <>
-                  {", "}
-                  <span className="bg-gradient-to-r from-accent to-accent-hover bg-clip-text text-transparent">{settings.userName}</span>
-                </>
-              )}
-            </h1>
-            <p className="mt-0.5 text-sm first-letter:uppercase text-text-muted">
-              {new Date().toLocaleDateString(getLocale(), { weekday: "long", day: "numeric", month: "long" })}
-              {" · "}
-              <span className="normal-case">
-                {trn(focusTasks.length, "{n} tarefa em foco", "{n} tarefas em foco")}
-                {" · "}
-                {trn(todayEvents.length, "{n} compromisso hoje", "{n} compromissos hoje")}
+      <div className="relative flex flex-wrap items-end justify-between gap-3 pt-2">
+        <DitherGlow className="absolute -right-7 -top-6 h-[150px] w-[70%] opacity-25 [mask-image:linear-gradient(to_bottom,black,transparent)]" />
+        <div className="relative">
+          <h1 className="text-[24px] font-semibold leading-tight tracking-tight text-text">
+            {greeting()}
+            {settings?.userName && `, ${settings.userName}`}
+          </h1>
+          <p className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-text-muted">
+            <span className="first-letter:uppercase">{new Date().toLocaleDateString(getLocale(), { weekday: "long", day: "numeric", month: "long" })}</span>
+            {summary.map((s) => (
+              <span key={s.text} className="flex items-center gap-2">
+                <span className="text-text-faint">·</span>
+                <button onClick={s.onClick} className={cn("transition-colors hover:text-text", s.tone === "danger" && "text-danger")}>
+                  {s.text}
+                </button>
               </span>
-            </p>
-          </div>
+            ))}
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => setCustomizeOpen(true)} title={tr("Personalizar o Início")}>
-            <Settings2 size={13} /> {tr("Personalizar")}
+        <div className="relative flex items-center gap-1">
+          <Button variant="ghost" size="icon" onClick={() => setCustomizeOpen(true)} title={tr("Personalizar o Início")} aria-label={tr("Personalizar o Início")}>
+            <Settings2 size={15} />
           </Button>
           <AppUsageButton />
         </div>
       </div>
       <DashboardCustomizeDialog open={customizeOpen} onClose={() => setCustomizeOpen(false)} />
 
-      <div className="grid grid-cols-2 gap-3 xl:grid-cols-3">
-        <StatTile
-          icon={CheckSquare}
-          label={tr("Tarefas em foco")}
-          value={focusTasks.length}
-          sub={overdue > 0 ? trn(overdue, "{n} atrasada", "{n} atrasadas") : trn(doneToday.length, "{n} concluída hoje", "{n} concluídas hoje")}
-          tone={overdue > 0 ? "danger" : "accent"}
-          onClick={() => navigate("tarefas")}
-        />
-        <StatTile
-          icon={CalendarDays}
-          label={tr("Compromissos hoje")}
-          value={todayEvents.length}
-          sub={nextToday ? tr("Próximo às {time}", { time: formatTime(nextToday.startsAt) }) : tr("Agenda livre")}
-          tone="success"
-          onClick={() => navigate("agenda")}
-        />
-        <StatTile
-          icon={Code2}
-          label={tr("Projetos")}
-          value={projects.length}
-          sub={pendingChanges > 0 ? tr("{n} com alterações no Git", { n: pendingChanges }) : tr("Tudo commitado")}
-          tone="warning"
-          onClick={() => navigate("projetos")}
-        />
-      </div>
+      {lastProject && <ContinueStrip project={lastProject} lastCommit={lastCommit} />}
 
-      <div className="flex flex-wrap gap-2">
-        {quickActions.map((a) => (
-          <Button key={a.label} variant="secondary" size="sm" onClick={a.run}>
-            <a.icon size={13} className="text-text-faint" /> {a.label}
-          </Button>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 xl:grid-flow-row-dense xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-flow-row-dense xl:grid-cols-3">
         {visibleWidgets.map((id) => (
-          <div key={id} className={cn("min-w-0 [&>*]:h-full", WIDE_WIDGETS.has(id) && "xl:col-span-2")}>
+          <div key={id} className={cn("min-w-0", WIDE_WIDGETS.has(id) && "xl:col-span-2")}>
             {widgets[id]}
           </div>
         ))}

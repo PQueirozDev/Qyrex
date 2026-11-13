@@ -82,7 +82,7 @@ export function applyQyrexTheme(): void {
   const border = cssHex("--border-subtle", dark ? "#1c1f25" : "#e8eaee");
   const text = cssHex("--text", dark ? "#e6e8eb" : "#16181d");
   const faint = cssHex("--text-faint", dark ? "#686f7a" : "#8a909c");
-  const accent = cssHex("--accent", dark ? "#688cff" : "#4c6ef5");
+  const accent = cssHex("--accent", dark ? "#ff9a3c" : "#c2570c");
   monaco.editor.defineTheme("qyrex", {
     base: dark ? "vs-dark" : "vs",
     inherit: true,

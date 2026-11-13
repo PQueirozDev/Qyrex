@@ -684,3 +684,42 @@ export interface AIUsageSummary {
   byDay: { date: string; inputTokens: number; outputTokens: number; costUsd: number; byProvider: Record<string, number> }[];
   recent: AIUsageRecord[];
 }
+
+// --- Runner de processos (2.2) ------------------------------------------------------
+
+export type PackageManager = "npm" | "pnpm" | "yarn" | "bun";
+
+export interface ProjectScripts {
+  /** Gerenciador detectado pelo lockfile da pasta. */
+  packageManager: PackageManager;
+  /** Scripts do package.json (nome → comando), na ordem do arquivo. */
+  scripts: { name: string; command: string }[];
+}
+
+export type RunnerStatus = "running" | "exited" | "failed" | "stopped";
+
+export interface RunnerProcess {
+  id: string;
+  projectId: string;
+  projectName: string;
+  /** Nome do script do package.json; null quando é um comando livre. */
+  script: string | null;
+  /** O que roda de fato, exatamente como foi mostrado na confirmação. */
+  command: string;
+  status: RunnerStatus;
+  exitCode: number | null;
+  startedAt: string;
+  endedAt: string | null;
+  /** Endereços locais anunciados na saída (ex.: http://localhost:5173/). */
+  urls: string[];
+  pid: number | null;
+}
+
+export interface ListeningPort {
+  port: number;
+  address: string;
+  pid: number;
+  processName: string | null;
+  /** Processo do runner dono da porta (a própria árvore dele), se houver. */
+  runnerId: string | null;
+}

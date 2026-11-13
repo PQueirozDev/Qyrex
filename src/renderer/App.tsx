@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
+import { StatusBar } from "@/components/StatusBar";
 import { CommandPalette } from "@/components/CommandPalette";
 import { FocusDialogs } from "@/components/Focus";
 import { ConfirmHost, PromptHost, Toaster } from "@/components/Overlays";
@@ -27,6 +28,8 @@ const PatchNotes = lazy(() => import("@/pages/PatchNotes").then((m) => ({ defaul
 const Notion = lazy(() => import("@/pages/Notion").then((m) => ({ default: m.Notion })));
 const TerminalPage = lazy(() => import("@/pages/TerminalPage").then((m) => ({ default: m.TerminalPage })));
 const Automations = lazy(() => import("@/pages/Automations").then((m) => ({ default: m.Automations })));
+const ProcessesPage = lazy(() => import("@/pages/ProcessesPage").then((m) => ({ default: m.ProcessesPage })));
+const ToolsPage = lazy(() => import("@/pages/ToolsPage").then((m) => ({ default: m.ToolsPage })));
 const EditorPage = lazy(() => import("@/pages/EditorPage").then((m) => ({ default: m.EditorPage })));
 
 function PageView({ page }: { page: Page }) {
@@ -42,6 +45,10 @@ function PageView({ page }: { page: Page }) {
       return <Tasks />;
     case "automacoes":
       return <Automations />;
+    case "processos":
+      return <ProcessesPage />;
+    case "ferramentas":
+      return <ToolsPage />;
     case "arquivos":
       return <FilesPage />;
     case "configuracoes":
@@ -85,7 +92,7 @@ function PersistentPage({ visible, children }: { visible: boolean; children: (vi
 }
 
 /** Páginas que ocupam a altura toda (sem padding/scroll do layout). */
-const FULL_BLEED: Page[] = ["ia", "terminal", "editor", "notion"];
+const FULL_BLEED: Page[] = ["ia", "terminal", "editor", "notion", "processos"];
 
 export function App() {
   const page = useUIStore((s) => s.page);
@@ -220,6 +227,7 @@ export function App() {
           <PersistentPage visible={page === "terminal"}>{(visible) => <TerminalPage visible={visible} />}</PersistentPage>
           <PersistentPage visible={page === "editor"}>{(visible) => <EditorPage visible={visible} />}</PersistentPage>
         </main>
+        {!terminalOnly && <StatusBar />}
       </div>
 
       <CommandPalette />

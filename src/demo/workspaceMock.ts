@@ -28,11 +28,13 @@ import type {
   GitCommit,
   IntegrationStatus,
   IpcResult,
+  ListeningPort,
   LocalMediaState,
   NotionItem,
   Project,
   ProjectWithGit,
   RecentItem,
+  RunnerProcess,
   SavedPrompt,
   Task,
 } from "../shared/types";
@@ -428,6 +430,51 @@ const withGit = (p: Project): ProjectWithGit => ({
   icon: null,
   git: { branch: db.branch[p.id] ?? "main", modifiedCount: db.changes[p.id]?.length ?? 0, isRepo: true, ahead: p.id === "p1" ? 1 : 0, behind: 0, remoteUrl: p.githubUrl, upstream: `origin/${db.branch[p.id] ?? "main"}`, conflicts: 0, operation: null },
 });
+// Runner simulado: nada roda de verdade; a saída imita um servidor de dev.
+const runnerChanged = channel<RunnerProcess[]>();
+const runnerData = channel<{ id: string; chunk: string }>();
+const demoProcesses: RunnerProcess[] = [];
+const demoOutput = new Map<string, string>();
+const DEMO_SCRIPTS: Record<string, string> = { dev: "vite", build: "tsc -b && vite build", test: "vitest", lint: "eslint ." };
+function demoStartProcess(projectId: string, script: string | null, command: string): RunnerProcess {
+  const project = db.projects.find((p) => p.id === projectId);
+  const proc: RunnerProcess = {
+    id: uid(),
+    projectId,
+    projectName: project?.name ?? "?",
+    script,
+    command,
+    status: "running",
+    exitCode: null,
+    startedAt: new Date().toISOString(),
+    endedAt: null,
+    urls: [],
+    pid: 4000 + Math.floor(Math.random() * 4000),
+  };
+  demoProcesses.unshift(proc);
+  const lines =
+    script === "dev"
+      ? ["", "  \x1b[32mVITE v6.0.0\x1b[0m  ready in 412 ms", "", "  \x1b[32m➜\x1b[0m  Local:   \x1b[36mhttp://localhost:5173/\x1b[0m", "  ➜  Network: use --host to expose"]
+      : ["Rodando " + command + "...", "\x1b[32m✓\x1b[0m 42 verificações passaram", ""];
+  const write = (chunk: string) => {
+    demoOutput.set(proc.id, (demoOutput.get(proc.id) ?? "") + chunk);
+    runnerData.emit({ id: proc.id, chunk });
+  };
+  write(`\x1b[2m> ${command}\x1b[0m\r\n`);
+  lines.forEach((line, i) =>
+    setTimeout(() => {
+      write(line + "\r\n");
+      if (line.includes("localhost:5173")) proc.urls = ["http://localhost:5173/"];
+      if (i === lines.length - 1) {
+        if (script !== "dev") Object.assign(proc, { status: "exited", exitCode: 0, endedAt: new Date().toISOString() });
+        runnerChanged.emit([...demoProcesses]);
+      }
+    }, 300 + i * 250)
+  );
+  runnerChanged.emit([...demoProcesses]);
+  return proc;
+}
+
 const projectByPath = (path: string) => db.projects.find((p) => path.toLowerCase().startsWith(p.localPath.toLowerCase()));
 const risk = (cmd: string): CommandRisk => (/\b(rm|del|remove-item|format|rd|rmdir)\b|--force|reset --hard/i.test(cmd) ? "dangerous" : /^(git status|dir|ls|echo|npm run dev|node -v|npm -v)\b/i.test(cmd.trim()) ? "safe" : "normal");
 const DEMO_ONLY = "Na demo web isso não abre nada no seu computador — no app desktop abre de verdade.";
@@ -598,6 +645,45 @@ export const workspaceMock: WorkspaceApi = {
       return ok(undefined);
     },
     used: () => ok(undefined),
+  },
+  runner: {
+    scripts: () => ok({ packageManager: "npm" as const, scripts: Object.entries(DEMO_SCRIPTS).map(([name, command]) => ({ name, command })) }),
+    list: () => ok([...demoProcesses], 20),
+    output: async (id) => ok(demoOutput.get(id) ?? "", 20),
+    start: async (input) => ok(demoStartProcess(input.projectId, input.script ?? null, input.script ? `npm run ${input.script}` : input.command ?? "")),
+    stop: async (id) => {
+      const proc = demoProcesses.find((p) => p.id === id);
+      if (proc && proc.status === "running") {
+        Object.assign(proc, { status: "stopped", endedAt: new Date().toISOString(), pid: null });
+        runnerChanged.emit([...demoProcesses]);
+      }
+      return ok(undefined);
+    },
+    restart: async (id) => {
+      const proc = demoProcesses.find((p) => p.id === id);
+      if (!proc) return fail("Processo não encontrado.");
+      const i = demoProcesses.indexOf(proc);
+      demoProcesses.splice(i, 1);
+      return ok(demoStartProcess(proc.projectId, proc.script, proc.command));
+    },
+    remove: async (id) => {
+      const i = demoProcesses.findIndex((p) => p.id === id);
+      if (i >= 0) demoProcesses.splice(i, 1);
+      runnerChanged.emit([...demoProcesses]);
+      return ok(undefined);
+    },
+    ports: () => {
+      const ports: ListeningPort[] = [
+        { port: 5432, address: "0.0.0.0", pid: 3120, processName: "postgres.exe", runnerId: null },
+        ...demoProcesses
+          .filter((p) => p.status === "running" && p.urls.length > 0)
+          .map((p) => ({ port: 5173, address: "127.0.0.1", pid: p.pid ?? 0, processName: "node.exe", runnerId: p.id })),
+      ];
+      return ok(ports);
+    },
+    killPort: () => fail(DEMO_ONLY),
+    onChanged: (cb) => runnerChanged.on(cb),
+    onData: (cb) => runnerData.on(cb),
   },
   automations: {
     list: () => ok(demoAutomations.map(withLastRun), 20),

@@ -60,9 +60,11 @@ function ensureSubscribed() {
   window.workspace.terminal.onExit(({ id, exitCode }) => exitHandlers.get(id)?.(exitCode));
 }
 
-function cssColor(name: string): string {
+function cssColor(name: string, alpha?: number): string {
   const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  return value ? `rgb(${value.split(/\s+/).join(", ")})` : "#000";
+  if (!value) return "#000";
+  const rgb = value.split(/\s+/).join(", ");
+  return alpha === undefined ? `rgb(${rgb})` : `rgba(${rgb}, ${alpha})`;
 }
 
 interface Tab {
@@ -134,7 +136,7 @@ function TerminalView({
         background: cssColor("--bg"),
         foreground: cssColor("--text"),
         cursor: cssColor("--accent"),
-        selectionBackground: "rgba(104, 140, 255, 0.3)",
+        selectionBackground: cssColor("--accent", 0.3),
       },
     });
     const fit = new FitAddon();

@@ -6,6 +6,8 @@ export type Page =
   | "projetos"
   | "terminal"
   | "automacoes"
+  | "processos"
+  | "ferramentas"
   | "arquivos"
   | "editor"
   | "agenda"
@@ -21,6 +23,8 @@ export const PAGES: Page[] = [
   "projetos",
   "terminal",
   "automacoes",
+  "processos",
+  "ferramentas",
   "arquivos",
   "editor",
   "agenda",
@@ -71,12 +75,15 @@ interface UIState {
   promptState: Pending<string | null, PromptOptions> | null;
   /** Modo "só terminais": na página Terminal, esconde a barra lateral e o cabeçalho. */
   terminalOnly: boolean;
+  /** Barra lateral recolhida (só ícones). */
+  sidebarCollapsed: boolean;
 
   navigate: (page: Page, param?: string | null) => void;
   setPaletteOpen: (open: boolean) => void;
   setQuickTaskOpen: (open: boolean) => void;
   setOnline: (online: boolean) => void;
   setTerminalOnly: (on: boolean) => void;
+  setSidebarCollapsed: (on: boolean) => void;
   pushToast: (kind: Toast["kind"], message: string) => void;
   dismissToast: (id: number) => void;
 }
@@ -84,11 +91,21 @@ interface UIState {
 let toastId = 0;
 
 const TERMINAL_ONLY_KEY = "qrz.terminalOnly";
-function readTerminalOnly(): boolean {
+const SIDEBAR_KEY = "qrz.sidebarCollapsed";
+
+/** Preferências pequenas de layout ficam no localStorage (sem storage: valem só nesta sessão). */
+function readFlag(key: string): boolean {
   try {
-    return localStorage.getItem(TERMINAL_ONLY_KEY) === "1";
+    return localStorage.getItem(key) === "1";
   } catch {
     return false;
+  }
+}
+function writeFlag(key: string, on: boolean): void {
+  try {
+    localStorage.setItem(key, on ? "1" : "0");
+  } catch {
+    // sem storage: vale só nesta sessão
   }
 }
 
@@ -101,19 +118,20 @@ export const useUIStore = create<UIState>((set, get) => ({
   toasts: [],
   confirmState: null,
   promptState: null,
-  terminalOnly: readTerminalOnly(),
+  terminalOnly: readFlag(TERMINAL_ONLY_KEY),
+  sidebarCollapsed: readFlag(SIDEBAR_KEY),
 
   navigate: (page, param = null) => set({ page, pageParam: param }),
   setPaletteOpen: (open) => set({ paletteOpen: open }),
   setQuickTaskOpen: (open) => set({ quickTaskOpen: open }),
   setOnline: (online) => set({ online }),
   setTerminalOnly: (on) => {
-    try {
-      localStorage.setItem(TERMINAL_ONLY_KEY, on ? "1" : "0");
-    } catch {
-      // sem storage: vale só nesta sessão
-    }
+    writeFlag(TERMINAL_ONLY_KEY, on);
     set({ terminalOnly: on });
+  },
+  setSidebarCollapsed: (on) => {
+    writeFlag(SIDEBAR_KEY, on);
+    set({ sidebarCollapsed: on });
   },
   pushToast: (kind, message) => {
     const id = ++toastId;

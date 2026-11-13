@@ -32,6 +32,7 @@ import * as appUsageService from "../services/appUsageService.js";
 import * as backupService from "../services/backupService.js";
 import * as focusService from "../services/focusService.js";
 import * as automationService from "../services/automationService.js";
+import * as runnerService from "../services/runnerService.js";
 import * as promptService from "../services/promptService.js";
 import * as syncService from "../services/syncService.js";
 import { getDiscordStatus, setDiscordActivity } from "../integrations/discord.js";
@@ -159,6 +160,25 @@ export function registerIpcHandlers(): void {
   handle("automations:runs", (_e, id) => automationService.listRuns(v.parse(v.id, id)));
   handle("automations:recentRuns", () => automationService.recentRuns());
   handle("automations:suggest", (_e, projectId) => automationService.suggestAutomations(v.parse(v.id, projectId)));
+
+  // --- Runner de processos ----------------------------------------------------------
+  handle("runner:scripts", (_e, projectId) => runnerService.getProjectScripts(v.parse(v.id, projectId)));
+  handle("runner:list", () => runnerService.listProcesses());
+  handle("runner:output", (_e, id) => runnerService.getOutput(v.parse(v.id, id)));
+  handle("runner:start", (_e, input, confirmed) => {
+    // Rodar script/comando é ação sensível: só depois do diálogo que mostra o comando exato.
+    requireConfirmation(confirmed);
+    return runnerService.start(v.parse(v.runnerStart, input));
+  });
+  handle("runner:stop", (_e, id) => runnerService.stop(v.parse(v.id, id)));
+  // Reinicia o comando JÁ confirmado deste processo (guardado no main; o renderer não troca o que roda).
+  handle("runner:restart", (_e, id) => runnerService.restart(v.parse(v.id, id)));
+  handle("runner:remove", (_e, id) => runnerService.remove(v.parse(v.id, id)));
+  handle("runner:ports", () => runnerService.listPorts());
+  handle("runner:killPort", (_e, port, pid, confirmed) => {
+    requireConfirmation(confirmed);
+    return runnerService.killPort(v.parse(v.port, port), v.parse(v.pid, pid));
+  });
 
   // --- Foco ------------------------------------------------------------------------
   handle("focus:state", () => focusService.getState());

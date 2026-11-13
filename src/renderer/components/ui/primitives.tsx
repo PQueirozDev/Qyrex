@@ -5,6 +5,7 @@ import { Loader2, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { tr } from "@/lib/i18n";
 import { initials } from "@/lib/format";
+import { Mascot } from "@/components/ui/Brand";
 
 export function Badge({
   children,
@@ -79,12 +80,15 @@ export function Spinner({ className }: { className?: string }) {
 
 export function EmptyState({
   icon: Icon,
+  mascot,
   title,
   description,
   action,
   className,
 }: {
-  icon: LucideIcon;
+  icon?: LucideIcon;
+  /** Mostra a capivara da marca no lugar do ícone (estados vazios "felizes": nada pendente, primeira vez). */
+  mascot?: boolean;
   title: string;
   description?: ReactNode;
   action?: ReactNode;
@@ -92,13 +96,17 @@ export function EmptyState({
 }) {
   return (
     <div className={cn("flex animate-blur-in flex-col items-center justify-center gap-2 px-6 py-10 text-center", className)}>
-      {/* Ícone com halo na cor do tema: vazio, mas convidativo. */}
-      <div className="relative mb-1.5">
-        <div className="absolute inset-0 scale-150 rounded-full bg-accent/10 blur-xl" />
-        <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-border bg-gradient-to-b from-bg-card to-bg-elevated shadow-card">
-          <Icon size={19} className="text-accent/80" />
+      {mascot ? (
+        <Mascot scale={2} className="mb-1" />
+      ) : Icon ? (
+        // Ícone com halo na cor do tema: vazio, mas convidativo.
+        <div className="relative mb-1.5">
+          <div className="absolute inset-0 scale-150 rounded-full bg-accent/10 blur-xl" />
+          <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-border bg-gradient-to-b from-bg-card to-bg-elevated shadow-card">
+            <Icon size={19} className="text-accent/80" />
+          </div>
         </div>
-      </div>
+      ) : null}
       <p className="text-sm font-medium text-text">{title}</p>
       {description && <p className="max-w-sm text-xs leading-relaxed text-text-muted">{description}</p>}
       {action && <div className="mt-2">{action}</div>}

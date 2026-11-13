@@ -187,7 +187,8 @@ function LimitsCard({ limits, now, refreshing, onRefresh }: { limits: Subscripti
 }
 
 /** Indicadores da barra de título + painel "Detalhes de uso de IA". */
-export function AILimitsIndicator() {
+/** `compact`: versão da barra de status (ícones e textos menores). */
+export function AILimitsIndicator({ compact = false }: { compact?: boolean } = {}) {
   const [limits, setLimits] = useState<SubscriptionLimits[] | null>(null);
   const [memory, setMemory] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
@@ -254,15 +255,15 @@ export function AILimitsIndicator() {
         <button
           onClick={() => setOpen(true)}
           title={tr("Uso da assinatura — clique para ver os detalhes")}
-          className="flex items-center gap-3 rounded-lg px-2 py-1 transition-colors hover:bg-bg-hover"
+          className={compact ? "status-item gap-2.5" : "flex items-center gap-3 rounded-lg px-2 py-1 transition-colors hover:bg-bg-hover"}
         >
           {visible.map((l) => {
             const s = session(l);
             const pct = s ? Math.round(s.usedPercent) : null;
             return (
               <span key={l.cli} className="flex items-center gap-1.5">
-                <ProviderIcon cli={l.cli} size={18} />
-                <span className={cn("font-mono text-[12px] font-semibold tabular-nums", pct === null ? "text-text-faint" : levelText(pct))}>
+                <ProviderIcon cli={l.cli} size={compact ? 13 : 18} />
+                <span className={cn("font-mono font-semibold tabular-nums", compact ? "text-[11px]" : "text-[12px]", pct === null ? "text-text-faint" : levelText(pct))}>
                   {pct === null ? "—" : `${pct}%`}
                 </span>
               </span>
@@ -271,8 +272,11 @@ export function AILimitsIndicator() {
         </button>
       )}
       {memory !== null && (
-        <span className="flex items-center gap-1.5 font-mono text-[12px] tabular-nums text-text-muted" title={tr("Memória usada pelo Qyrex")}>
-          <MemoryStick size={13} className="text-text-faint" />
+        <span
+          className={cn("flex items-center gap-1.5 font-mono tabular-nums text-text-muted", compact ? "status-item text-[11px]" : "text-[12px]")}
+          title={tr("Memória usada pelo Qyrex")}
+        >
+          <MemoryStick size={compact ? 11 : 13} className="text-text-faint" />
           {memory} MB
         </span>
       )}

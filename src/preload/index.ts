@@ -21,7 +21,10 @@ import type {
   DiscordStatus,
   FocusState,
   FocusSummary,
+  ListeningPort,
   LocalMediaState,
+  ProjectScripts,
+  RunnerProcess,
   MediaAction,
   NotionItem,
   NotionPageContent,
@@ -110,6 +113,24 @@ const api = {
     delete: (id: string) => invoke<void>("prompts:delete", id),
     /** Conta o uso (os mais usados aparecem primeiro). */
     used: (id: string) => invoke<void>("prompts:used", id),
+  },
+  runner: {
+    /** Scripts do package.json do projeto e o gerenciador detectado. */
+    scripts: (projectId: string) => invoke<ProjectScripts>("runner:scripts", projectId),
+    list: () => invoke<RunnerProcess[]>("runner:list"),
+    /** Saída guardada do processo (até ~256 KB, com cores ANSI). */
+    output: (id: string) => invoke<string>("runner:output", id),
+    /** Só depois do diálogo que mostra o comando exato. */
+    start: (input: { projectId: string; script?: string; command?: string }, confirmed: true) =>
+      invoke<RunnerProcess>("runner:start", input, confirmed),
+    stop: (id: string) => invoke<void>("runner:stop", id),
+    restart: (id: string) => invoke<RunnerProcess>("runner:restart", id),
+    remove: (id: string) => invoke<void>("runner:remove", id),
+    ports: () => invoke<ListeningPort[]>("runner:ports"),
+    /** Só depois da confirmação; o main confere de novo que o PID ainda usa a porta. */
+    killPort: (port: number, pid: number, confirmed: true) => invoke<void>("runner:killPort", port, pid, confirmed),
+    onChanged: (callback: (processes: RunnerProcess[]) => void) => subscribe<RunnerProcess[]>("runner:changed", callback),
+    onData: (callback: (payload: { id: string; chunk: string }) => void) => subscribe<{ id: string; chunk: string }>("runner:data", callback),
   },
   automations: {
     list: (projectId?: string) => invoke<Automation[]>("automations:list", projectId),

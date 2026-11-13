@@ -123,6 +123,18 @@ export const automationCreate = z.object({
   enabled: z.boolean().optional(),
 });
 
+/** Runner: um script do package.json OU um comando livre (nunca os dois). */
+export const runnerStart = z
+  .object({
+    projectId: id,
+    script: z.string().min(1).max(200).optional(),
+    command: z.string().trim().min(1, "Comando vazio").max(2000).optional(),
+  })
+  .refine((v) => Boolean(v.script) !== Boolean(v.command), "Escolha um script ou digite um comando.");
+
+export const port = z.number().int().min(1).max(65535);
+export const pid = z.number().int().min(5).max(4_294_967_295);
+
 export const automationUpdate = z
   .object({
     name: nonEmpty(120),
