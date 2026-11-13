@@ -631,7 +631,59 @@ await step("Arquivos: navegar na pasta autorizada", async () => {
   await waitFor(`textOf(document.querySelector("main")).includes("demo")`, { label: "pasta demo" });
   const outside = await ev(`return (await window.workspace.files.list(${JSON.stringify(os.homedir())})).ok`);
   if (outside !== false) throw new Error("listou pasta fora da allowlist");
-  return "fora da allowlist bloqueado";
+  await waitFor(`!!document.querySelector('[role=tree]')`, { label: "árvore de arquivos" });
+  await waitFor(`$$("[role=treeitem]").some(b=>b.title===${JSON.stringify(PROJECT)})`, { label: "projeto na árvore" });
+  await ev(`$$("[role=treeitem]").find(b=>b.title===${JSON.stringify(PROJECT)}).click(); return 1;`);
+  await waitFor(`$$("[role=treeitem]").some(b=>b.title===${JSON.stringify(path.join(PROJECT, "README.md"))})`, { label: "arquivo na árvore" });
+  await ev(`const file=$$("[role=treeitem]").find(b=>b.title===${JSON.stringify(path.join(PROJECT, "README.md"))});file.focus();file.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true})); return 1;`);
+  await waitFor(`$$("[role=treeitem][aria-selected=true]").some(b=>b.title.endsWith("README.md"))`, { label: "arquivo selecionado por teclado" });
+  await ev(`document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true}));return 1;`);
+  if (!await ev(`return document.activeElement.title===${JSON.stringify(PROJECT)}`)) throw new Error("seta para esquerda não voltou à pasta");
+  // Mover um arquivo deve atualizar tanto o destino quanto a origem já expandida.
+  const destination = path.join(PROJECT, "destino");
+  await ev(`await window.workspace.files.createFolder(${JSON.stringify(PROJECT)},'destino');return 1;`);
+  await click("Atualizar");
+  await waitFor(`$$("[role=treeitem]").some(b=>b.title===${JSON.stringify(destination)})`, { label: "pasta de destino" });
+  await ev(`const name=$$('main p').find(p=>textOf(p)==='README.md');name.closest('.group').querySelector('button').click();return 1;`);
+  await click("Recortar (mover)");
+  await ev(`$$("[role=treeitem]").find(b=>b.title===${JSON.stringify(destination)}).click();return 1;`);
+  await click("Colar");
+  await waitFor(`!!document.querySelector('[role=dialog]')`, { label: "confirmar movimento" });
+  await click("Mover", `document.querySelector('[role=dialog]')`);
+  await waitFor(`$$("[role=treeitem]").some(b=>b.title===${JSON.stringify(path.join(destination, "README.md"))})&&!$$("[role=treeitem]").some(b=>b.title===${JSON.stringify(path.join(PROJECT, "README.md"))})`, { label: "origem e destino atualizados" });
+  await click("Recolher tudo");
+  if (!await ev(`return $$("[role=treeitem][aria-expanded=true]").length===0`)) throw new Error("árvore não recolhida");
+  return "árvore, seleção por teclado e permissões ok";
+});
+
+await step("Início: organizar widgets e abrir o Workspace salvo", async () => {
+  await nav("Início");
+  await waitFor(`!!findButton("Organizar")`, { label: "organizar Início" });
+  const before = await ev(`return $$("[data-widget]").map(el=>el.dataset.widget)`);
+  await click("Organizar");
+  await waitFor(`!!findButton("Salvar organização")`, { label: "modo organizar" });
+  const first = before[0];
+  await click("Amplo", `document.querySelector('[data-widget="${first}"]')`);
+  await click("Mover para baixo", `document.querySelector('[data-widget="${first}"]')`);
+  await click("Salvar organização");
+  await waitFor(`!findButton("Salvar organização")`, { label: "organização salva" });
+  const prefs = await ev(`return (await window.workspace.settings.get()).data.dashboard`);
+  if (prefs.sizes?.[first] !== "wide" || prefs.order.indexOf(first) <= prefs.order.indexOf(before[1])) throw new Error("organização não persistida");
+  await nav("Projetos"); await nav("Início");
+  const after = await ev(`return $$("[data-widget]").map(el=>el.dataset.widget)`);
+  if (after[1] !== first) throw new Error("ordem mudou após navegar");
+  await click("Organizar");
+  await click("Mover para cima", `document.querySelector('[data-widget="${first}"]')`);
+  await ev(`const handle=document.querySelector('[data-widget="${first}"] button[draggable]');handle.focus();handle.dispatchEvent(new KeyboardEvent('keydown',{key:'End',bubbles:true}));return 1;`);
+  if ((await ev(`return $$("[data-widget]").map(el=>el.dataset.widget)`)).at(-1) !== first) throw new Error("teclado não moveu o widget para o fim");
+  await ev(`document.querySelector('[data-widget="${first}"] button[draggable]').dispatchEvent(new DragEvent('dragstart',{bubbles:true,dataTransfer:new DataTransfer()}));return 1;`);
+  await ev(`const target=document.querySelector('[data-widget]');target.dispatchEvent(new DragEvent('dragover',{bubbles:true,cancelable:true,dataTransfer:new DataTransfer()}));target.dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:new DataTransfer()}));return 1;`);
+  if ((await ev(`return $$("[data-widget]").map(el=>el.dataset.widget)`))[0] !== first) throw new Error("arrastar não moveu o widget para o início");
+  await click("Cancelar");
+  if ((await ev(`return $$("[data-widget]").map(el=>el.dataset.widget)`))[1] !== first) throw new Error("cancelar salvou o rascunho");
+  const resume = await ev(`const label=$$("span").find(e=>textOf(e)==="Continuar de onde parou"); const b=label?.closest("button");if(b)b.click();return !!b;`);
+  if (resume) await waitFor(`$$("aside nav button[aria-current=page]").some(b=>textOf(b)==="Workspace")`, { label: "retomada no Workspace" });
+  return "tamanho e ordem salvos; cancelar e retomada ok";
 });
 
 await step("Terminal: executa comando no PowerShell", async () => {
@@ -705,6 +757,9 @@ await step("interface em inglês: sem texto em português", async () => {
     await shot(`en-${label.replace(/\W/g, "")}`);
   }
   if (Object.keys(leftovers).length) throw new Error(JSON.stringify(leftovers));
+  await nav("Home"); await click("Arrange");
+  if (await ev(`return $$("[data-widget] > [role=group]").some(el=>/Agenda de hoje|Tarefas|Atividade|Foco|Projetos recentes|Automações|Servidores ativos|Avisos importantes/.test(textOf(el)))`)) throw new Error("rótulos do modo Arrange em português");
+  await click("Cancel");
   return "13 páginas";
 });
 

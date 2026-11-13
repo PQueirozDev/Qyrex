@@ -18,7 +18,7 @@ interface SettingsState {
   pickAvatar: () => Promise<boolean>;
   removeAvatar: () => Promise<void>;
   loadSystem: () => Promise<void>;
-  update: (patch: SettingsPatch) => Promise<void>;
+  update: (patch: SettingsPatch) => Promise<boolean>;
   addAllowedDir: (dir?: string) => Promise<boolean>;
   removeAllowedDir: (dir: string) => Promise<void>;
   /** Liga/desliga "Permitir todas as pastas do PC" (ligar pede confirmação). */
@@ -54,9 +54,14 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   },
   update: async (patch) => {
     // Atualização otimista: a UI responde na hora; o valor do banco prevalece.
-    set((s) => ({ settings: s.settings ? { ...s.settings, ...patch } : s.settings }));
+    const previous = get().settings;
+    const optimistic = previous ? { ...previous, ...patch } : previous;
+    set({ settings: optimistic });
     const data = await attempt(window.workspace.settings.update(patch));
-    if (data) set({ settings: data });
+    if (data) { set({ settings: data }); return true; }
+    // Uma falha não deixa a preferência parecendo salva. Preserve mudanças mais recentes.
+    if (get().settings === optimistic) set({ settings: previous });
+    return false;
   },
   addAllowedDir: async (dir) => {
     const data = await attempt(window.workspace.settings.addAllowedDir(dir));

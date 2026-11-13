@@ -98,9 +98,12 @@ app.whenReady().then(async () => {
   };
 
   await shot("inicio", "app-inicio");
+  await click("Organizar");
+  await shot("inicio-organizar", "app-organizar");
+  await click("Cancelar");
   await click("IA");
   await click("Cache do catálogo"); // conversa de exemplo da demo
-  await shot("ia");
+  await shot("ia", "app-ia");
   for (const [label, name] of [
     ["Projetos", "projetos"],
     ["Tarefas", "tarefas"],
@@ -116,11 +119,12 @@ app.whenReady().then(async () => {
   await click("Detalhes");
   await wait(800);
   await click("src/webhooks/retry.ts");
-  await shot("projeto-git");
+  await shot("projeto-git", "app-git");
   await js(`document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); true`);
   await wait(600);
 
-  // Telas da 2.2 e os ajustes recentes de navegação e consumo do próprio app.
+  // Processos e preview simulados, sem iniciar comandos ou acessar um servidor real.
+  await js(`(async () => { await window.workspace.runner.start({ projectId: "p1", script: "dev", confirmed: true }); return true; })()`);
   await click("Processos");
   await wait(2200);
   await shot("monitor", "app-monitor");
@@ -130,6 +134,7 @@ app.whenReady().then(async () => {
   await click("Arquivos");
   await click("api-pagamentos");
   await shot("arquivos", "app-arquivos");
+  await js(`(async () => { await window.workspace.preview.open("http://localhost:5173"); return true; })()`);
   await click("Workspace");
   await click("api-pagamentos");
   await shot("workspace", "app-workspace");
@@ -152,6 +157,10 @@ app.whenReady().then(async () => {
   await shot("capivara", "app-capivara");
   await js(`document.querySelector('[role="dialog"][aria-label="Capivara assistente"] button[aria-label="Fechar"]').click(); true`);
   await click("Início");
+
+  await click("Configurações");
+  await click("Aparência");
+  await shot("temas", "app-temas");
 
   // Temas: escolhidos em Configurações → Aparência, fotografados no Início.
   for (const [label, name] of [

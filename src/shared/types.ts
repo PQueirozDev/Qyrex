@@ -490,11 +490,14 @@ export interface FocusSummary {
 
 export const DASHBOARD_WIDGETS = ["agenda", "tarefas", "atividade", "foco", "projetos", "automacoes", "servidores", "avisos"] as const;
 export type DashboardWidgetId = (typeof DASHBOARD_WIDGETS)[number];
+export type DashboardWidgetSize = "compact" | "wide";
 
 export interface DashboardPrefs {
   /** Ordem escolhida (widgets que faltarem entram no fim, na ordem padrão). */
   order: DashboardWidgetId[];
   hidden: DashboardWidgetId[];
+  /** Ausente em preferências antigas: usa o tamanho padrão do widget. */
+  sizes?: Partial<Record<DashboardWidgetId, DashboardWidgetSize>>;
 }
 
 export interface FocusPrefs {

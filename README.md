@@ -38,7 +38,7 @@ explorar a interface atual com projetos e dados fictícios. Terminal, monitor,
 integrações e IA são simulados: a demo não lê seu computador nem suas chaves.
 
 O app desktop oferece suporte a **Windows 10 e 11 de 64 bits**. macOS e Linux
-ainda não são suportados. As telas abaixo mostram o código atual da **2.2**;
+ainda não são suportados. As telas abaixo mostram o código atual da **2.3**;
 o download aponta sempre para a última versão publicada nas releases.
 
 ## Telas
@@ -61,7 +61,7 @@ o download aponta sempre para a última versão publicada nas releases.
     <td><img src="docs/screenshots/monitor.png" alt="Monitor de recursos do Qyrex"><p align="center"><b>Monitor</b> · CPU e memória do próprio Qyrex em destaque</p></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/arquivos.png" alt="Arquivos com acesso rápido aos projetos e caminho completo"><p align="center"><b>Arquivos</b> · atalhos de projetos, caminho completo e navegação por pastas</p></td>
+    <td><img src="docs/screenshots/arquivos.png" alt="Arquivos com árvore de pastas, projetos e caminho completo"><p align="center"><b>Arquivos</b> · árvore com navegação por teclado, atalhos e prévia</p></td>
     <td><img src="docs/screenshots/terminais.png" alt="Três terminais preenchendo a área lado a lado"><p align="center"><b>Terminal</b> · três sessões lado a lado, sem espaço vazio</p></td>
   </tr>
   <tr>
@@ -71,6 +71,10 @@ o download aponta sempre para a última versão publicada nas releases.
   <tr>
     <td><img src="docs/screenshots/utilitarios.png" alt="Utilitários de desenvolvimento"><p align="center"><b>Utilitários</b> · ferramentas locais para o dia a dia</p></td>
     <td><img src="docs/screenshots/capivara.png" alt="Capivara assistente"><p align="center"><b>Capivara</b> · respostas rápidas com os dados do seu PC</p></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/inicio-organizar.png" alt="Modo Organizar com alças, setas e tamanhos dos widgets"><p align="center"><b>Seu Início</b> · arraste os widgets e escolha Compacto ou Amplo</p></td>
+    <td><img src="docs/screenshots/temas.png" alt="Seletor de temas com pequenas cenas Onsen"><p align="center"><b>Aparência</b> · cenas com a paleta de cada tema</p></td>
   </tr>
 </table>
 
@@ -91,7 +95,7 @@ Também tem Escuro, Meia-noite, Areia e Sistema, escolhidos por prévia em
 
 | | |
 | --- | --- |
-| 🏠 **Início** | Resumo do dia numa linha, "continuar de onde parou" e widgets que você escolhe e ordena: agenda, tarefas, atividade, foco, projetos recentes, automações, servidores ativos e avisos importantes. Botão **Daily** resume seus commits e tarefas. |
+| 🏠 **Início** | Resumo do dia e **Continuar de onde parou** para retomar o Workspace salvo. Em **Organizar**, arraste os widgets ou use as setas, escolha **Compacto/Amplo** e salve; **Cancelar** descarta o rascunho. Escolha quais mostrar em **Personalizar o Início**. Botão **Daily** resume commits e tarefas. |
 | 🧱 **Workspace** | Por projeto: arquivos, terminal, Git, preview, IA, tarefas, notas, processos e monitor em painéis. Divida, arraste abas, maximize, use os layouts Desenvolvimento/Debug/Git/Foco; cada projeto guarda o seu e vários abrem em abas. |
 | 🌐 **Preview** | A aplicação local dentro do app, isolada (só `localhost`, sem acesso às APIs do Qyrex), com desktop/tablet/celular/personalizado, zoom, console e DevTools. |
 | ▶️ **Processos e Monitor** | Abre no Monitor, com CPU e memória do próprio Qyrex em destaque e os totais do PC como referência. Também acompanha scripts do `package.json` ou comandos confirmados, saída ao vivo, portas e consumo de cada processo iniciado pelo app. |
@@ -104,7 +108,7 @@ Também tem Escuro, Meia-noite, Areia e Sistema, escolhidos por prévia em
 | ⚙️ **Automações** | Sequências de comandos e ações de um projeto (testes, lint, build, git, abrir o ambiente), com modelos a partir dos scripts e histórico. Cada execução pede confirmação e mostra o risco de cada comando. |
 | ⏱️ **Foco** | Temporizador com pausa ligado a um projeto, histórico do dia e da semana e meta diária opcional. |
 | 💾 **Backup e sincronização** | Backup local verificado (diário e antes de cada atualização), restauração com cópia de segurança e sincronização entre PCs por uma pasta da nuvem, cifrada com a sua senha. |
-| 📁 **Arquivos** | Acesso rápido aos projetos e às pastas autorizadas, caminho completo, botão para subir uma pasta, busca, renomear/copiar/mover/excluir e preview de imagem, código e Markdown. |
+| 📁 **Arquivos** | Árvore de pastas carregada sob demanda: setas navegam e expandem, Enter abre e **Recolher tudo** fecha os ramos. Acesso rápido aos projetos, caminho completo, busca, renomear/copiar/mover/excluir e preview de imagem, código e Markdown. |
 | ✅ **Tarefas** | Lista (Hoje, Próximas, Todas, Concluídas) ou kanban, com prioridade, prazo, tags e projeto. `Ctrl+Shift+T` de qualquer lugar. |
 | 📅 **Agenda** | Dia, semana e mês, com eventos locais e do Google Agenda. |
 | 📝 **Notion** | Busca, leitura e criação de páginas, com "Perguntar à IA" sobre o conteúdo. |
@@ -240,6 +244,7 @@ script e rode `node site/pixel/pixel.mjs` e depois `npm run icons`.
 - [x] 2.0: backup, sincronização entre PCs, Git visual, foco, automações, prompts e Início personalizável
 - [x] 2.1: 100% para devs (saem clientes, cobranças, marketing e WhatsApp)
 - [x] 2.2: workspace por projeto, preview web, processos e monitor, capivara assistente, plugins declarativos, utilitários e cara nova
+- [x] 2.3: árvore em Arquivos, widgets arrastáveis com tamanhos, retomada do Workspace, cenas nos temas e tour guiado no site
 - [ ] Criar e editar eventos do Google Agenda pelo app
 - [ ] Restaurar sessões de terminal ao reabrir o app
 - [ ] Saúde das dependências (`npm outdated`/`audit`), cliente HTTP leve e painel do Docker

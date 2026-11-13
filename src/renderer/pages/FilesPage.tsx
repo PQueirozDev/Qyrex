@@ -38,6 +38,7 @@ import { confirmAction, promptText, toast, useUIStore } from "@/stores/useUIStor
 
 import { getLocale, tr } from "@/lib/i18n";
 import { PAGE_ICONS } from "@/lib/pageIcons";
+import { FilesTree } from "@/components/FilesTree";
 const sep = (p: string) => (p.includes("\\") ? "\\" : "/");
 const norm = (p: string) => p.replace(/[\\/]+$/, "").toLowerCase().replace(/\//g, "\\");
 
@@ -176,32 +177,44 @@ export function FilesPage() {
   const [results, setResults] = useState<DirEntry[] | null>(null);
   const [searching, setSearching] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
+  const directoryRequest = useRef(0);
+  const [treeRevision, setTreeRevision] = useState(0);
+  const [treeRefreshPaths, setTreeRefreshPaths] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!root && roots.length > 0) {
-      setRoot(roots[0]);
-      setCurrentPath(roots[0]);
+    if (!root || !roots.includes(root)) {
+      setRoot(roots[0] ?? null);
+      setCurrentPath(roots[0] ?? null);
+      setSelected(null);
+      setEntries([]);
     }
   }, [roots, root]);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (changedPaths: string[] = []) => {
     if (!currentPath) return;
+    const request = ++directoryRequest.current;
     setLoading(true);
     try {
       const list = await unwrap(window.workspace.files.list(currentPath));
+      if (request !== directoryRequest.current) return;
       setEntries([...list].sort((a, b) => Number(b.isDirectory) - Number(a.isDirectory) || a.name.localeCompare(b.name, getLocale())));
       setError(null);
+      setTreeRefreshPaths([...new Set([currentPath, ...changedPaths])]);
+      setTreeRevision((value) => value + 1);
     } catch (err) {
+      if (request !== directoryRequest.current) return;
       setError(errorMessage(err));
       setEntries([]);
     } finally {
-      setLoading(false);
+      if (request === directoryRequest.current) setLoading(false);
     }
   }, [currentPath]);
 
+  const invalidateDirectoryRequest = useCallback(() => { directoryRequest.current++; }, []);
   useEffect(() => {
     void refresh();
-  }, [refresh]);
+    return invalidateDirectoryRequest;
+  }, [refresh, invalidateDirectoryRequest]);
 
   const openDir = useCallback(
     (p: string) => {
@@ -248,15 +261,18 @@ export function FilesPage() {
     const q = query.trim();
     if (q.length < 2) {
       setResults(null);
+      setSearching(false);
       return;
     }
+    let active = true;
     setSearching(true);
     const t = setTimeout(async () => {
       const data = await attempt(window.workspace.files.search(q, root ?? undefined));
+      if (!active) return;
       setResults(data ?? []);
       setSearching(false);
     }, 250);
-    return () => clearTimeout(t);
+    return () => { active = false; clearTimeout(t); };
   }, [query, root]);
 
   async function newFolder() {
@@ -309,7 +325,7 @@ export function FilesPage() {
     if (!ok) return;
     if ((await attempt(window.workspace.files.move(clipboard.path, currentPath, true), tr("Movido"))) !== undefined) {
       setClipboard(null);
-      void refresh();
+      void refresh([dirname(clipboard.path)]);
     }
   }
 
@@ -475,7 +491,9 @@ export function FilesPage() {
         <p className="mt-2 break-all text-xs text-text-faint">{currentPath}</p>
       </nav>
 
-      <div className={cn("grid gap-4", selected && "lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]")}>
+      <div className="grid items-start gap-4 md:grid-cols-[190px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,1fr)]">
+        <FilesTree roots={roots} currentPath={currentPath} selectedPath={selected?.path ?? null} refreshKey={treeRevision} refreshPaths={treeRefreshPaths} onOpenDirectory={openDir} onOpenFile={revealFile} />
+        <div className={cn("grid min-w-0 gap-4", selected && "xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]")}>
         <Card className="overflow-hidden">
           {results !== null || searching ? (
             <>
@@ -510,6 +528,7 @@ export function FilesPage() {
             <PreviewPanel entry={selected} onClose={() => setSelected(null)} />
           </div>
         )}
+        </div>
       </div>
     </div>
   );

@@ -1,11 +1,12 @@
 import { ArrowDown, ArrowUp, RotateCcw } from "lucide-react";
-import { DASHBOARD_WIDGETS, type DashboardPrefs, type DashboardWidgetId } from "@shared/types";
+import type { DashboardPrefs, DashboardWidgetId } from "@shared/types";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { Switch } from "@/components/ui/primitives";
 import { tr } from "@/lib/i18n";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { tm } from "@shared/i18n";
+import { normalizeDashboardOrder } from "@/lib/dashboardLayout";
 
 export const WIDGET_LABEL: Record<DashboardWidgetId, string> = {
   agenda: tm("Agenda de hoje"),
@@ -20,8 +21,7 @@ export const WIDGET_LABEL: Record<DashboardWidgetId, string> = {
 
 /** Ordem final: a escolhida pelo usuário + widgets novos no fim, na ordem padrão. */
 export function dashboardOrder(prefs: DashboardPrefs | undefined): DashboardWidgetId[] {
-  const chosen = (prefs?.order ?? []).filter((id) => (DASHBOARD_WIDGETS as readonly string[]).includes(id));
-  return [...chosen, ...DASHBOARD_WIDGETS.filter((id) => !chosen.includes(id))];
+  return normalizeDashboardOrder(prefs?.order);
 }
 
 export function DashboardCustomizeDialog({ open, onClose }: { open: boolean; onClose: () => void }) {

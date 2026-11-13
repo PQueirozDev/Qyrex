@@ -4,7 +4,17 @@ Guia para o Claude Code continuar o **Qyrex**: um app desktop (Electron + React 
 
 Sempre responda e comente o código em **português do Brasil**, com acentuação correta.
 
-## Qyrex 2.2.0: processos, ferramentas e cara nova (branch `v2.2`, não publicada)
+## Qyrex 2.3.0: navegação e personalização (2026-11-13)
+
+- **Arquivos**: `components/FilesTree.tsx` e `lib/filesTree.ts`: árvore carregada sob demanda, raízes autorizadas sem duplicação, foco itinerante e setas/Home/End/Enter. Gerações e IDs de requisição descartam respostas antigas. Revalidação preserva os filhos para não perder foco; movimentos atualizam a origem e o destino. A autorização continua no main.
+- **Início**: `Organizar` edita um rascunho com alça arrastável, setas e tamanhos Compacto/Amplo. Salvar persiste `dashboard.order/sizes`, Cancelar descarta. Preferências antigas continuam válidas; tamanhos são filtrados no banco, IPC e importação de backup. O store de configurações retorna sucesso real e desfaz a atualização otimista quando a gravação falha. `Continuar de onde parou` abre o Workspace salvo.
+- **Temas**: `components/ui/ThemeScene.tsx/.css` mostra pequenas cenas próprias com a paleta de cada tema; seis temas e Sistema preservados. Movimento só na interação, respeitando movimento reduzido.
+- **Site**: tour de três etapas com captura sincronizada à rolagem nativa no desktop, clique/setas no celular, galeria completa recolhível. Margens do IntersectionObserver em pixels calculados pela altura (percentuais usam a largura). Seletor com mini cenas Onsen; brilho pontilhado reage ao ponteiro sem animação contínua em repouso.
+- **Capturas**: incluem `inicio-organizar` e `temas`; atualizam também Git/IA. Processos e Preview são simulados explicitamente pelo bridge da demo. Não usar dados do perfil real em imagens públicas.
+- **Distribuição**: código/site em `PQueirozDev/Qyrex` (Vercel publica `site/` pelo `main`); demo em `PQueirozDev/pq-portfolio/qyrex-demo/`; instaladores/feed em `PQueirozDev/QrzSpace-releases`. A 2.2.0 já foi publicada nos dois repositórios de releases. Windows 10/11 x64; portabilidade macOS/Linux foi adiada pelo usuário.
+- Validação: typecheck e lint sem avisos, 347 testes passando e 3 pulados. E2E cobre árvore, foco, organização salva/cancelada e retomada do Workspace; QA do site cobre cinco páginas em 360/375/1440 px, tour, teclado, links, API e movimento reduzido.
+
+## Qyrex 2.2.0: processos, ferramentas e cara nova (publicada)
 
 ### Ajustes de continuidade (2026-11-13)
 

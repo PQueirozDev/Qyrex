@@ -185,6 +185,15 @@ describe("backup local", () => {
 });
 
 describe("exportar e importar configurações", () => {
+  it("preserva organização e tamanhos do Início no banco e na exportação", () => {
+    updateSettings({ dashboard: { order: ["foco", "agenda"], hidden: ["avisos"], sizes: { agenda: "wide", projetos: "compact" } } });
+    expect(getSettings().dashboard.sizes).toEqual({ agenda: "wide", projetos: "compact" });
+    expect(parseSettingsExport(buildSettingsExport(), "layout.json").patch.dashboard).toEqual(getSettings().dashboard);
+    const old = JSON.stringify({ format: "qyrex-settings", settings: { dashboard: { order: ["agenda"], hidden: [] } } });
+    expect(parseSettingsExport(old, "antigo.json").patch.dashboard).toEqual({ order: ["agenda"], hidden: [] });
+    const retired = JSON.stringify({ format: "qyrex-settings", settings: { dashboard: { order: [], hidden: [], sizes: { agenda: "wide", cobrancas: "wide", foco: "huge" } } } });
+    expect(parseSettingsExport(retired, "filtrado.json").patch.dashboard?.sizes).toEqual({ agenda: "wide" });
+  });
   it("exporta só preferências portáveis e importa de volta", () => {
     updateSettings({ theme: "onsen", language: "en", allowedProjectDirs: ["C:\\segredo"], allowAllDirs: true });
     const raw = buildSettingsExport();

@@ -45,7 +45,8 @@ import { tm } from "@shared/i18n";
 import { REPO_URL, SITE_HOST, SITE_URL } from "@shared/links";
 import logoUrl from "@/assets/logo.svg";
 import { ProfileAvatar } from "@/components/ProfileAvatar";
-import { THEMES, type ThemeDefinition } from "@/lib/themes";
+import { THEMES } from "@/lib/themes";
+import { ThemeScene } from "@/components/ui/ThemeScene";
 import { useSettingsStore } from "@/stores/useSettingsStore";
 import { useAIStore } from "@/stores/useAIStore";
 import { confirmAction, toast } from "@/stores/useUIStore";
@@ -94,43 +95,16 @@ function Row({ label, hint, children }: { label: string; hint?: ReactNode; child
   );
 }
 
-/** Miniatura do app desenhada com as cores do tema. */
-function ThemePreview({ theme }: { theme: ThemeDefinition }) {
-  const p = theme.preview;
-  return (
-    <div className="flex h-[74px] overflow-hidden rounded-md" style={{ background: p.bg, border: `1px solid ${p.border}` }}>
-      <div className="flex w-[30%] flex-col gap-1 p-1.5" style={{ background: p.sidebar, borderRight: `1px solid ${p.border}` }}>
-        <div className="mb-0.5 h-2.5 w-2.5 rounded-[3px]" style={{ background: p.accent }} />
-        {[0.9, 0.55, 0.7, 0.6].map((w, i) => (
-          <div key={i} className="h-1 rounded-full" style={{ width: `${w * 100}%`, background: i === 0 ? p.accent : p.muted, opacity: i === 0 ? 0.9 : 0.5 }} />
-        ))}
-      </div>
-      <div className="flex flex-1 flex-col gap-1.5 p-2">
-        <div className="h-1.5 w-1/2 rounded-full" style={{ background: p.text, opacity: 0.85 }} />
-        <div className="flex flex-1 gap-1.5">
-          {[0, 1].map((i) => (
-            <div key={i} className="flex flex-1 flex-col gap-1 rounded p-1.5" style={{ background: p.card, border: `1px solid ${p.border}` }}>
-              <div className="h-1 w-2/3 rounded-full" style={{ background: p.muted, opacity: 0.6 }} />
-              <div className="h-1 w-1/2 rounded-full" style={{ background: p.muted, opacity: 0.4 }} />
-              <div className="mt-auto h-1.5 w-1/3 rounded-full" style={{ background: p.accent }} />
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function SystemPreview() {
   const dark = THEMES.find((t) => t.id === "dark")!;
   const light = THEMES.find((t) => t.id === "light")!;
   return (
-    <div className="relative h-[74px] overflow-hidden rounded-md">
+    <div className="relative h-[84px] overflow-hidden rounded-xl">
       <div className="absolute inset-0" style={{ clipPath: "polygon(0 0, 100% 0, 0 100%)" }}>
-        <ThemePreview theme={light} />
+        <ThemeScene theme={light} />
       </div>
       <div className="absolute inset-0" style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }}>
-        <ThemePreview theme={dark} />
+        <ThemeScene theme={dark} />
       </div>
     </div>
   );
@@ -138,7 +112,7 @@ function SystemPreview() {
 
 function ThemePicker({ value, onChange }: { value: AppSettings["theme"]; onChange: (t: AppSettings["theme"]) => void }) {
   const options: { id: AppSettings["theme"]; name: string; description: string; preview: ReactNode }[] = [
-    ...THEMES.map((t) => ({ id: t.id, name: t.name, description: t.description, preview: <ThemePreview theme={t} /> })),
+    ...THEMES.map((t) => ({ id: t.id, name: t.name, description: t.description, preview: <ThemeScene theme={t} /> })),
     { id: "system", name: tr("Sistema"), description: tr("Acompanha o modo claro/escuro do Windows."), preview: <SystemPreview /> },
   ];
   return (
@@ -152,7 +126,7 @@ function ThemePicker({ value, onChange }: { value: AppSettings["theme"]; onChang
             key={opt.id}
             onClick={() => onChange(opt.id)}
             className={cn(
-              "group relative rounded-lg border p-2 text-left transition-all",
+              "q-theme-option group relative rounded-xl border p-2 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
               wide && "col-span-2 flex items-center gap-3 md:col-span-3",
               active ? "border-accent ring-2 ring-accent/25" : "border-border-subtle hover:border-border hover:bg-bg-hover/50"
             )}

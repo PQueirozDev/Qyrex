@@ -44,9 +44,25 @@ app.whenReady().then(async () => {
       const broken = await run(`(async()=>{const bad=[];for(const el of document.querySelectorAll('a[href],img[src],script[src],link[rel="stylesheet"]')){const raw=el.getAttribute('href')||el.getAttribute('src');const u=new URL(raw,location.href);if(u.origin!==location.origin)continue;const r=await fetch(u);if(!r.ok)bad.push(raw);if(u.hash&&u.pathname===location.pathname&&!document.getElementById(u.hash.slice(1)))bad.push(raw);}return bad;})()`);
       assert(!broken.length, 'Links quebrados: '+broken.join(', '));
       if (!page) {
+        assert(await run(`(()=>{const steps=[...document.querySelectorAll('[data-tour-step]')];steps[0].focus();steps[0].dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true}));return document.activeElement===steps[1]&&steps[1].getAttribute('aria-pressed')==='true'&&document.querySelector('[data-tour-image]').getAttribute('src')==='assets/app-processos.webp';})()`),'Teclado do tour guiado');
+        assert(await run(`(()=>{const steps=[...document.querySelectorAll('[data-tour-step]')];steps[2].click();return steps.filter(s=>s.getAttribute('aria-pressed')==='true').length===1&&document.querySelector('[data-tour-image]').alt.includes('Workspace');})()`),'Seleção do tour guiado');
+        if (width === 1440) {
+          await run(`document.querySelector('[data-tour-step]').click();document.querySelectorAll('[data-tour-marker]')[2].scrollIntoView({block:'center',behavior:'instant'})`); await wait();
+          assert(await run(`document.querySelectorAll('[data-tour-step]')[2].getAttribute('aria-pressed')==='true'`),'Tour acompanha a rolagem em tela larga');
+          fs.writeFileSync(path.join(base,'verification','tour-desktop.png'),(await win.webContents.capturePage()).toPNG());
+          await run(`scrollTo({top:0,behavior:'instant'})`); await wait();
+        }
+        await run(`document.querySelector('.tour-gallery').open=true`);
         assert(await run(`(()=>{const t=document.querySelector('[role=tab]');t.focus();t.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));return document.activeElement.id==='tab-processos'&&!document.querySelector('#panel-processos').hidden;})()`),'Seta do tour');
         assert(await run(`document.querySelector('.dither-src').paused`),'Movimento reduzido');
         await run(`document.querySelector('#tab-workspace').click()`);
+        await run(`document.querySelector('.tour-gallery').open=false;document.querySelector('[data-tour-step]').click()`);
+      }
+      assert(await run(`(()=>{const b=document.querySelector('#site-theme');b.click();const options=[...document.querySelectorAll('#site-theme-options [role=option]')];const result=options.length===6&&options.every(o=>!!o.querySelector('.mini-onsen svg image'));b.click();return result;})()`),'Seletor de temas com cenas');
+      if (!page) {
+        await run(`document.querySelector('#site-theme').click()`); await wait();
+        fs.writeFileSync(path.join(base,'verification',`theme-menu-${width}.png`),(await win.webContents.capturePage()).toPNG());
+        await run(`document.querySelector('#site-theme').click()`);
       }
       if (page==='docs') {
         assert(await run(`(()=>{const s=document.querySelector('#docs-search');s.value='CONFIGURACAO';s.dispatchEvent(new Event('input'));return !document.querySelector('#configuracao').hidden;})()`),'Busca sem acento');

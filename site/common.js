@@ -36,6 +36,64 @@ tabs.forEach((tab, index) => {
   });
 });
 
+// Três etapas com rolagem nativa. Clique e teclado funcionam também no celular.
+const tourStory = document.querySelector('[data-tour-story]');
+if (tourStory) {
+  const steps = [...tourStory.querySelectorAll('[data-tour-step]')];
+  const markers = [...tourStory.querySelectorAll('[data-tour-marker]')];
+  const picture = tourStory.querySelector('[data-tour-image]');
+  const caption = tourStory.querySelector('[data-tour-caption]');
+  const position = tourStory.querySelector('[data-tour-position]');
+  const desktopTour = matchMedia('(min-width: 900px)');
+  let active = -1;
+  function showStep(index) {
+    if (index === active || !steps[index]) return;
+    active = index;
+    steps.forEach((step, i) => step.setAttribute('aria-pressed', String(i === index)));
+    const step = steps[index];
+    picture.src = step.dataset.image;
+    picture.alt = step.dataset.alt;
+    caption.textContent = step.dataset.caption;
+    position.textContent = `${String(index + 1).padStart(2, '0')} / 03 · ${step.querySelector('strong').textContent}`;
+    tourStory.style.setProperty('--tour-progress', String(index / (steps.length - 1)));
+  }
+  steps.forEach((step, index) => {
+    step.addEventListener('click', () => showStep(index));
+    step.addEventListener('keydown', (event) => {
+      let next;
+      if (event.key === 'ArrowDown' || event.key === 'ArrowRight') next = (index + 1) % steps.length;
+      else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') next = (index + steps.length - 1) % steps.length;
+      else if (event.key === 'Home') next = 0;
+      else if (event.key === 'End') next = steps.length - 1;
+      if (next !== undefined) { event.preventDefault(); steps[next].focus(); showStep(next); }
+    });
+  });
+  function followScroll() {
+    if (!desktopTour.matches) return;
+    const center = innerHeight * .45;
+    const visible = markers.map((marker, index) => ({ index, rect: marker.getBoundingClientRect() }))
+      .filter(({ rect }) => rect.bottom > innerHeight * .28 && rect.top < innerHeight * .65);
+    if (visible.length) {
+      visible.sort((a, b) => Math.abs((a.rect.top + a.rect.bottom) / 2 - center) - Math.abs((b.rect.top + b.rect.bottom) / 2 - center));
+      showStep(visible[0].index);
+    }
+  }
+  let observer;
+  function observeSteps() {
+    observer?.disconnect();
+    // Margens em px: percentuais do IntersectionObserver usam a largura da viewport.
+    observer = new IntersectionObserver(followScroll, { rootMargin: `-${innerHeight * .28}px 0px -${innerHeight * .35}px 0px`, threshold: [0, .25, .5, .75, 1] });
+    markers.forEach((marker) => observer.observe(marker));
+  }
+  let resizeFrame = 0;
+  window.addEventListener('resize', () => {
+    cancelAnimationFrame(resizeFrame);
+    resizeFrame = requestAnimationFrame(observeSteps);
+  }, { passive: true });
+  observeSteps();
+  showStep(0);
+}
+
 const search = document.querySelector('#docs-search');
 if (search) {
   const sections = [...document.querySelectorAll('[data-doc-section]')];
@@ -71,6 +129,22 @@ const themeChoices = [
   { id:'sand', name:'Areia', colors:['#f7f3ec', '#e4dbcd', '#c95a26'] },
 ];
 const themeControls = [];
+const sceneWaters = { onsen:'#70b6b8', dark:'#5f9b89', light:'#b4d9d1', midnight:'#378aa0', violet:'#8975b1', sand:'#9aab84' };
+function paintThemeScene(element, theme) {
+  element.dataset.daylight = String(theme.id === 'light' || theme.id === 'sand');
+  element.style.setProperty('--scene-sky', theme.colors[0]);
+  element.style.setProperty('--scene-water', sceneWaters[theme.id]);
+  element.style.setProperty('--scene-accent', theme.colors[2]);
+}
+function createThemeScene(theme) {
+  const scene = document.createElement('span');
+  scene.className = 'theme-swatch mini-onsen';
+  scene.setAttribute('aria-hidden', 'true');
+  // Arte própria em SVG: a mesma capivara do app, sem WebGL ou loop de animação.
+  scene.innerHTML = `<svg viewBox="0 0 80 40" fill="none" shape-rendering="crispEdges"><path fill="var(--scene-sky)" d="M0 0h80v40H0z"/><g class="mini-onsen-stars" fill="#f0dfa8"><path d="M10 6h1v1h-1zM25 10h1v1h-1zM40 5h1v1h-1zM73 15h1v1h-1z"/></g><path class="mini-onsen-sun" fill="var(--scene-accent)" d="M58 5h7v2h2v7h-2v2h-7v-2h-2V7h2z"/><path class="mini-onsen-moon" fill="#f0dfa8" d="M61 5h5v2h-3v3h2v2h3v3h-7v-2h-2V7h2z"/><path fill="var(--scene-water)" opacity=".16" d="M0 22h5v-5h7v-4h7v7h10v-3h9v-5h7v7h12v-4h9v6h14v19H0z"/><path fill="var(--scene-water)" opacity=".22" d="M0 29h11v-4h9v3h16v-5h11v6h11v-4h12v3h10v12H0z"/><image class="mini-onsen-capy" href="assets/capy-mark.svg" x="25" y="12" width="29" height="23"/><path fill="var(--scene-water)" opacity=".72" d="M0 33h80v7H0z"/><g class="mini-onsen-ripples" fill="var(--scene-water)"><path d="M5 35h9v1H5zM27 35h21v1H27zM58 36h12v1H58zM15 38h8v1h-8zM40 38h12v1H40z"/></g></svg>`;
+  paintThemeScene(scene, theme);
+  return scene;
+}
 function createThemeControl(id) {
   const control = document.createElement('div');
   control.className = 'theme-control';
@@ -81,9 +155,7 @@ function createThemeControl(id) {
   trigger.setAttribute('aria-haspopup', 'listbox');
   trigger.setAttribute('aria-expanded', 'false');
   trigger.setAttribute('aria-controls', `${id}-options`);
-  const swatch = document.createElement('span');
-  swatch.className = 'theme-swatch';
-  swatch.setAttribute('aria-hidden', 'true');
+  const swatch = createThemeScene(themeChoices[0]);
   const label = document.createElement('span');
   label.className = 'theme-label';
   const arrow = document.createElement('span');
@@ -108,8 +180,7 @@ function createThemeControl(id) {
     option.setAttribute('role', 'option');
     option.dataset.theme = theme.id;
     option.tabIndex = -1;
-    const preview = swatch.cloneNode();
-    preview.style.background = `linear-gradient(135deg, ${theme.colors[0]} 45%, ${theme.colors[1]} 45% 72%, ${theme.colors[2]} 72%)`;
+    const preview = createThemeScene(theme);
     const name = document.createElement('span');
     name.textContent = theme.name;
     const check = document.createElement('span');
@@ -181,7 +252,7 @@ function applySiteTheme(theme) {
   themeControls.forEach(({ trigger, swatch, label, options }) => {
     label.textContent = choice.name;
     trigger.setAttribute('aria-label', `Tema do site: ${choice.name}`);
-    swatch.style.background = `linear-gradient(135deg, ${choice.colors[0]} 45%, ${choice.colors[1]} 45% 72%, ${choice.colors[2]} 72%)`;
+    paintThemeScene(swatch, choice);
     options.forEach((option) => {
       const selected = option.dataset.theme === theme;
       option.setAttribute('aria-selected', String(selected));

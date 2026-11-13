@@ -4,6 +4,23 @@
  * (ver tests/i18n.test.ts); `node scripts/i18n-keys.cjs --missing` lista as faltantes.
  */
 export const EN: Record<string, string> = {
+  "Explorar pastas": "Browse folders",
+  "Recolher tudo": "Collapse all",
+  "Árvore de arquivos": "File tree",
+  "Tentar novamente": "Try again",
+  "Use as setas para navegar.": "Use the arrow keys to navigate.",
+  "Posição de {name} alterada.": "Position of {name} changed.",
+  "Organização do Início salva.": "Home layout saved.",
+  "Organizar": "Arrange",
+  "Seu Início, do seu jeito": "Your Home, your way",
+  "Arraste pela alça ou use as setas. Escolha o tamanho de cada bloco.": "Drag the handle or use the arrows. Choose a size for each block.",
+  "Salvar organização": "Save layout",
+  "Arraste para mover": "Drag to move",
+  "Mover para cima": "Move up",
+  "Mover para baixo": "Move down",
+  "Tamanho do bloco": "Widget size",
+  "Compacto": "Compact",
+  "Amplo": "Wide",
   // --- Main process: bandeja, Discord, integrações --------------------------------
   "Abrir Qyrex": "Open Qyrex",
   "Nova tarefa": "New task",

@@ -22,6 +22,28 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "2.3.0",
+    date: "2026-11-13",
+    title: { pt: "Qyrex 2.3: seu espaço, do seu jeito", en: "Qyrex 2.3: your space, your way" },
+    sections: [
+      {
+        kind: "new",
+        items: [
+          { pt: "Arquivos ganhou uma árvore de navegação com guias de hierarquia, seleção visível, recolher tudo e navegação por teclado. As pastas são carregadas somente quando abertas.", en: "Files now has a navigation tree with hierarchy guides, visible selection, collapse all and keyboard navigation. Folders load only when opened." },
+          { pt: "Organize o Início diretamente na grade: arraste os widgets pela alça, mova pelas setas ou escolha tamanho compacto e amplo. Salve a organização ou cancele as alterações.", en: "Arrange Home directly in the grid: drag widgets by their handle, move them with the arrows or choose compact and wide sizes. Save the layout or cancel changes." },
+          { pt: "Cada tema agora tem uma mini cena Onsen com a capivara, água, sol ou lua. As prévias mantêm as cores de cada tema e respeitam movimento reduzido.", en: "Each theme now has a mini Onsen scene with the capybara, water, sun or moon. Previews keep each theme's colors and respect reduced motion." },
+        ],
+      },
+      {
+        kind: "improved",
+        items: [
+          { pt: "Continuar de onde parou abre o Workspace salvo do projeto. Os atalhos de VS Code, terminal, editor e Explorer continuam disponíveis.", en: "Pick up where you left off opens the project's saved Workspace. VS Code, terminal, editor and Explorer shortcuts remain available." },
+          { pt: "O site apresenta o fluxo em três etapas, com prévia sincronizada, mini cenas no seletor de temas e pontilhado reativo ao ponteiro, sem animação contínua em repouso.", en: "The website presents the workflow in three steps, with synchronized previews, mini scenes in the theme picker and pointer-reactive dithering without continuous idle animation." },
+        ],
+      },
+    ],
+  },
+  {
     version: "2.2.0",
     date: "2026-11-13",
     title: { pt: "Qyrex 2.2: workspace, preview, monitor e cara nova", en: "Qyrex 2.2: workspace, preview, monitor and a new look" },

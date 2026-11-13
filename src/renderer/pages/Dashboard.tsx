@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
-import { MessageSquareText, CheckCircle2, Code2, FileCode2, FileText, FolderOpen, GitBranch, GitCommitHorizontal, Plus, Settings2, SquareTerminal, Timer } from "lucide-react";
-import type { CalendarEvent, DashboardWidgetId, GitCommit, ProjectWithGit, RecentItem } from "@shared/types";
+import { ArrowDown, ArrowUp, Check, GripVertical, LayoutDashboard, MessageSquareText, CheckCircle2, Code2, FileCode2, FileText, FolderOpen, GitBranch, GitCommitHorizontal, Plus, Settings2, SquareTerminal, Timer } from "lucide-react";
+import type { CalendarEvent, DashboardWidgetId, DashboardWidgetSize, GitCommit, ProjectWithGit, RecentItem } from "@shared/types";
 import { Button } from "@/components/ui/Button";
 import { Badge, EmptyState, LoadingRows, ProjectIcon } from "@/components/ui/primitives";
 import { DitherGlow } from "@/components/ui/Brand";
@@ -15,7 +15,8 @@ import { PRIORITY_LABEL } from "@/components/TaskFormDialog";
 import { getLocale, tr, trn } from "@/lib/i18n";
 import { AppUsageButton } from "@/components/AppUsage";
 import { FocusCardBody } from "@/components/Focus";
-import { DashboardCustomizeDialog, dashboardOrder } from "@/components/DashboardCustomize";
+import { DashboardCustomizeDialog, dashboardOrder, WIDGET_LABEL } from "@/components/DashboardCustomize";
+import { dashboardWidgetSize, moveDashboardWidget } from "@/lib/dashboardLayout";
 import { useFocusStore } from "@/stores/useFocusStore";
 import { RUN_STATUS } from "@/components/AutomationRun";
 import { NoticesWidget, ServersWidget } from "@/components/DashboardExtras";
@@ -87,7 +88,7 @@ function ContinueStrip({ project, lastCommit }: { project: ProjectWithGit; lastC
   const git = project.git;
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-card border border-border-subtle bg-bg-card/60 px-4 py-3">
-      <button className="flex min-w-0 flex-1 items-center gap-3 text-left" onClick={() => navigate("projetos", project.id)}>
+      <button className="flex min-w-0 flex-1 items-center gap-3 text-left" onClick={() => navigate("workspace", project.id)}>
         <ProjectIcon name={project.name} icon={project.icon} size={34} />
         <span className="min-w-0">
           <span className="flex items-center gap-2 text-[11px] text-text-faint">{tr("Continuar de onde parou")}</span>
@@ -105,9 +106,10 @@ function ContinueStrip({ project, lastCommit }: { project: ProjectWithGit; lastC
         </span>
       </button>
       <div className="flex shrink-0 gap-1.5">
-        <Button size="sm" onClick={() => void open(project, "vscode")}>
-          <Code2 size={13} /> {tr("VS Code")}
+        <Button size="sm" onClick={() => navigate("workspace", project.id)}>
+          <LayoutDashboard size={13} /> {tr("Workspace")}
         </Button>
+        <Button size="icon" variant="ghost" onClick={() => void open(project, "vscode")} title={tr("Abrir no VS Code")} aria-label={tr("Abrir no VS Code")}><Code2 size={15} /></Button>
         <Button size="icon" variant="ghost" onClick={() => navigate("terminal", project.id)} title={tr("Terminal")} aria-label={tr("Terminal")}>
           <SquareTerminal size={15} />
         </Button>
@@ -125,8 +127,6 @@ function ContinueStrip({ project, lastCommit }: { project: ProjectWithGit; lastC
 // Só carrega o Markdown quando o diálogo da daily abre.
 const DailyDialog = lazy(() => import("@/components/DailyDialog"));
 
-/** Widgets que ocupam duas colunas na tela larga. */
-const WIDE_WIDGETS = new Set<DashboardWidgetId>(["projetos"]);
 const ACTIVITY_ICON: Record<string, typeof Code2> = {
   project: Code2,
   file: FileText,
@@ -152,9 +152,37 @@ export function Dashboard() {
   const { projects: allProjects, loaded: projectsLoaded, load: loadProjects, open: openProject } = useProjectsStore();
   const projects = useMemo(() => allProjects.filter((p) => !p.archivedAt), [allProjects]);
   const settings = useSettingsStore((s) => s.settings);
+  const updateSettings = useSettingsStore((s) => s.update);
   const setFocusDialog = useFocusStore((s) => s.setDialog);
   const [customizeOpen, setCustomizeOpen] = useState(false);
   const [dailyOpen, setDailyOpen] = useState(false);
+  const [organizing, setOrganizing] = useState(false);
+  const [draftOrder, setDraftOrder] = useState<DashboardWidgetId[]>([]);
+  const [draftSizes, setDraftSizes] = useState<Partial<Record<DashboardWidgetId, DashboardWidgetSize>>>({});
+  const [dragged, setDragged] = useState<DashboardWidgetId | null>(null);
+  const [dropTarget, setDropTarget] = useState<DashboardWidgetId | null>(null);
+  const [savingLayout, setSavingLayout] = useState(false);
+  const [layoutAnnouncement, setLayoutAnnouncement] = useState("");
+
+  function organize() {
+    setDraftOrder(dashboardOrder(settings?.dashboard));
+    setDraftSizes({ ...settings?.dashboard.sizes });
+    setOrganizing(true);
+  }
+  function moveWidget(source: DashboardWidgetId, target: DashboardWidgetId) {
+    setDraftOrder((order) => moveDashboardWidget(order, source, target));
+    setLayoutAnnouncement(tr("Posição de {name} alterada.", { name: tr(WIDGET_LABEL[source]) }));
+  }
+  async function saveLayout() {
+    if (!settings || savingLayout) return;
+    setSavingLayout(true);
+    try {
+      if (await updateSettings({ dashboard: { ...settings.dashboard, order: draftOrder, sizes: draftSizes } })) {
+        setOrganizing(false);
+        setLayoutAnnouncement(tr("Organização do Início salva."));
+      }
+    } finally { setSavingLayout(false); }
+  }
 
   const [events, setEvents] = useState<CalendarEvent[] | null>(null);
   const [activity, setActivity] = useState<RecentItem[]>([]);
@@ -414,7 +442,7 @@ export function Dashboard() {
       </Widget>
     ),
   };
-  const visibleWidgets = dashboardOrder(settings?.dashboard).filter((id) => !settings?.dashboard.hidden.includes(id));
+  const visibleWidgets = (organizing ? draftOrder : dashboardOrder(settings?.dashboard)).filter((id) => !settings?.dashboard.hidden.includes(id));
 
   // Resumo do dia numa linha só (substitui os cards de número).
   const summary: { text: string; tone?: "danger"; onClick: () => void }[] = [
@@ -450,10 +478,11 @@ export function Dashboard() {
           </p>
         </div>
         <div className="relative flex items-center gap-1">
+          {!organizing && <Button variant="ghost" size="sm" onClick={organize}><GripVertical size={14} /> {tr("Organizar")}</Button>}
           <Button variant="ghost" size="sm" onClick={() => setDailyOpen(true)} title={tr("Resumo para a daily")}>
             <MessageSquareText size={14} /> {tr("Daily")}
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => setCustomizeOpen(true)} title={tr("Personalizar o Início")} aria-label={tr("Personalizar o Início")}>
+          <Button variant="ghost" size="icon" disabled={organizing} onClick={() => setCustomizeOpen(true)} title={tr("Personalizar o Início")} aria-label={tr("Personalizar o Início")}>
             <Settings2 size={15} />
           </Button>
           <AppUsageButton />
@@ -467,11 +496,32 @@ export function Dashboard() {
       )}
 
       {lastProject && <ContinueStrip project={lastProject} lastCommit={lastCommit} />}
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-flow-row-dense xl:grid-cols-3">
-        {visibleWidgets.map((id) => (
-          <div key={id} className={cn("min-w-0", WIDE_WIDGETS.has(id) && "xl:col-span-2")}>
-            {widgets[id]}
+      <p className="sr-only" role="status">{layoutAnnouncement}</p>
+      {organizing && <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-accent/25 bg-accent/5 px-4 py-3">
+        <div><p className="text-sm font-medium text-text">{tr("Seu Início, do seu jeito")}</p><p className="text-xs text-text-muted">{tr("Arraste pela alça ou use as setas. Escolha o tamanho de cada bloco.")}</p></div>
+        <div className="flex gap-2"><Button size="sm" variant="ghost" disabled={savingLayout} onClick={() => { setOrganizing(false); setDragged(null); setDropTarget(null); }}>{tr("Cancelar")}</Button><Button size="sm" loading={savingLayout} onClick={() => void saveLayout()}><Check size={13} /> {tr("Salvar organização")}</Button></div>
+      </div>}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3" data-dashboard-grid>
+        {visibleWidgets.map((id, index) => (
+          <div key={id} data-widget={id}
+            className={cn("flex min-w-0 flex-col rounded-xl", dashboardWidgetSize(id, organizing ? draftSizes : settings?.dashboard.sizes) === "wide" && "lg:col-span-2", organizing && "ring-1 ring-accent/20", dragged === id && "opacity-50", dropTarget === id && "ring-2 ring-accent")}
+            onDragOver={(event) => { if (organizing && dragged && dragged !== id) { event.preventDefault(); event.dataTransfer.dropEffect = "move"; setDropTarget(id); } }}
+            onDragLeave={(event) => { if (!(event.relatedTarget instanceof Node) || !event.currentTarget.contains(event.relatedTarget)) setDropTarget(null); }}
+            onDrop={(event) => { if (!organizing || !dragged) return; event.preventDefault(); moveWidget(dragged, id); setDragged(null); setDropTarget(null); }}>
+            {organizing && <div role="group" aria-label={tr(WIDGET_LABEL[id])} className="flex flex-wrap items-center gap-1 rounded-t-xl border-b border-accent/15 bg-bg-elevated px-2 py-1.5">
+              <button draggable onDragStart={(event) => { event.dataTransfer.setData("application/x-qyrex-widget", id); event.dataTransfer.effectAllowed = "move"; setDragged(id); }} onDragEnd={() => { setDragged(null); setDropTarget(null); }} onKeyDown={(event) => {
+                if (event.altKey || event.ctrlKey || event.metaKey) return;
+                const target = event.key === "ArrowUp" ? visibleWidgets[index - 1] : event.key === "ArrowDown" ? visibleWidgets[index + 1] : event.key === "Home" ? visibleWidgets[0] : event.key === "End" ? visibleWidgets[visibleWidgets.length - 1] : undefined;
+                if (target) { event.preventDefault(); moveWidget(id, target); }
+              }} className="cursor-grab rounded p-1 text-text-muted hover:text-accent active:cursor-grabbing" title={tr("Arraste para mover")} aria-label={tr("Arraste para mover")}><GripVertical size={14} /></button>
+              <span className="min-w-0 flex-1 truncate text-[11px] text-text-muted">{tr(WIDGET_LABEL[id])}</span>
+              <Button size="icon-sm" variant="ghost" disabled={index === 0} aria-label={tr("Mover para cima")} title={tr("Mover para cima")} onClick={() => moveWidget(id, visibleWidgets[index - 1])}><ArrowUp size={12} /></Button>
+              <Button size="icon-sm" variant="ghost" disabled={index === visibleWidgets.length - 1} aria-label={tr("Mover para baixo")} title={tr("Mover para baixo")} onClick={() => moveWidget(id, visibleWidgets[index + 1])}><ArrowDown size={12} /></Button>
+              <div role="group" className="flex rounded-full border border-border-subtle p-0.5" aria-label={tr("Tamanho do bloco")}>
+                {(["compact", "wide"] as const).map((size) => <button key={size} aria-pressed={dashboardWidgetSize(id, draftSizes) === size} className={cn("rounded-full px-2 py-1 text-[10px]", dashboardWidgetSize(id, draftSizes) === size ? "bg-accent/15 text-accent" : "text-text-faint hover:text-text")} onClick={() => setDraftSizes((sizes) => ({ ...sizes, [id]: size }))}>{size === "compact" ? tr("Compacto") : tr("Amplo")}</button>)}
+              </div>
+            </div>}
+            <div ref={(node) => { if (node) node.inert = organizing; }} className={cn("min-h-0 flex-1", organizing && "select-none")}>{widgets[id]}</div>
           </div>
         ))}
       </div>

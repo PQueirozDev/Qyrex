@@ -106,6 +106,7 @@ export const settingsPatch = z
     dashboard: z.object({
       order: z.array(z.enum(DASHBOARD_WIDGETS)).max(DASHBOARD_WIDGETS.length),
       hidden: z.array(z.enum(DASHBOARD_WIDGETS)).max(DASHBOARD_WIDGETS.length),
+      sizes: z.partialRecord(z.enum(DASHBOARD_WIDGETS), z.enum(["compact", "wide"])).optional(),
     }),
   })
   .partial();

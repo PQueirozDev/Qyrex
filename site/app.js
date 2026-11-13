@@ -92,7 +92,7 @@ function watchDither(st) {
   }).observe(st.ctx.canvas.parentElement);
 }
 
-// A mesma luz de pixels dos cabeçalhos do app, desenhada só ao redimensionar/trocar tema.
+// Luz de pixels: reage ao ponteiro sem manter um loop de animação em repouso.
 document.querySelectorAll('.hero-visual, .page-heading, .download-summary').forEach((host) => {
   host.classList.add('glow-host');
   const canvas = document.createElement('canvas');
@@ -102,7 +102,7 @@ document.querySelectorAll('.hero-visual, .page-heading, .download-summary').forE
   const ctx = canvas.getContext('2d');
   const cell = 3;
   const st = {
-    ctx, w:0, h:0,
+    ctx, w:0, h:0, pointer:null,
     size() {
       this.w = Math.max(1, Math.ceil(host.clientWidth / cell));
       this.h = Math.max(1, Math.ceil(Math.min(220, host.clientHeight) / cell));
@@ -116,7 +116,8 @@ document.querySelectorAll('.hero-visual, .page-heading, .download-summary').forE
       for (let y = 0; y < this.h; y++) {
         for (let x = 0; x < this.w; x++) {
           const distance = Math.hypot((x - this.w * .75) / (this.w * .7), (y + this.h * .1) / (this.h * 1.2));
-          const intensity = Math.max(0, 1 - distance) ** 1.6 * .5;
+          const nearby = this.pointer ? Math.exp(-((x / this.w - this.pointer.x) ** 2 + (y / this.h - this.pointer.y) ** 2) / .04) * .22 : 0;
+          const intensity = Math.min(.65, Math.max(0, 1 - distance) ** 1.6 * .5 + nearby);
           if (intensity * 64 > BAYER[(y % 8) * 8 + x % 8]) {
             const p = (y * this.w + x) * 4;
             img.data[p] = color[0]; img.data[p + 1] = color[1]; img.data[p + 2] = color[2]; img.data[p + 3] = 255;
@@ -127,6 +128,24 @@ document.querySelectorAll('.hero-visual, .page-heading, .download-summary').forE
     },
   };
   watchDither(st);
+  const finePointer = matchMedia('(hover: hover) and (pointer: fine)');
+  let frame = 0;
+  const redraw = () => {
+    if (frame) return;
+    frame = requestAnimationFrame(() => { frame = 0; if (!document.hidden) st.paint(); });
+  };
+  host.addEventListener('pointermove', (event) => {
+    if (motion.matches || !finePointer.matches || document.hidden) return;
+    const box = canvas.getBoundingClientRect();
+    if (!box.width || !box.height) return;
+    st.pointer = { x:(event.clientX - box.left) / box.width, y:(event.clientY - box.top) / box.height };
+    redraw();
+  }, { passive:true });
+  const reset = () => { st.pointer = null; redraw(); };
+  host.addEventListener('pointerleave', reset);
+  motion.addEventListener('change', reset);
+  finePointer.addEventListener('change', reset);
+  document.addEventListener('visibilitychange', reset);
 });
 
 // Hero: o vídeo do onsen, quadro a quadro (12 fps, só enquanto aparece na tela).

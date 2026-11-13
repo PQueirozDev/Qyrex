@@ -350,13 +350,14 @@ export function parseSettingsExport(raw: string, file: string): SettingsImport {
     if (key in data.settings) portable[key] = (data.settings as Record<string, unknown>)[key];
   }
   // Exportações antigas podem citar widgets que saíram do app (ex.: "cobrancas"): descarta só esses.
-  const dash = portable.dashboard as { order?: unknown; hidden?: unknown } | undefined;
+  const dash = portable.dashboard as { order?: unknown; hidden?: unknown; sizes?: unknown } | undefined;
   if (dash && typeof dash === "object") {
     const known = (v: unknown) => (DASHBOARD_WIDGETS as readonly unknown[]).includes(v);
     portable.dashboard = {
       ...dash,
       order: Array.isArray(dash.order) ? dash.order.filter(known) : dash.order,
       hidden: Array.isArray(dash.hidden) ? dash.hidden.filter(known) : dash.hidden,
+      ...(dash.sizes && typeof dash.sizes === "object" ? { sizes: Object.fromEntries(Object.entries(dash.sizes).filter(([key, value]) => known(key) && (value === "compact" || value === "wide"))) } : {}),
     };
   }
   const parsed = settingsPatch.safeParse(portable);

@@ -229,6 +229,7 @@ function pickDashboard(raw: Partial<DashboardPrefs>): DashboardPrefs {
   return {
     order: Array.isArray(raw.order) ? raw.order.filter(known) : DEFAULT_DASHBOARD.order,
     hidden: Array.isArray(raw.hidden) ? raw.hidden.filter(known) : DEFAULT_DASHBOARD.hidden,
+    ...(raw.sizes && typeof raw.sizes === "object" ? { sizes: Object.fromEntries(Object.entries(raw.sizes).filter(([key, value]) => known(key) && (value === "compact" || value === "wide"))) } : {}),
   };
 }
 

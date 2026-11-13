@@ -84,8 +84,33 @@
 </section>
 <section id="tour" class="section " data-buddy="Um projeto. Todas as perspectivas.">
 <p class="eyebrow">01 / Por dentro</p>
-<h2>Um projeto. Todas as perspectivas.</h2>
-<p class="intro">Explore capturas reais do app. Este tour não executa comandos.</p>
+<h2>Do projeto aberto ao primeiro resultado.</h2>
+<p class="intro">Um fluxo, três momentos. Acompanhe as etapas ou escolha por onde começar.</p>
+<div class="tour-story" data-tour-story>
+<ol class="tour-path" aria-label="Primeiros passos no Qyrex">
+<li data-tour-marker>
+<button type="button" class="tour-step" data-tour-step aria-pressed="true" aria-controls="tour-story-preview" data-image="assets/app-projetos.webp" data-alt="Projetos do Qyrex com acesso ao Workspace" data-caption="Escolha o projeto e retome o seu Workspace salvo.">
+<span class="tour-number" aria-hidden="true">01</span><span><strong>Seu projeto, no lugar certo.</strong><span class="tour-detail">Escolha um repositório. Arquivos, Git, tarefas e ferramentas ficam no contexto dele, com o layout que você deixou salvo.</span></span>
+</button>
+</li>
+<li data-tour-marker>
+<button type="button" class="tour-step" data-tour-step aria-pressed="false" aria-controls="tour-story-preview" data-image="assets/app-processos.webp" data-alt="Processos do Qyrex com saída de um servidor de desenvolvimento" data-caption="Revise o comando, execute e acompanhe a saída do servidor.">
+<span class="tour-number" aria-hidden="true">02</span><span><strong>Do comando à saída.</strong><span class="tour-detail">Revise e rode um script. A saída fica à vista, o endereço local aparece e você controla o que continua rodando.</span></span>
+</button>
+</li>
+<li data-tour-marker>
+<button type="button" class="tour-step" data-tour-step aria-pressed="false" aria-controls="tour-story-preview" data-image="assets/app-workspace.webp" data-alt="Workspace do Qyrex com arquivos, terminal e preview lado a lado" data-caption="Confira o resultado no Preview, junto dos arquivos e do terminal.">
+<span class="tour-number" aria-hidden="true">03</span><span><strong>Veja o resultado. Continue criando.</strong><span class="tour-detail">Confira o Preview ao lado do terminal e dos arquivos. Troque de ferramenta mantendo o projeto à mão.</span></span>
+</button>
+</li>
+</ol>
+<div class="tour-preview-shell" id="tour-story-preview" role="region" aria-label="Prévia dos primeiros passos no Qyrex">
+<div class="tour-stage-label"><span class="hero-caption-dot" aria-hidden="true"></span><span data-tour-position>01 / 03 · Seu projeto</span></div>
+<figure class="shot"><img data-tour-image src="assets/app-projetos.webp" alt="Projetos do Qyrex com acesso ao Workspace" width="1440" height="900" loading="lazy" decoding="async"><figcaption data-tour-caption>Escolha o projeto e retome o seu Workspace salvo.</figcaption></figure>
+<div class="tour-stage-bottom"><span class="fine">Capturas da demo · dados fictícios</span><a href="https://pqueirozdev.com.br/qyrex-demo/">Experimentar esse fluxo <span aria-hidden="true">↗</span></a></div>
+</div>
+</div>
+<details class="tour-gallery"><summary>Explorar todas as telas <span>Workspace, Git, IA e mais</span></summary>
 <div class="tabs" role="tablist" aria-label="Tour do Qyrex">
 <button role="tab" id="tab-workspace" aria-controls="panel-workspace" aria-selected="true" tabindex="0">Workspace</button>
 <button role="tab" id="tab-processos" aria-controls="panel-processos" aria-selected="false" tabindex="-1">Terminal/Processos</button>
@@ -165,6 +190,7 @@
 <figcaption>Demonstração com dados fictícios</figcaption>
 </figure>
 </div>
+</details>
 </section>
 <section id="recursos" class="section " data-buddy="Menos troca de contexto. Mais desenvolvimento.">
 <p class="eyebrow">02 / Recursos</p>
